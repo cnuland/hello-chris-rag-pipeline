@@ -1,41 +1,35 @@
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
-  name: mock-servicenow-api-pipeline
-  annotations:
-    # argocd.argoproj.io/sync-wave: "2" # Adjust as needed
-    # argocd.argoproj.io/sync-options: "SkipDryRunOnMissingResource=true"
+  name: hello-chris-ai-pipeline
 spec:
   workspaces:
   - name: shared-workspace
-    description: Workspace for git source and other shared artifacts.
-  - name: dockerconfig-ws # Added for registry credentials
-    description: Optional workspace for .docker/config.json credentials
-    optional: true
   params:
+  - name: deployment-name
+    type: string
+    description: name of the deployment to be patched
+  - name: namespace
+    type: string
+    description: name of the namespace everything is being deployed to
   - name: git-url
     type: string
-    description: URL of the git repo for the code.
+    description: url of the git repo for the code of deployment
   - name: git-revision
     type: string
-    description: Revision to be used from repo.
-    default: "main" # Or "master" depending on your repo
-  - name: image-url
+    description: revision to be used from repo of the code for deployment
+    default: "master"
+  - name: IMAGE
     type: string
-    description: Image to be built and pushed (e.g., quay.io/your-user/mock-servicenow-api).
-  - name: dockerfile-path
+    description: image to be built from the code
+  - name: TLSVERIFY
     type: string
-    description: Path to the Dockerfile within the git repository.
-    default: "./Dockerfile" # Assumes Dockerfile is at the root of the repo
-  - name: context-path
+    default: "false"
+    description: tls verification
+  - name: working-dir
     type: string
-    description: Path to the build context within the git repository.
-    default: "." # Assumes build context is the root of the repo
-  - name: tls-verify
-    type: string
-    default: "true" # Usually true for Quay.io
-    description: Enable TLS verification for container registry.
-
+    default: ""
+    description: default working directory to build from
   tasks:
   - name: fetch-repository
     taskRef:
@@ -47,31 +41,26 @@ spec:
     params:
     - name: url
       value: $(params.git-url)
-    - name: revision
-      value: $(params.git-revision)
     - name: deleteExisting
       value: "true"
-
-  - name: build-and-push-image
+    - name: revision
+      value: $(params.git-revision)
+  - name: build-image
     taskRef:
-      name: buildah # Use the standard buildah task name
+      name: buildah
       kind: Task
-    workspaces:
-    - name: source # buildah task expects 'source'
-      workspace: shared-workspace
-    - name: dockerconfig # Pass the dockerconfig workspace to buildah
-      workspace: dockerconfig-ws
     params:
     - name: IMAGE
-      value: $(params.image-url)
-    - name: DOCKERFILE
-      value: $(params.dockerfile-path) # Use the new param
-    - name: CONTEXT
-      value: $(params.context-path) # Use the new param
+      value: $(params.IMAGE)
     - name: TLSVERIFY
-      value: $(params.tls-verify)
+      value: $(params.TLSVERIFY)
+    - name: DOCKERFILE
+      value: "./$(params.working-dir)/Dockerfile"
+    workspaces:
+    - name: output
+      workspace: shared-workspace
+    - name: source
+      workspace: shared-workspace
     runAfter:
     - fetch-repository
-  # Optional: Add a task here to update the Deployment with the new image digest
-  # using a tool like 'oc patch' or a Kubernetes manifest task (e.g., from Tekton Hub)
   # This would typically use results like $(tasks.build-and-push-image.results.IMAGE_DIGEST)

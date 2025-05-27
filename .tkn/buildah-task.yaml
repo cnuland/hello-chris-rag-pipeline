@@ -2,10 +2,6 @@ apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
   name: buildah
-  namespace: hello-chris-ai
-  annotations:
-    argocd.argoproj.io/sync-wave: "2"
-    argocd.argoproj.io/sync-options: "SkipDryRunOnMissingResource=true"
 spec:
   description: |-
     Buildah task builds source into a container image and then pushes it to a container registry.

@@ -1,27 +1,35 @@
 apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
-  name: mock-servicenow-api-run-1717098124  # Using timestamp for uniqueness
+  generateName: mock-servicenow-api-run-  # Using timestamp for uniqueness
   namespace: hello-chris-ai-5
 spec:
   pipelineRef:
-    name: mock-servicenow-api-pipeline
+    name: hello-chris-ai-pipeline
   workspaces:
   - name: shared-workspace
     persistentVolumeClaim:
       claimName: tekton-pvc-mock-api # Matches the PVC name
   params:
+  - name: namespace
+    value: "hello-chris-ai-5"
+  - name: deployment-name
+    value: "hello-chris-ai"
   - name: git-url
     value: "https://github.com/cnuland/hello-chris-rag-pipeline.git"
   - name: git-revision
     value: "main" # Or your specific branch/commit
-  - name: image-url
+  - name: IMAGE
     # IMPORTANT: Replace with your Quay.io image URL
     value: "quay.io/cnuland/hello-chris-rag-pipeline"
   - name: dockerfile-path
     value: "Dockerfile" # Path to your main Dockerfile from the root of the git repo
   - name: context-path
     value: "." # Build context from the root of the git repo
-  - name: tls-verify
+  - name: TLSVERIFY
+    value: "false"
+  - name: NO_PROXY
     value: "true"
+  - name: working-dir
+    value: "app"
   # serviceAccountName: pipeline # Optional: if your pipeline needs specific permissions
