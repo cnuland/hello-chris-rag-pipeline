@@ -2,10 +2,6 @@ apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
   name: mock-servicenow-api-run-$(uid) # Adding $(uid) makes the name unique
-  # namespace: hello-chris-ai # Replace with your target OpenShift project/namespace
-  # annotations:
-    # argocd.argoproj.io/hook: PostSync # Example for ArgoCD
-    # argocd.argoproj.io/hook-delete-policy: HookSucceeded
 spec:
   pipelineRef:
     name: mock-servicenow-api-pipeline
@@ -18,16 +14,16 @@ spec:
       secretName: quay-credentials # YOU NEED TO CREATE THIS SECRET
   params:
   - name: git-url
-    value: "https://github.com/your-username/your-repo-name.git" # CHANGE THIS
+    value: "https://github.com/cnuland/hello-chris-rag-pipeline.git"
   - name: git-revision
     value: "main" # Or your specific branch/commit
   - name: image-url
     # IMPORTANT: Replace with your Quay.io image URL
-    value: "quay.io/your-quay-username/mock-servicenow-api"
+    value: "quay.io/cnuland/hello-chris-rag-pipeline"
   - name: dockerfile-path
     value: "./Dockerfile" # Path to your main Dockerfile from the root of the git repo
   - name: context-path
-    value: "." # Build context from the root of the git repo
+    value: "/app" # Build context from the root of the git repo
   - name: tls-verify
     value: "true"
   # serviceAccountName: pipeline # Optional: if your pipeline needs specific permissions

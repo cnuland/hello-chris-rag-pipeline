@@ -2,7 +2,6 @@ apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
   name: mock-servicenow-api-pipeline
-  # namespace: hello-chris-ai # Replace with your target OpenShift project/namespace
   annotations:
     # argocd.argoproj.io/sync-wave: "2" # Adjust as needed
     # argocd.argoproj.io/sync-options: "SkipDryRunOnMissingResource=true"

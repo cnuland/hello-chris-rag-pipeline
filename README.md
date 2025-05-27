@@ -78,6 +78,14 @@ A Flask-based REST API that provides mock ServiceNow functionality for incident 
    tkn pipelinerun list
    ```
 
+3. Create Secret for Quay
+   ```
+   oc create secret docker-registry dockerconfigjson \
+  --docker-server=quay.io \
+  --docker-username=<your robot username> \
+  --docker-password=<your robot password> \
+  --docker-email=test@acme.com -n <your-app-namespace>
+   ```
 ### Kubernetes Deployment
 
 1. Apply the Kubernetes manifests:
