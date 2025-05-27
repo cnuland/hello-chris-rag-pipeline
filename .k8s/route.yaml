@@ -1,0 +1,18 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: mock-servicenow-api-route
+  labels:
+    app: mock-servicenow-api
+spec:
+  to:
+    kind: Service
+    name: mock-servicenow-api-svc
+    weight: 100
+  port:
+    targetPort: http # This should match the 'name' of the port in the Service definition
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect # Optional: Redirect HTTP to HTTPS
+  # host: mock-api.apps.your-openshift-cluster.com # Optional: uncomment and set your desired hostname
+  wildcardPolicy: None

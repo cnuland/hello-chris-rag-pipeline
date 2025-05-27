@@ -1,0 +1,78 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: mock-servicenow-api-pipeline
+  # namespace: hello-chris-ai # Replace with your target OpenShift project/namespace
+  annotations:
+    # argocd.argoproj.io/sync-wave: "2" # Adjust as needed
+    # argocd.argoproj.io/sync-options: "SkipDryRunOnMissingResource=true"
+spec:
+  workspaces:
+  - name: shared-workspace
+    description: Workspace for git source and other shared artifacts.
+  - name: dockerconfig-ws # Added for registry credentials
+    description: Optional workspace for .docker/config.json credentials
+    optional: true
+  params:
+  - name: git-url
+    type: string
+    description: URL of the git repo for the code.
+  - name: git-revision
+    type: string
+    description: Revision to be used from repo.
+    default: "main" # Or "master" depending on your repo
+  - name: image-url
+    type: string
+    description: Image to be built and pushed (e.g., quay.io/your-user/mock-servicenow-api).
+  - name: dockerfile-path
+    type: string
+    description: Path to the Dockerfile within the git repository.
+    default: "./Dockerfile" # Assumes Dockerfile is at the root of the repo
+  - name: context-path
+    type: string
+    description: Path to the build context within the git repository.
+    default: "." # Assumes build context is the root of the repo
+  - name: tls-verify
+    type: string
+    default: "true" # Usually true for Quay.io
+    description: Enable TLS verification for container registry.
+
+  tasks:
+  - name: fetch-repository
+    taskRef:
+      name: git-clone # Assumes git-clone ClusterTask or Task in namespace
+      kind: ClusterTask # Or Task, if namespaced
+    workspaces:
+    - name: output
+      workspace: shared-workspace
+    params:
+    - name: url
+      value: $(params.git-url)
+    - name: revision
+      value: $(params.git-revision)
+    - name: deleteExisting
+      value: "true"
+
+  - name: build-and-push-image
+    taskRef:
+      name: buildah-mock-api # Reference the specific buildah task name
+      kind: Task
+    workspaces:
+    - name: source # buildah task expects 'source'
+      workspace: shared-workspace
+    - name: dockerconfig # Pass the dockerconfig workspace to buildah
+      workspace: dockerconfig-ws
+    params:
+    - name: IMAGE
+      value: $(params.image-url)
+    - name: DOCKERFILE
+      value: $(params.dockerfile-path) # Use the new param
+    - name: CONTEXT
+      value: $(params.context-path) # Use the new param
+    - name: TLSVERIFY
+      value: $(params.tls-verify)
+    runAfter:
+    - fetch-repository
+  # Optional: Add a task here to update the Deployment with the new image digest
+  # using a tool like 'oc patch' or a Kubernetes manifest task (e.g., from Tekton Hub)
+  # This would typically use results like $(tasks.build-and-push-image.results.IMAGE_DIGEST)

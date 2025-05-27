@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mock-servicenow-api
+  labels:
+    app: mock-servicenow-api
+    app.kubernetes.io/component: backend
+    app.kubernetes.io/instance: mock-servicenow-api
+    app.kubernetes.io/name: mock-servicenow-api
+    app.kubernetes.io/part-of: mock-ticketing-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mock-servicenow-api
+  template:
+    metadata:
+      labels:
+        app: mock-servicenow-api
+    spec:
+      containers:
+      - name: mock-servicenow-api-container
+        # IMPORTANT: Replace with your actual image pushed to Quay or other registry by Tekton
+        image: quay.io/your-quay-username/mock-servicenow-api:latest
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+        livenessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
