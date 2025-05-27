@@ -1,7 +1,8 @@
 apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
-  name: mock-servicenow-api-run-$(uid) # Adding $(uid) makes the name unique
+  name: mock-servicenow-api-run-1717098124  # Using timestamp for uniqueness
+  namespace: hello-chris-ai-5
 spec:
   pipelineRef:
     name: mock-servicenow-api-pipeline
@@ -9,9 +10,6 @@ spec:
   - name: shared-workspace
     persistentVolumeClaim:
       claimName: tekton-pvc-mock-api # Matches the PVC name
-  - name: dockerconfig-ws # Provide Quay.io credentials secret
-    secret:
-      secretName: quay-credentials # YOU NEED TO CREATE THIS SECRET
   params:
   - name: git-url
     value: "https://github.com/cnuland/hello-chris-rag-pipeline.git"
@@ -21,9 +19,9 @@ spec:
     # IMPORTANT: Replace with your Quay.io image URL
     value: "quay.io/cnuland/hello-chris-rag-pipeline"
   - name: dockerfile-path
-    value: "./Dockerfile" # Path to your main Dockerfile from the root of the git repo
+    value: "Dockerfile" # Path to your main Dockerfile from the root of the git repo
   - name: context-path
-    value: "/app" # Build context from the root of the git repo
+    value: "." # Build context from the root of the git repo
   - name: tls-verify
     value: "true"
   # serviceAccountName: pipeline # Optional: if your pipeline needs specific permissions

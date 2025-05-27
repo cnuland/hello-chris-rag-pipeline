@@ -39,8 +39,8 @@ spec:
   tasks:
   - name: fetch-repository
     taskRef:
-      name: git-clone # Assumes git-clone ClusterTask or Task in namespace
-      kind: ClusterTask # Or Task, if namespaced
+      name: git-clone
+      kind: Task
     workspaces:
     - name: output
       workspace: shared-workspace
@@ -54,7 +54,7 @@ spec:
 
   - name: build-and-push-image
     taskRef:
-      name: buildah-mock-api # Reference the specific buildah task name
+      name: buildah # Use the standard buildah task name
       kind: Task
     workspaces:
     - name: source # buildah task expects 'source'
