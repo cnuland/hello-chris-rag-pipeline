@@ -31,5 +31,5 @@ spec:
   - name: NO_PROXY
     value: "true"
   - name: working-dir
-    value: "app"
+    value: "apps/api"
   # serviceAccountName: pipeline # Optional: if your pipeline needs specific permissions

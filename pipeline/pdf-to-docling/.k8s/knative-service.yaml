@@ -1,0 +1,55 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: kfp-s3-trigger
+  namespace: your-serverless-project # CHANGEME
+  annotations:
+    # Useful for OpenShift Serverless to autoscale to zero
+    autoscaling.knative.dev/minScale: "0"
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/scale-to-zero-pod-retention-period: "10m" # How long to keep pod after scale to zero
+    spec:
+      serviceAccountName: kfp-trigger-sa # Use the SA created in rbac.yaml
+      containers:
+        - image: image-registry.openshift-image-registry.svc:5000/your-serverless-project/kfp-s3-trigger:latest # CHANGEME - Use internal registry or Quay
+          ports:
+            - containerPort: 8080
+          env:
+            - name: KFP_ENDPOINT
+              # Example: http://ds-pipeline-pipelines-definition.your-openshift-ai-project.svc.cluster.local:8888
+              # Or the external route if accessed from outside the kfp namespace directly by URL
+              # For in-cluster, the service FQDN is preferred.
+              value: "http://ds-pipeline-your-osai-project.apps.your-cluster.com" # CHANGEME - KFP API HOST or internal service
+            - name: KFP_PIPELINE_NAME
+              value: "Simple PDF Processing Pipeline" # Must match the name in KFP UI
+            - name: KFP_EXPERIMENT_NAME
+              value: "S3 Triggered PDF Runs"
+            # KFP_BEARER_TOKEN is not set here; relying on the service account token mounted at KFP_SA_TOKEN_PATH
+            # If you were not using SA based auth:
+            # - name: KFP_BEARER_TOKEN
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: kfp-api-token-secret # A secret you would create
+            #       key: token
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: / # Or a dedicated /healthz if you add one to app.py
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: / # Or a dedicated /healthz
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20

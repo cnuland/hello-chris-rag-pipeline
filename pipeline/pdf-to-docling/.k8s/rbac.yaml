@@ -1,0 +1,46 @@
+# This assumes your KFP instance is user-namespaced or you target a specific namespace
+# where users run pipelines. Adjust namespace accordingly.
+# The namespace of the KFP service account (often 'kubeflow-pipelines' or similar if centralized)
+# or the user's project where pipelines will run.
+# For OpenShift AI, this would typically be the user's project or the OSAI project.
+
+# Let's assume your Knative service runs in 'your-serverless-project'
+# and KFP pipelines run in 'your-openshift-ai-project'
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kfp-trigger-sa
+  namespace: your-serverless-project # Namespace where Knative Service will run
+
+---
+# Role in the namespace where KFP creates PipelineRuns (Argo Workflows)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  # Namespace where pipelines are executed (e.g., your OpenShift AI project)
+  namespace: your-openshift-ai-project
+  name: kfp-pipeline-runner-role
+rules:
+- apiGroups: ["argoproj.io"] # KFP uses Argo Workflows
+  resources: ["workflows"]
+  verbs: ["create", "get", "list", "watch", "patch"] # Permissions to manage workflows
+- apiGroups: ["kubeflow.org"]
+  resources: ["pipelines", "pipelineruns", "experiments", "jobs"] # KFP specific resources
+  verbs: ["create", "get", "list", "patch", "update"] # Depending on SDK calls
+# Add other permissions if your pipeline components need to interact with k8s services
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kfp-trigger-sa-can-run-pipelines
+  # Namespace where pipelines are executed
+  namespace: your-openshift-ai-project
+subjects:
+- kind: ServiceAccount
+  name: kfp-trigger-sa # Name of the SA defined above
+  namespace: your-serverless-project # Namespace of the SA
+roleRef:
+  kind: Role
+  name: kfp-pipeline-runner-role
+  apiGroup: rbac.authorization.k8s.io
