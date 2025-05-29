@@ -13,7 +13,7 @@ spec:
     spec:
       serviceAccountName: kfp-trigger-sa # SA for KFP interaction (defined in rbac.yaml)
       containers:
-        - image: quay.io/cnuland/hello-chris-rag-pipeline:latest
+        - image: quay.io/cnuland/hello-chris-rag-pipeline-event:latest
           # Or, if using OpenShift internal registry:
           # image: image-registry.openshift-image-registry.svc:5000/your-serverless-project/s3-kfp-trigger:latest
           ports:
