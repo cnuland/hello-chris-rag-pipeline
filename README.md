@@ -9,7 +9,55 @@ The system is designed for containerized deployment on OpenShift, leveraging Ope
 
 ## Project Structure
 
-├── apps │ ├── api # ServiceNow Mock API │ │ ├── app.py │ │ ├── Dockerfile │ │ ├── requirements.txt │ │ └── .k8s/ # (API's k8s manifests) │ │ ├── deployment.yaml │ │ ├── service.yaml │ │ └── route.yaml │ └── s3-event-handler # Serverless KFP Trigger (Knative Service) │ ├── app.py │ ├── Dockerfile │ ├── requirements.txt │ └── .openshift/ # Knative & RBAC YAMLs │ ├── knative-service.yaml │ ├── trigger.yaml │ └── rbac.yaml ├── bootstrap # Cluster/tool bootstrapping scripts ├── LICENSE ├── pipeline │ ├── api-to-rag # (Future RAG pipeline placeholder) │ └── pdf-to-docling # Kubeflow Pipeline for PDF processing │ └── pdf-pipeline.py ├── README.md ├── services # Infra & Supporting Services YAMLs │ ├── cloudevents # MinIO-to-CloudEvents bridge │ │ ├── deployment.yaml │ │ ├── secret.yaml │ │ └── service.yaml │ ├── docling # (Docling service placeholder) │ ├── instructlab # (InstructLab service placeholder) │ ├── knative # Knative configs │ │ └── broker.yaml │ └── minio # MinIO S3 Storage deployment │ ├── create-secret.yaml │ ├── deployment.yaml │ ├── namespace.yaml │ ├── pvc.yaml │ ├── route.yaml │ ├── sa.yaml │ └── service.yaml ├── .tekton/ # Tekton CI/CD for the API │ ├── pipeline.yaml │ ├── pipeline_run.yaml │ ├── buildah-task.yaml # Custom task definition │ └── tekton-pvc.yaml
+```
+.
+├── apps
+│   ├── api                         # ServiceNow Mock API
+│   │   ├── app.py
+│   │   ├── Dockerfile
+│   │   ├── requirements.txt
+│   │   └── .k8s/                   # API's k8s manifests
+│   │       ├── deployment.yaml
+│   │       ├── service.yaml
+│   │       └── route.yaml
+│   └── s3-event-handler            # Serverless KFP Trigger (Knative Service)
+│       ├── app.py
+│       ├── Dockerfile
+│       ├── requirements.txt
+│       └── .openshift/            # Knative & RBAC YAMLs
+│           ├── knative-service.yaml
+│           ├── trigger.yaml
+│           └── rbac.yaml
+├── bootstrap                       # Cluster/tool bootstrapping scripts
+├── LICENSE
+├── pipeline
+│   ├── api-to-rag                  # Future RAG pipeline placeholder
+│   └── pdf-to-docling              # Kubeflow Pipeline for PDF processing
+│       └── pdf-pipeline.py
+├── README.md
+├── services                        # Infra & Supporting Services YAMLs
+│   ├── cloudevents                # MinIO-to-CloudEvents bridge
+│   │   ├── deployment.yaml
+│   │   ├── secret.yaml
+│   │   └── service.yaml
+│   ├── docling                    # Docling service placeholder
+│   ├── instructlab                # InstructLab service placeholder
+│   ├── knative                    # Knative configs
+│   │   └── broker.yaml
+│   └── minio                      # MinIO S3 Storage deployment
+│       ├── create-secret.yaml
+│       ├── deployment.yaml
+│       ├── namespace.yaml
+│       ├── pvc.yaml
+│       ├── route.yaml
+│       ├── sa.yaml
+│       └── service.yaml
+├── .tekton/                        # Tekton CI/CD for the API
+│   ├── pipeline.yaml
+│   ├── pipeline_run.yaml
+│   ├── buildah-task.yaml          # Custom task definition
+│   └── tekton-pvc.yaml
+```
 
 *(Note: Kubernetes and Knative YAMLs are assumed to be located as shown or managed via your CI/CD process. Paths in examples should be adjusted to your actual layout.)*
 
