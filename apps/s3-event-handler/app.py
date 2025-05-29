@@ -22,13 +22,6 @@ KFP_EXPERIMENT_NAME = os.environ.get("KFP_EXPERIMENT_NAME", "S3 Triggered PDF Ru
 
 app = Flask(__name__)
 
-
-@app.route('/healthz', methods=['GET'])
-def healthz():
-    """Dedicated health check endpoint."""
-    # You can add more checks here if needed (e.g., KFP client connectivity)
-    return jsonify(status="healthy", message="Application is running"), 200
-    
 def get_kfp_client():
     """Initializes and returns a KFP client."""
     if KFP_ENDPOINT:
@@ -58,7 +51,11 @@ def get_kfp_client():
         print("KFP Client: KFP_ENDPOINT not set, trying default client initialization.")
         return KFPClient()
 
-
+@app.route('/healthz', methods=['GET']) # Ensure this route exists
+def healthz():
+    """Dedicated health check endpoint."""
+    return jsonify(status="healthy", message="Application is running"), 200
+    
 @app.route('/', methods=['POST'])
 def handle_s3_event():
     """
