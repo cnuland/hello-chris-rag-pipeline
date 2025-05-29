@@ -2,21 +2,18 @@ apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
   name: kfp-s3-trigger
-  namespace: rag-pipeline-workshop # ✅ CHANGEME: Ensure this namespace exists and is correct
-  # annotations: # REMOVE autoscaling annotation from here
-    # serving.knative.openshift.io/enablePassthrough: "true" # Example OpenShift-specific annotation
+  namespace: rag-pipeline-workshop
 spec:
   template:
     metadata:
       annotations:
-        # ✅ MOVED HERE: Standard Knative annotation for scaling to zero.
         autoscaling.knative.dev/minScale: "0"
         # How long to keep a pod after it scales to zero.
         autoscaling.knative.dev/scale-to-zero-pod-retention-period: "10m"
     spec:
       serviceAccountName: kfp-trigger-sa # SA for KFP interaction (defined in rbac.yaml)
       containers:
-        - image: quay.io/your-quay-username/s3-kfp-trigger:latest # CHANGEME
+        - image: quay.io/cnuland/hello-chris-rag-pipeline-event:latest
           # Or, if using OpenShift internal registry:
           # image: image-registry.openshift-image-registry.svc:5000/your-serverless-project/s3-kfp-trigger:latest
           ports:
