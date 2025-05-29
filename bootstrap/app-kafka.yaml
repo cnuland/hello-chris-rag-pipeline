@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kafka
+  namespace: openshift-gitops # Or your ArgoCD apps namespace
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/cnuland/hello-chris-rag-pipeline.git # CHANGEME
+    path: services/kafka
+    targetRevision: HEAD # CHANGEME
+    kustomize: {}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kafka # CHANGEME
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  # ignoreDifferences:
+  # - group: serving.knative.dev
+  #   kind: Service
+  #   name: kfp-s3-trigger # Name of your Knative service
+  #   jsonPointers:
+  #   - /spec/template/spec/containers/0/image # If image is updated by a separate CI/CD for this app
