@@ -1,25 +1,22 @@
-apiVersion: serving.knative.dev/v1 # Standard Knative Serving API
+apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
-  name: kfp-s3-trigger # Name of your Knative Service
-  namespace: rag-pipeline-workshop # CHANGEME: Target OpenShift project
-  annotations:
-    # Standard Knative annotation for scaling to zero. Works in OpenShift Serverless.
-    autoscaling.knative.dev/minScale: "0"
-    # OpenShift specific annotations can be added here if needed for specific behaviors
-    # or UI integrations, but are often not required for basic functionality.
-    # Example: To influence the generated OpenShift Route:
-    # serving.knative.openshift.io/enablePassthrough: "true"
+  name: kfp-s3-trigger
+  namespace: rag-pipeline-workshop # ✅ CHANGEME: Ensure this namespace exists and is correct
+  # annotations: # REMOVE autoscaling annotation from here
+    # serving.knative.openshift.io/enablePassthrough: "true" # Example OpenShift-specific annotation
 spec:
   template:
     metadata:
       annotations:
+        # ✅ MOVED HERE: Standard Knative annotation for scaling to zero.
+        autoscaling.knative.dev/minScale: "0"
         # How long to keep a pod after it scales to zero.
         autoscaling.knative.dev/scale-to-zero-pod-retention-period: "10m"
     spec:
       serviceAccountName: kfp-trigger-sa # SA for KFP interaction (defined in rbac.yaml)
       containers:
-        - image: quay.io/cnuland/hello-chris-rag-pipeline-event:latest # CHANGEME
+        - image: quay.io/your-quay-username/s3-kfp-trigger:latest # CHANGEME
           # Or, if using OpenShift internal registry:
           # image: image-registry.openshift-image-registry.svc:5000/your-serverless-project/s3-kfp-trigger:latest
           ports:
@@ -27,7 +24,6 @@ spec:
           env:
             - name: KFP_ENDPOINT
               # CHANGEME: Correct Kubeflow Pipelines API endpoint URL
-              # e.g., http://ds-pipeline-pipelines-definition.your-openshift-ai-project.svc.cluster.local:8888
               value: "http://ds-pipeline-your-osai-project.apps.your-cluster.com"
             - name: KFP_PIPELINE_NAME
               value: "Simple PDF Processing Pipeline" # Must match uploaded KFP pipeline name
