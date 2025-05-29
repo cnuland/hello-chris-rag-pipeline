@@ -8,7 +8,7 @@ spec:
 
   source:
     repoURL: https://github.com/cnuland/hello-chris-rag-pipeline.git # CHANGEME: URL to your Git repository
-    path: bootstrap/argocd-applications # Path to the directory containing the kustomization.yaml for child apps
+    path: bootstrap/ # Path to the directory containing the kustomization.yaml for child apps
     targetRevision: HEAD # CHANGEME: Your target branch, tag, or commit
     # kustomize: {} # Implicit if kustomization.yaml exists in the path
 
