@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: knative-broker
-  namespace: argocd # Or your ArgoCD apps namespace
+  namespace: openshift-gitops # Or your ArgoCD apps namespace
 spec:
   project: default
   source:

@@ -16,7 +16,7 @@ spec:
     # The child Application CRDs will be created in this namespace.
     # This should be the namespace where ArgoCD runs and manages its own configuration, typically 'argocd'.
     server: https://kubernetes.default.svc
-    namespace: argocd # CHANGEME if your ArgoCD runs in a different namespace
+    namespace: openshift-gitops # CHANGEME if your ArgoCD runs in a different namespace
 
   syncPolicy:
     automated:
