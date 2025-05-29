@@ -3,10 +3,8 @@ kind: Application
 metadata:
   name: root-app-of-apps
   namespace: openshift-gitops # This application CRD itself lives in the ArgoCD namespace
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
 spec:
-  project: openshift-gitops # Or your specific ArgoCD project
+  project: default # Or your specific ArgoCD project
 
   source:
     repoURL: https://github.com/cnuland/hello-chris-rag-pipeline.git # CHANGEME: URL to your Git repository
@@ -18,12 +16,12 @@ spec:
     # The child Application CRDs will be created in this namespace.
     # This should be the namespace where ArgoCD runs and manages its own configuration, typically 'argocd'.
     server: https://kubernetes.default.svc
-    namespace: openshift-gitops # CHANGEME if your ArgoCD runs in a different namespace
+    namespace: argocd # CHANGEME if your ArgoCD runs in a different namespace
 
   syncPolicy:
     automated:
       prune: true    # Allows ArgoCD to delete child Applications if they are removed from Git
       selfHeal: true # Allows ArgoCD to correct deviations from the Git state
     syncOptions:
-      - CreateNamespace=false # Typically, the 'argocd' namespace already exists.
+      - CreateNamespace=true # Typically, the 'argocd' namespace already exists.
                               # Set to true if this root app should try to create the 'argocd' namespace.
