@@ -11,7 +11,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: kfp-trigger-sa
-  namespace: hello-chris-rag-pipeline
+  namespace: rag-pipeline-workshop
 
 ---
 # Role in the namespace where KFP creates PipelineRuns (Argo Workflows)
@@ -19,7 +19,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   # Namespace where pipelines are executed (e.g., your OpenShift AI project)
-  namespace:hello-chris-rag-pipeline
+  namespace: rag-pipeline-workshop
   name: kfp-pipeline-runner-role
 rules:
 - apiGroups: ["argoproj.io"] # KFP uses Argo Workflows
@@ -35,11 +35,11 @@ kind: RoleBinding
 metadata:
   name: kfp-trigger-sa-can-run-pipelines
   # Namespace where pipelines are executed
-  namespace: your-openshift-ai-project
+  namespace: rag-pipeline-workshop
 subjects:
 - kind: ServiceAccount
   name: kfp-trigger-sa # Name of the SA defined above
-  namespace: your-serverless-project # Namespace of the SA
+  namespace: rag-pipeline-workshop # Namespace of the SA
 roleRef:
   kind: Role
   name: kfp-pipeline-runner-role

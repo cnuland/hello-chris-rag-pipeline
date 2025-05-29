@@ -29,7 +29,7 @@ spec:
         - name: K_SINK # The Knative Broker URL
           # This points to the 'default' broker in 'your-serverless-project'
           # Adjust if your broker or namespace is different.
-          value: "http://default-broker.your-serverless-project.svc.cluster.local" # CHANGEME (namespace)
+          value: "http://default-broker.rag-pipeline-workshop.svc.cluster.local" # CHANGEME (namespace)
         - name: PORT
           value: "8080"
         - name: VERBOSE

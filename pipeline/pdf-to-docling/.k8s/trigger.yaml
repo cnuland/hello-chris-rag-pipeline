@@ -1,28 +1,17 @@
-apiVersion: eventing.knative.dev/v1
+apiVersion: eventing.knative.dev/v1 # Standard Knative Eventing API
 kind: Trigger
 metadata:
   name: s3-pdf-upload-trigger-to-kfp
-  namespace: hello-chris-rag-pipeline # CHANGEME
+  namespace: hello-chris-rag-pipeline # CHANGEME: Target OpenShift project
 spec:
-  broker: default # Or the name of your specific broker
+  broker: default # Must match the name of your Broker
   filter:
     attributes:
-      # These attributes depend on how your S3 event source formats the CloudEvent
-      # For AWS S3 events, 'type' might be 'aws.s3.object.created' (or similar)
-      # 'subject' might contain the object key or be filterable by suffix
-      type: "com.amazonaws.s3.ObjectCreated" # Example type, adjust to your S3 event source
-      # You might need to inspect the actual CloudEvents to set correct filters
-      # This is a common way to filter by file extension if subject contains the full key
-      # subject: ".pdf" # This is a suffix filter; Knative supports various filter types.
-      # If subject doesn't directly allow suffix, you might need a more complex filter or
-      # handle filtering inside your app.py (as currently implemented).
-      # For more advanced filtering, Knative supports CEL (Common Expression Language) filters
-      # if your Broker implementation supports it.
-      # Example using a hypothetical extension attribute (if your event source adds it):
-      # s3objectextension: ".pdf"
+      # This 'type' should match the CloudEvent type produced by radiorabe/minio-cloudevents-service
+      type: "io.minio.objectcreated.put"
   subscriber:
     ref:
       apiVersion: serving.knative.dev/v1
-      kind: Service
-      name: kfp-s3-trigger # Name of your Knative Service defined above
-    # uri: / # Optional: if you want to send to a specific path on your service
+      kind: Service # This is a Knative Service, not a Kubernetes Service
+      name: kfp-s3-trigger # Name of your Knative Service defined in knative-service.yaml
+    # uri: / # Optional: if your service needs events at a specific path

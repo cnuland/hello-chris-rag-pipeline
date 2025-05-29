@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: minio-cloudevents-bridge
-  namespace: argocd # Or your ArgoCD apps namespace
+  namespace: openshift-gitops # Or your ArgoCD apps namespace
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -10,11 +10,11 @@ spec:
   source:
     repoURL: https://github.com/cnuland/hello-chris-rag-pipeline.git
     path: services/cloudevents
-    targetRevision: HEAD # CHANGEME
+    targetRevision: HEAD
     kustomize: {}
   destination:
     server: https://kubernetes.default.svc
-    namespace: rag-pipeline-workshop # CHANGEME
+    namespace: rag-pipeline-workshop
   syncPolicy:
     automated:
       prune: true
