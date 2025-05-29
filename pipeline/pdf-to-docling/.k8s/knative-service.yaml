@@ -13,7 +13,7 @@ spec:
     spec:
       serviceAccountName: kfp-trigger-sa # SA for KFP interaction (defined in rbac.yaml)
       containers:
-        - image: quay.io/cnuland/hello-chris-rag-pipeline-event:latest
+        - image: quay.io/cnuland/hello-chris-rag-pipeline:latest
           # Or, if using OpenShift internal registry:
           # image: image-registry.openshift-image-registry.svc:5000/your-serverless-project/s3-kfp-trigger:latest
           ports:
@@ -35,13 +35,17 @@ spec:
               cpu: "500m"
           readinessProbe:
             httpGet:
-              path: / # Assuming your Flask app responds to / for health/readiness
+              path: /healthz # Use the new health check endpoint
               port: 8080
-            initialDelaySeconds: 5
+            initialDelaySeconds: 10 # Slightly increased initial delay just in case
             periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
           livenessProbe:
             httpGet:
-              path: /
+              path: /healthz # Use the new health check endpoint
               port: 8080
-            initialDelaySeconds: 15
+            initialDelaySeconds: 20 # Slightly increased initial delay
             periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
