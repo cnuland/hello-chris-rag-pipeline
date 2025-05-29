@@ -1,11 +1,3 @@
-I am unable to directly create or export files to Google Docs or any other external services. I can't access your Google Drive or perform actions that require logging into your accounts.
-
-However, I can provide you with the full README content again in a format that you can easily copy and then paste into a new Google Document yourself.
-
-Here's the full README content:
-
-Markdown
-
 # Mock Ticketing & Event-Driven Document Processing System
 
 This project provides a comprehensive suite of services including:
@@ -17,53 +9,7 @@ The system is designed for containerized deployment on OpenShift, leveraging Ope
 
 ## Project Structure
 
-.
-├── apps
-│   ├── api                     # ServiceNow Mock API
-│   │   ├── app.py
-│   │   ├── Dockerfile
-│   │   └── requirements.txt
-│   │   └── .k8s/               # (Assumed location for API's k8s manifests)
-│   │       ├── deployment.yaml
-│   │       ├── service.yaml
-│   │       └── route.yaml
-│   └── s3-event-handler        # Serverless KFP Trigger (Knative Service)
-│       ├── app.py
-│       ├── Dockerfile
-│       ├── requirements.txt
-│       └── .openshift/         # (Knative Service, Trigger, RBAC YAMLs)
-│           ├── knative-service.yaml
-│           ├── trigger.yaml
-│           └── rbac.yaml
-├── bootstrap                   # (Assumed: Cluster/Tool bootstrapping scripts)
-├── LICENSE
-├── pipeline
-│   ├── api-to-rag              # (Placeholder for future RAG pipeline)
-│   └── pdf-to-docling          # Kubeflow Pipeline for PDF processing
-│       └── pdf-pipeline.py
-├── README.md
-└── services                    # Infrastructure & Supporting Services YAMLs
-├── cloudevents             # MinIO-to-CloudEvents bridge service
-│   ├── deployment.yaml
-│   ├── secret.yaml
-│   └── service.yaml
-├── docling                 # (Placeholder for Docling service)
-├── instructlab             # (Placeholder for InstructLab service)
-├── knative                 # Knative specific configurations
-│   └── broker.yaml         # Knative Eventing Broker
-└── minio                   # MinIO S3 Storage (Example Deployment)
-├── create-secret.yaml  # Corrected name
-├── deployment.yaml
-├── namespace.yaml
-├── pvc.yaml
-├── route.yaml
-├── sa.yaml
-└── service.yaml
-├── .tekton/                    # Tekton CI/CD resources for the Mock API (example location)
-│   ├── pipeline.yaml
-│   ├── pipeline_run.yaml
-│   ├── buildah-task.yaml       # Custom Buildah task definition (if not using catalog)
-│   └── tekton-pvc.yaml
+<pre> . ├── apps │ ├── api # ServiceNow Mock API │ │ ├── app.py │ │ ├── Dockerfile │ │ ├── requirements.txt │ │ └── .k8s/ # (API's k8s manifests) │ │ ├── deployment.yaml │ │ ├── service.yaml │ │ └── route.yaml │ └── s3-event-handler # Serverless KFP Trigger (Knative Service) │ ├── app.py │ ├── Dockerfile │ ├── requirements.txt │ └── .openshift/ # Knative & RBAC YAMLs │ ├── knative-service.yaml │ ├── trigger.yaml │ └── rbac.yaml ├── bootstrap # Cluster/tool bootstrapping scripts ├── LICENSE ├── pipeline │ ├── api-to-rag # (Future RAG pipeline placeholder) │ └── pdf-to-docling # Kubeflow Pipeline for PDF processing │ └── pdf-pipeline.py ├── README.md ├── services # Infra & Supporting Services YAMLs │ ├── cloudevents # MinIO-to-CloudEvents bridge │ │ ├── deployment.yaml │ │ ├── secret.yaml │ │ └── service.yaml │ ├── docling # (Docling service placeholder) │ ├── instructlab # (InstructLab service placeholder) │ ├── knative # Knative configs │ │ └── broker.yaml │ └── minio # MinIO S3 Storage deployment │ ├── create-secret.yaml │ ├── deployment.yaml │ ├── namespace.yaml │ ├── pvc.yaml │ ├── route.yaml │ ├── sa.yaml │ └── service.yaml ├── .tekton/ # Tekton CI/CD for the API │ ├── pipeline.yaml │ ├── pipeline_run.yaml │ ├── buildah-task.yaml # Custom task definition │ └── tekton-pvc.yaml </pre>
 
 *(Note: Kubernetes and Knative YAMLs are assumed to be located as shown or managed via your CI/CD process. Paths in examples should be adjusted to your actual layout.)*
 
