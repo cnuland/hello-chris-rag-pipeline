@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: minio-cloudevents-service
-        image: radiorabe/minio-cloudevents-service:latest # Using the image from the GitHub repo
+        image: quay.io/cnuland/hello-chris-rag-pipeline-handler:latest # Using the image from the GitHub repo
         ports:
         - containerPort: 8080 # Default port for the service
         env:
