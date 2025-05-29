@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: minio
+  namespace: argocd # Or your ArgoCD apps namespace
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/cnuland/hello-chris-rag-pipeline.git
+    path: services/minio
+    targetRevision: HEAD # CHANGEME
+    kustomize: {} # Indicates that the path contains a kustomization.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    # The kustomization for MinIO includes its own namespace.yaml.
+    # ArgoCD will create resources in the 'minio' namespace defined there.
+    # If namespace.yaml was not part of kustomize, you'd set:
+    namespace: minio # This should match the namespace created by services/minio/namespace.yaml
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true # Allows ArgoCD to create the destination namespace if it doesn't exist
+                             # (though MinIO's kustomize already creates it)

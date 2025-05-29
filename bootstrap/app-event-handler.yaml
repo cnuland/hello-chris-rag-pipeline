@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: s3-event-handler
+  namespace: argocd # Or your ArgoCD apps namespace
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/cnuland/hello-chris-rag-pipeline.git # CHANGEME
+    path: pipeline/pdf-to-docling/.k8s
+    targetRevision: HEAD # CHANGEME
+    kustomize: {}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: rag-pipeline-workshop # CHANGEME
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  # ignoreDifferences:
+  # - group: serving.knative.dev
+  #   kind: Service
+  #   name: kfp-s3-trigger # Name of your Knative service
+  #   jsonPointers:
+  #   - /spec/template/spec/containers/0/image # If image is updated by a separate CI/CD for this app

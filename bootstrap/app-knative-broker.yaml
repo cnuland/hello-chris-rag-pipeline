@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: knative-broker
+  namespace: argocd # Or your ArgoCD apps namespace
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/cnuland/hello-chris-rag-pipeline.git
+    path: services/knative
+    targetRevision: HEAD # CHANGEME
+    kustomize: {}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: rag-pipeline-workshop # CHANGEME
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
