@@ -5,7 +5,7 @@ metadata:
   namespace: kafka # CHANGEME: Namespace for Kafka deployment
 spec:
   kafka:
-    version: 3.6.0            # Specify a Kafka version supported by your AMQ Streams Operator
+    version: 3.8.0            # Specify a Kafka version supported by your AMQ Streams Operator
     replicas: 1               # Single broker for PoC. Increase for HA.
     listeners:
       # Plain listener on 9092 for internal cluster communication
