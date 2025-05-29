@@ -26,9 +26,25 @@ spec:
         - /bin/bash
         - -c
         image: quay.io/minio/minio:RELEASE.2023-06-19T19-52-50Z
-        envFrom:
-        - secretRef:
-            name: minio-root-user
+        env:
+        # --- Add these for webhook notifications ---
+        - name: MINIO_NOTIFY_WEBHOOK_ENABLE_KNATIVEBRIDGE # Using "KNATIVEBRIDGE" as <YOUR_TARGET_ID>
+          value: "on"
+        - name: MINIO_NOTIFY_WEBHOOK_ENDPOINT_KNATIVEBRIDGE
+          value: "http://minio-cloudevents-service.rag-pipeline-workshop.svc.cluster.local:8080" # Your internal endpoint
+        - name: MINIO_NOTIFY_WEBHOOK_AUTH_TOKEN_KNATIVEBRIDGE
+          value: "mino123" # The SAME secret key
+        # --- End of new env vars ---
+        - name: MINIO_ROOT_USER
+          valueFrom:
+            secretKeyRef:
+              name: minio-root-user
+              key: MINIO_ROOT_USER
+        - name: MINIO_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: minio-root-user
+              key: MINIO_ROOT_PASSWORD
         ports:
         - containerPort: 9000
           protocol: TCP
