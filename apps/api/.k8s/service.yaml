@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mock-servicenow-api-svc
+  namespace: rag-pipeline-workshop
   labels:
     app: mock-servicenow-api
 spec:

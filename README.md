@@ -1,263 +1,312 @@
-# ServiceNow Mock API - Incident and Request Management
+I am unable to directly create or export files to Google Docs or any other external services. I can't access your Google Drive or perform actions that require logging into your accounts.
 
-A Flask-based REST API that provides mock ServiceNow functionality for incident and service request management, with a focus on closed ticket retrieval and management. This project includes containerization using Podman and automated deployment using Tekton pipelines and Kubernetes.
+However, I can provide you with the full README content again in a format that you can easily copy and then paste into a new Google Document yourself.
 
-## Technical Stack
+Here's the full README content:
 
-- Python 3.11
-- Flask web framework
-- Gunicorn WSGI server
-- Red Hat Universal Base Image (UBI)
-- Podman for container management
-- Kubernetes for deployment
-- Tekton for CI/CD pipelines
+Markdown
 
-## Features
+# Mock Ticketing & Event-Driven Document Processing System
 
-- **Incident Management**
-  - Create, read, update, and delete incidents
-  - Filter by state, priority, assignment group, and more
-  - Pagination support for large result sets
-  - Automatic handling of closed ticket metadata
+This project provides a comprehensive suite of services including:
+1.  A **ServiceNow-like Mock API** for managing incidents and service requests.
+2.  An **Event-Driven Serverless Application** that triggers a Kubeflow Pipeline when a PDF is uploaded to a MinIO S3 bucket.
+3.  Supporting infrastructure components for **MinIO eventing** and **Knative** deployment on OpenShift.
 
-- **Service Request Management**
-  - Full CRUD operations for service requests
-  - State and stage tracking
-  - Support for item details and approvals
-  - Closed request handling
+The system is designed for containerized deployment on OpenShift, leveraging OpenShift Serverless (Knative), OpenShift AI (Kubeflow Pipelines), and Tekton for CI/CD.
 
-- **Health Check Endpoint**
-  - Monitor API availability
-  - Simple status check endpoint
+## Project Structure
 
-## Setup and Installation
+.
+├── apps
+│   ├── api                     # ServiceNow Mock API
+│   │   ├── app.py
+│   │   ├── Dockerfile
+│   │   └── requirements.txt
+│   │   └── .k8s/               # (Assumed location for API's k8s manifests)
+│   │       ├── deployment.yaml
+│   │       ├── service.yaml
+│   │       └── route.yaml
+│   └── s3-event-handler        # Serverless KFP Trigger (Knative Service)
+│       ├── app.py
+│       ├── Dockerfile
+│       ├── requirements.txt
+│       └── .openshift/         # (Knative Service, Trigger, RBAC YAMLs)
+│           ├── knative-service.yaml
+│           ├── trigger.yaml
+│           └── rbac.yaml
+├── bootstrap                   # (Assumed: Cluster/Tool bootstrapping scripts)
+├── LICENSE
+├── pipeline
+│   ├── api-to-rag              # (Placeholder for future RAG pipeline)
+│   └── pdf-to-docling          # Kubeflow Pipeline for PDF processing
+│       └── pdf-pipeline.py
+├── README.md
+└── services                    # Infrastructure & Supporting Services YAMLs
+├── cloudevents             # MinIO-to-CloudEvents bridge service
+│   ├── deployment.yaml
+│   ├── secret.yaml
+│   └── service.yaml
+├── docling                 # (Placeholder for Docling service)
+├── instructlab             # (Placeholder for InstructLab service)
+├── knative                 # Knative specific configurations
+│   └── broker.yaml         # Knative Eventing Broker
+└── minio                   # MinIO S3 Storage (Example Deployment)
+├── create-secret.yaml  # Corrected name
+├── deployment.yaml
+├── namespace.yaml
+├── pvc.yaml
+├── route.yaml
+├── sa.yaml
+└── service.yaml
+├── .tekton/                    # Tekton CI/CD resources for the Mock API (example location)
+│   ├── pipeline.yaml
+│   ├── pipeline_run.yaml
+│   ├── buildah-task.yaml       # Custom Buildah task definition (if not using catalog)
+│   └── tekton-pvc.yaml
 
-### Local Development
+*(Note: Kubernetes and Knative YAMLs are assumed to be located as shown or managed via your CI/CD process. Paths in examples should be adjusted to your actual layout.)*
 
-1. Set up Python environment:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install -r app/requirements.txt
-   ```
+---
 
-2. Run the development server:
-   ```bash
-   python app.py
-   ```
+## I. ServiceNow Mock API
 
-### Container Development with Podman
+A Flask-based REST API that provides mock ServiceNow functionality, focusing on closed ticket data.
 
-1. Build the container image:
-   ```bash
-   podman build -t servicenow-mock-api .
-   ```
+### Technical Stack (Mock API)
 
-2. Run the container locally:
-   ```bash
-   podman run -d -p 8080:8080 servicenow-mock-api
-   ```
+* Python 3.11
+* Flask, Gunicorn
+* Red Hat Universal Base Image (UBI) 9
 
-3. Managing containers:
-   ```bash
-   podman ps                    # List running containers
-   podman stop <container-id>   # Stop a container
-   podman rm <container-id>     # Remove a container
-   ```
+### Features (Mock API)
 
-### Tekton Pipeline Deployment
+* **Incident Management:** CRUD operations, filtering, pagination.
+* **Service Request Management:** CRUD operations, filtering, pagination.
+* **Health Check Endpoint:** `/api/v1/health`.
 
-1. Apply the Tekton pipeline configuration:
-   ```bash
-   kubectl apply -f .tkn/
-   ```
+---
 
-2. Monitor pipeline execution:
-   ```bash
-   tkn pipeline list
-   tkn pipelinerun list
-   ```
+## II. Serverless S3 -> Kubeflow Pipeline Trigger
 
-3. Create Secret for Quay
-   ```
-   oc create secret docker-registry dockerconfigjson \
+An event-driven serverless application that:
+1.  Listens for PDF file uploads to a MinIO S3 bucket (via Knative Eventing).
+2.  Triggers a (stubbed) Kubeflow Pipeline to process the PDF.
+
+### Technical Stack (Serverless Trigger)
+
+* Python 3.11, Flask (for Knative service)
+* Kubeflow Pipelines SDK (`kfp`)
+* Red Hat Universal Base Image (UBI) 9
+* OpenShift Serverless (Knative Serving and Eventing)
+* MinIO for S3 storage
+* `radiorabe/minio-cloudevents-service` for MinIO to Knative event bridging.
+
+### Kubeflow Pipeline (Stub)
+
+* Located at `pipeline/pdf-to-docling/pdf-pipeline.py`.
+* A simple pipeline that accepts S3 bucket/key for a PDF and logs this information.
+* This pipeline needs to be compiled (e.g., `python pipeline/pdf-to-docling/pdf-pipeline.py` to produce `simple_pdf_pipeline.tar.gz`) and uploaded to your Kubeflow Pipelines instance on OpenShift AI.
+
+---
+
+## III. Setup and Deployment
+
+This section covers setting up MinIO, the event bridge, Knative components, the Mock API, and the Serverless KFP trigger.
+
+### Prerequisites
+
+* OpenShift Cluster (4.x)
+* OpenShift Serverless Operator installed (providing Knative Serving & Eventing).
+* OpenShift AI Operator installed (providing Kubeflow Pipelines).
+* Tekton Pipelines Operator installed.
+* OpenShift CLI (`oc`) installed and configured.
+* MinIO Client (`mc`) installed and configured.
+* Podman (or Docker) for building container images locally.
+* Tekton CLI (`tkn`) (optional).
+
+### Step 1: Deploy MinIO S3 Storage (Example)
+
+(As previously detailed - using `services/minio/` YAMLs. Ensure `create-secret.yaml` is correctly named and populated.)
+
+```
+oc apply -f services/minio/namespace.yaml
+oc apply -f services/minio/create-secret.yaml
+# ... apply other MinIO YAMLs ...
+mc alias set osminio $(oc get route minio -n minio -o jsonpath='{.spec.host}') <your-minio-access-key> <your-minio-secret-key>
+mc mb osminio/pdf-inbox
+```
+
+Step 2: Deploy Knative Eventing Broker
+Define your target namespace, e.g., your-serverless-project.
+
+
+```
+# oc new-project your-serverless-project # If it doesn't exist
+oc apply -f services/knative/broker.yaml -n your-serverless-project
+```
+
+Ensure the namespace in services/knative/broker.yaml is your-serverless-project.
+
+
+Step 3: Deploy MinIO CloudEvents Bridge Service
+```
+# Update MINIO_WEBHOOK_SECRET_KEY in services/cloudevents/secret.yaml
+oc apply -f services/cloudevents/secret.yaml -n your-serverless-project
+oc apply -f services/cloudevents/deployment.yaml -n your-serverless-project
+oc apply -f services/cloudevents/service.yaml -n your-serverless-project
+```
+
+Ensure K_SINK in services/cloudevents/deployment.yaml points to your Broker and namespace is your-serverless-project.
+
+
+Step 4: Configure MinIO Bucket Notifications
+(As previously detailed - using mc event add to point to the minio-cloudevents-service in your-serverless-project using the shared secret.)
+
+Step 5: Build and Deploy ServiceNow Mock API (Manual or via Tekton)
+Manual Build & Push (Example): Navigate to apps/api/
+
+```
+podman build -t quay.io/your-quay-username/servicenow-mock-api:latest -f Dockerfile .
+podman push quay.io/your-quay-username/servicenow-mock-api:latest
+```
+
+Manual Deploy to OpenShift: (Update image path in your apps/api/.k8s/deployment.yaml)
+
+```
+oc apply -f apps/api/.k8s/ -n your-api-project # Target namespace for the API
+```
+
+Step 6: Build and Deploy Serverless S3 Event Handler (KFP Trigger)
+Prepare Kubeflow Pipeline: (Compile and upload pipeline/pdf-to-docling/pdf-pipeline.py as simple_pdf_pipeline.tar.gz to KFP UI).
+Build Container Image for s3-event-handler: Navigate to apps/s3-event-handler/
+
+```
+podman build -t quay.io/your-quay-username/s3-kfp-trigger:latest -f Dockerfile .
+podman push quay.io/your-quay-username/s3-kfp-trigger:latest
+```
+
+Deploy to OpenShift Serverless (Manual): (Apply YAMLs from apps/s3-event-handler/.openshift/, ensuring namespaces, image path, KFP_ENDPOINT, and KFP_PIPELINE_NAME are correct.)
+```
+oc apply -f apps/s3-event-handler/.openshift/rbac.yaml # Ensure correct target namespaces
+oc apply -f apps/s3-event-handler/.openshift/knative-service.yaml -n your-serverless-project
+oc apply -f apps/s3-event-handler/.openshift/trigger.yaml -n your-serverless-project
+```
+
+Step 7: Tekton CI/CD Pipeline for ServiceNow Mock API (OPTIONAL)
+The Tekton pipeline (.tkn/pipeline.yaml)
+
+Prerequisites for Tekton:
+
+Ensure Tekton ClusterTasks like git-clone, buildah (or your custom buildah-mock-api task), and kubernetes-actions (or openshift-client) are available on your cluster. If buildah-mock-api is a custom task, apply its definition
+
+```
+oc apply -f .tekton/buildah-task.yaml -n your-tekton-pipelines-namespace
+```
+
+Create a PVC for Tekton workspaces:
+
+```
+oc apply -f .tekton/tekton-pvc.yaml -n your-tekton-pipelines-namespace
+```
+
+Create a registry secret (e.g., quay-credentials) for pushing images:
+
+
+Replace placeholders; use your Tekton pipeline namespace
+
+```
+oc create secret docker-registry quay-credentials \
   --docker-server=quay.io \
-  --docker-username=<your robot username> \
-  --docker-password=<your robot password> \
-  --docker-email=test@acme.com -n <your-app-namespace>
-   ```
-### Kubernetes Deployment
-
-1. Apply the Kubernetes manifests:
-   ```bash
-   kubectl apply -f .k8s/
-   ```
-
-2. Verify deployment:
-   ```bash
-   kubectl get pods
-   kubectl get services
-   kubectl get routes
-   ```
-
-## API Documentation
-
-### Endpoints
-
-#### Health Check
+  --docker-username='<your_quay_robot_username>' \
+  --docker-password='<your_quay_robot_token>' \
+  --docker-email='unused@example.com' \
+  -n your-tekton-pipelines-namespace
 ```
-GET /api/v1/health
+
+Ensure this secret is usable by the pipeline ServiceAccount or referenced in the PipelineRun workspace dockerconfig-ws.
+Apply the Tekton Pipeline Definition:
+
+
+```
+oc apply -f .tekton/pipeline.yaml -n your-tekton-pipelines-namespace
+```
+
+Trigger the Pipeline with Optional Phases:
+Modify and apply .tekton/pipeline_run.yaml. You can control execution using the skip-* parameters:
+
+skip-fetch-repository: "true" (to skip git clone)
+skip-build-and-push: "true" (to skip image build)
+skip-apply-manifests: "true" (to skip deployment)
+Example snippet from pipeline_run.yaml:
+
+
+```
+# ...
+params:
+- name: git-url
+  value: "[https://github.com/your-username/your-repo.git](https://github.com/your-username/your-repo.git)"
+- name: image-url
+  value: "quay.io/your-username/mock-servicenow-api"
+- name: context-path # Path to the API code and Dockerfile in your repo
+  value: "apps/api"
+- name: manifest-dir # Path to the API's k8s manifests in your repo
+  value: "apps/api/.k8s"
+# --- Skip Control Parameters ---
+- name: skip-fetch-repository
+  value: "false" # Set to "true" to skip
+- name: skip-build-and-push
+  value: "false" # Set to "true" to skip
+- name: skip-apply-manifests
+  value: "false" # Set to "true" to skip
+# ... other params ...
+```
+
+Apply the configured PipelineRun:
+
+
+
+```
+oc apply -f .tekton/pipeline_run.yaml -n your-tekton-pipelines-namespace
+```
+Monitor Pipeline Execution:
+
+
+```
+tkn pipelinerun list -n your-tekton-pipelines-namespace
+tkn pipelinerun logs <pipelinerun-name> -f -n your-tekton-pipelines-namespace
+```
+
+IV. API Usage & Testing
+Mock API Endpoints
+Health Check: GET /api/v1/health
 Response: {"status": "UP"}
+Incidents:
+List: GET /api/v1/incidents (Query params: limit, offset, state, priority, etc.)
+Get single: GET /api/v1/incidents/<incident_number>
+Create: POST /api/v1/incidents (Body: {"short_description": "...", "caller_id": "...", "description": "..."})
+Update: PUT/PATCH /api/v1/incidents/<incident_number>
+Service Requests: Similar CRUD endpoints under /api/v1/requests.
+Example curl for Mock API (replace <mock-api-route>):
+
+
+```
+curl http://<mock-api-route-for-your-api-project>/api/v1/incidents?limit=2 | jq
 ```
 
-#### Incidents
+Testing Event-Driven Flow
+Upload a PDF file to the configured MinIO bucket (e.g., pdf-inbox).
 
-- List incidents:
-  ```
-  GET /api/v1/incidents
-  Query parameters:
-  - limit (default: 10)
-  - offset (default: 0)
-  - state
-  - priority
-  - assignment_group
-  - caller_id
-  - cmdb_ci
-  - category
-  ```
-
-- Get single incident:
-  ```
-  GET /api/v1/incidents/<incident_number>
-  ```
-
-- Create incident:
-  ```
-  POST /api/v1/incidents
-  Required fields:
-  - short_description
-  - caller_id
-  - description
-  ```
-
-- Update incident:
-  ```
-  PUT/PATCH /api/v1/incidents/<incident_number>
-  ```
-
-#### Service Requests
-
-- List requests:
-  ```
-  GET /api/v1/requests
-  Query parameters:
-  - limit (default: 10)
-  - offset (default: 0)
-  - state
-  - requested_by
-  - assignment_group
-  ```
-
-- Get single request:
-  ```
-  GET /api/v1/requests/<request_number>
-  ```
-
-- Create request:
-  ```
-  POST /api/v1/requests
-  Required fields:
-  - short_description
-  - requested_for
-  ```
-
-### Response Format
-
-All responses follow this structure:
-```json
-{
-    "result": [
-        {
-            "number": "INC001001",
-            "state": "Closed",
-            "short_description": "Email server unresponsive",
-            ...
-        }
-    ],
-    "total_records": 100,
-    "limit": 10,
-    "offset": 0
-}
+Monitor Logs:
+minio-cloudevents-service (in your-serverless-project): 
 ```
+oc logs -l app=minio-cloudevents-service -n your-serverless-project -f
+```
+s3-event-handler Knative service (e.g., kfp-s3-trigger in your-serverless-project): 
+```
+oc logs -l serving.knative.dev/service=kfp-s3-trigger -c user-container -n your-serverless-project -f
+```
+Check Kubeflow Pipelines UI: A new run for your PDF processing pipeline should appear.
 
-## CI/CD Pipeline
-
-The project uses Tekton pipelines for continuous integration and deployment:
-
-1. Pipeline Tasks:
-   - Source code checkout
-   - Build container image using Podman
-   - Run tests
-   - Deploy to Kubernetes
-
-2. Pipeline Resources:
-   - Git repository
-   - Container image registry
-   - Kubernetes deployment manifests
-
-3. Triggering Builds:
-   - Automatically on git push
-   - Manually using tkn CLI
-
-## Troubleshooting
-
-### Podman Issues
-
-1. Image build failures:
-   - Verify UBI registry access
-   - Check network connectivity
-   - Ensure proper SELinux context
-
-2. Container runtime issues:
-   - Check port conflicts
-   - Verify container logs
-   - Monitor resource usage
-
-### Pipeline Debugging
-
-1. Check pipeline logs:
-   ```bash
-   tkn pipelinerun logs <pipelinerun-name>
-   ```
-
-2. Verify task status:
-   ```bash
-   tkn taskrun list
-   ```
-
-### Kubernetes Deployment
-
-1. Pod issues:
-   ```bash
-   kubectl describe pod <pod-name>
-   kubectl logs <pod-name>
-   ```
-
-2. Service connectivity:
-   ```bash
-   kubectl get endpoints
-   kubectl describe service servicenow-mock-api
-   ```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
-
-## License
-
+License
 This project is licensed under the MIT License - see the LICENSE file for details.
-

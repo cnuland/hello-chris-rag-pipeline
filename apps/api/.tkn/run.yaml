@@ -2,7 +2,6 @@ apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
   generateName: mock-servicenow-api-run-  # Using timestamp for uniqueness
-  namespace: hello-chris-ai-5
 spec:
   pipelineRef:
     name: hello-chris-ai-pipeline
@@ -12,7 +11,7 @@ spec:
       claimName: tekton-pvc-mock-api # Matches the PVC name
   params:
   - name: namespace
-    value: "hello-chris-ai-5"
+    value: "hello-chris-ai"
   - name: deployment-name
     value: "hello-chris-ai"
   - name: git-url

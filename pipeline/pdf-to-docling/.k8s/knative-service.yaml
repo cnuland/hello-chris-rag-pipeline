@@ -2,7 +2,7 @@ apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
   name: kfp-s3-trigger
-  namespace: your-serverless-project # CHANGEME
+  namespace: hello-chris-rag-pipeline
   annotations:
     # Useful for OpenShift Serverless to autoscale to zero
     autoscaling.knative.dev/minScale: "0"

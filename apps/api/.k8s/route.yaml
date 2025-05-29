@@ -2,6 +2,7 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: mock-servicenow-api-route
+  namespace: rag-pipeline-workshop 
   labels:
     app: mock-servicenow-api
 spec:

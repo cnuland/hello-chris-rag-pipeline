@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mock-servicenow-api
+  namespace: rag-pipeline-workshop
   labels:
     app: mock-servicenow-api
     app.kubernetes.io/component: backend
@@ -9,7 +10,7 @@ metadata:
     app.kubernetes.io/name: mock-servicenow-api
     app.kubernetes.io/part-of: mock-ticketing-system
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: mock-servicenow-api
@@ -20,8 +21,7 @@ spec:
     spec:
       containers:
       - name: mock-servicenow-api-container
-        # IMPORTANT: Replace with your actual image pushed to Quay or other registry by Tekton
-        image: quay.io/your-quay-username/mock-servicenow-api:latest
+        image:  quay.io/cnuland/hello-chris-rag-pipeline:latest
         ports:
         - containerPort: 8080
           protocol: TCP

@@ -2,7 +2,7 @@ apiVersion: eventing.knative.dev/v1
 kind: Trigger
 metadata:
   name: s3-pdf-upload-trigger-to-kfp
-  namespace: your-serverless-project # CHANGEME
+  namespace: hello-chris-rag-pipeline # CHANGEME
 spec:
   broker: default # Or the name of your specific broker
   filter:
