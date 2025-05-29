@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
-  generateName: mock-servicenow-api-run-  # Using timestamp for uniqueness
+  generateName: s3-eventhandler-run-  # Using timestamp for uniqueness
   namespace: hello-chris-ai
 spec:
   pipelineRef:
