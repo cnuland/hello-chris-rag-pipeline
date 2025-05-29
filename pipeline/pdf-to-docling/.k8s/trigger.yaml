@@ -2,7 +2,7 @@ apiVersion: eventing.knative.dev/v1 # Standard Knative Eventing API
 kind: Trigger
 metadata:
   name: s3-pdf-upload-trigger-to-kfp
-  namespace: hello-chris-rag-pipeline # CHANGEME: Target OpenShift project
+  namespace: rag-pipeline-workshop # CHANGEME: Target OpenShift project
 spec:
   broker: default # Must match the name of your Broker
   filter:
