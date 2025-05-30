@@ -2,38 +2,45 @@ apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
   name: kfp-s3-trigger
-  namespace: rag-pipeline-workshop
+  namespace: rag-pipeline-workshop # Ensure this is your correct namespace
   annotations:
-    # This is CRITICAL because your KnativeServing CR has istio: enabled: true
-    networking.knative.dev/ingress-class: "istio.ingress.networking.knative.dev"
+    # This annotation is CRITICAL because your KnativeServing CR has istio: enabled: true
+    networking.knative.dev/ingress.class: "istio.ingress.networking.knative.dev"
+    # If ArgoCD is managing this, it might add its tracking annotations here.
 spec:
   template:
     metadata:
       annotations:
-        autoscaling.knative.dev/minScale: "1"
-        queue.serving.knative.dev/userPort: "8080"
-        # Consider if sidecar injection is needed for your user pod if Istio is the mesh.
-        # If your Knative's Istio Gateway is routing to services that are also part of the mesh,
-        # injection is typically needed. If it's routing to non-mesh k8s services, 'false' might be fine.
-        # Given rewriteAppHTTPProbers is true for Knative components, your app might need it too for probes via mesh.
-        # Try with 'true' or remove to use namespace default if Istio injection is enabled for the namespace.
-        sidecar.istio.io/inject: "true" # TRY THIS or remove to see if namespace default applies
-        sidecar.istio.io/rewriteAppHTTPProbers: "true" # Might be needed if sidecar is injected
+        # --- Essential Annotations for this Setup ---
+        autoscaling.knative.dev/minScale: "1" # Keeps at least one pod running for faster response & easier debugging
+        queue.serving.knative.dev/userPort: "8080" # Tells queue-proxy your app's actual listening port
+
+        # --- ISTIO SIDECAR INJECTION ---
+        # This is crucial for your pod to be part of the Istio mesh if Istio is the ingress.
+        sidecar.istio.io/inject: "true"
+
+        # Optional, but can be helpful if probes are rewritten by Istio.
+        # Knative system components in your KnativeServing CR had this.
+        sidecar.istio.io/rewriteAppHTTPProbers: "true"
+
+        # Optional: If you want new revisions to roll out immediately during development
+        # serving.knative.dev/rollout-duration: "0s"
     spec:
-      serviceAccountName: kfp-trigger-sa
+      serviceAccountName: kfp-trigger-sa # Ensure this SA exists and has necessary permissions
       containers:
-        - image: quay.io/cnuland/hello-chris-rag-pipeline-event:latest # Corrected image name
-          name: user-container
+        - name: user-container # Standard name for the main application container in Knative
+          image: quay.io/cnuland/hello-chris-rag-pipelin-event:latest # ✅ CORRECTED IMAGE NAME (without -event)
           ports:
-            - name: http1 # Standard Knative port name for user container
-              containerPort: 8080
+            - name: http1 # Knative convention, the port name is informational
+              containerPort: 8080 # Must match what your Gunicorn/Flask app listens on
+              protocol: TCP
           env:
             - name: KFP_ENDPOINT
-              # Assuming KFP service is within the cluster and uses HTTP internally.
-              # If KFP is also in the Istio mesh, its FQDN should be resolvable.
-              value: "http://ds-pipeline-pipelines-definition.your-osai-project.svc.cluster.local:8888" # CHANGEME
+              # ✅ VERIFY & CHANGEME: Internal HTTP URL for KFP ds-pipeline service.
+              # Replace 'your-osai-project' with the namespace where OpenShift AI/KFP is deployed.
+              value: "http://ds-pipeline-pipelines-definition.your-osai-project.svc.cluster.local:8888"
             - name: KFP_PIPELINE_NAME
-              value: "Simple PDF Processing Pipeline"
+              value: "Simple PDF Processing Pipeline" # Must match the name of the pipeline uploaded to KFP
             - name: KFP_EXPERIMENT_NAME
               value: "S3 Triggered PDF Runs"
           resources:
@@ -45,10 +52,10 @@ spec:
               cpu: "500m"
           readinessProbe:
             httpGet:
-              path: /healthz
-              port: 8080 # This is the user container port. Istio sidecar will handle rewriting if probes are enabled.
+              path: /healthz # Your Flask app MUST serve GET on this path with HTTP 200 OK
+              port: 8080    # This is the containerPort your application listens on
               scheme: HTTP
-            initialDelaySeconds: 15
+            initialDelaySeconds: 15 # Give more time for app + sidecar to start
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 3
@@ -57,7 +64,8 @@ spec:
               path: /healthz
               port: 8080
               scheme: HTTP
-            initialDelaySeconds: 30
+            initialDelaySeconds: 30 # Give more time for app + sidecar to start
             periodSeconds: 20
             timeoutSeconds: 5
             failureThreshold: 3
+      # timeoutSeconds: 300 # Default request timeout for the service revision
