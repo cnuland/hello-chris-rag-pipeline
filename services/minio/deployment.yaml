@@ -37,13 +37,13 @@ spec:
         - name: MINIO_ROOT_USER
           valueFrom:
             secretKeyRef:
-              name: minio-creds # Assuming this secret exists in the 'minio' namespace
-              key: rootUser
+              name: minio-root-user # Assuming this secret exists in the 'minio' namespace
+              key: MINIO_ROOT_USER
         - name: MINIO_ROOT_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: minio-creds
-              key: rootPassword
+              name: minio-root-user
+              key: MINIO_ROOT_PASSWORD
         ports:
         - containerPort: 9000
           protocol: TCP
