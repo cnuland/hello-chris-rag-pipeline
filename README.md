@@ -1,4 +1,4 @@
-Mock Ticketing & Event-Driven Document Processing System on OpenShift
+# Mock Ticketing & Event-Driven Document Processing System on OpenShift
 This project deploys a multifaceted system on OpenShift, featuring:
 
 A ServiceNow-like Mock API for simulating incident and service request management.
@@ -12,7 +12,7 @@ The entire system is designed for containerized deployment and is managed via Gi
 Overall Architecture
 The system is architecturally divided into an event-driven data pipeline and a standalone mock API, orchestrated and managed using GitOps.
 
-1. Event-Driven PDF Processing Workflow
+## 1. Event-Driven PDF Processing Workflow
 This workflow is initiated by a PDF upload and culminates in a Kubeflow Pipeline execution:
 
 MinIO (S3 Storage): Serves as the primary object storage for incoming PDF files. It's deployed on OpenShift and should ideally leverage OpenShift Data Foundation (ODF/OCS) for persistent and resilient storage in production.
@@ -33,7 +33,7 @@ Kubeflow Pipelines (via OpenShift AI Operator): The s3-event-handler uses the Ku
 
 Istio (via OpenShift Service Mesh Operator): Functions as the ingress controller for Knative Serving. It manages external and internal traffic to Knative Services like s3-event-handler through Istio Gateways and VirtualServices. The namespace hosting the Knative Service (rag-pipeline-workshop) must be part of the Service Mesh.
 
-2. ServiceNow Mock API
+## 2. ServiceNow Mock API
 An independent Flask/Gunicorn REST API providing mock ticketing data for incidents and service requests.
 
 Deployed as a standard OpenShift application (Deployment, Service, Route).
@@ -42,7 +42,7 @@ An optional Tekton CI/CD pipeline is provided for building and deploying this AP
 
 (For a visual representation, please refer to the PlantUML diagram in the plantuml_architecture_diagram_v2 artifact, which can be rendered in tools like draw.io or directly via PlantUML.)
 
-Required OpenShift Operators
+## Required OpenShift Operators
 Successful deployment and operation of this project depend on the following OpenShift Operators being installed and configured:
 
 OpenShift AI Operator: Essential for deploying and managing Kubeflow Pipelines, which orchestrates the PDF processing tasks. Also provides environments like JupyterHub for development.
@@ -65,7 +65,7 @@ OpenShift Streams Operator (AMQ Streams): Deploys and manages Apache Kafka clust
 
 OpenShift Data Foundation (ODF/OCS): (Recommended for Production) Provides enterprise-grade persistent, replicated storage. Crucial for stateful services like MinIO (for object storage), Apache Kafka (for message logs), and Kubeflow Pipelines (for artifacts and metadata). For development/PoC, ephemeral storage or standard PVCs with a basic StorageClass can be used, but ODF is recommended for resilience and scalability.
 
-GitOps with ArgoCD
+## GitOps with ArgoCD
 This entire project is designed to be managed using a GitOps workflow powered by ArgoCD (installed via the OpenShift GitOps Operator).
 
 Kustomize: Each component's Kubernetes/OpenShift manifests are organized into directories with kustomization.yaml files (e.g., in apps/api/.k8s/, services/minio/, services/kafka/, services/knative/, apps/s3-event-handler/.openshift/). This allows for base configurations and environment-specific overlays (though not explicitly detailed here, it's a common Kustomize pattern).
@@ -142,10 +142,10 @@ Project Structure
 ```
 (Note: The trigger.yaml for the s3-event-handler is located in apps/s3-event-handler/.openshift/ and managed by app-event-handler.yaml via ArgoCD. The services/knative/kustomization.yaml bundles the Kafka-backed Broker, its ConfigMap, and the KafkaSource.)
 
-I. ServiceNow Mock API
+ServiceNow Mock API
 A Flask-based REST API that provides mock ServiceNow functionality, focusing on closed ticket data.
 
-Technical Stack (Mock API)
+## Technical Stack (Mock API)
 Python 3.11
 
 Flask, Gunicorn
@@ -159,7 +159,7 @@ Service Request Management: CRUD operations, filtering, pagination.
 
 Health Check Endpoint: /api/v1/health.
 
-II. Serverless S3 -> Kubeflow Pipeline Trigger
+## II. Serverless S3 -> Kubeflow Pipeline Trigger
 An event-driven serverless application that listens for PDF file uploads to MinIO (via Kafka and Knative Eventing with Istio ingress) and triggers a Kubeflow Pipeline.
 
 Technical Stack (Serverless Trigger)
@@ -184,10 +184,10 @@ A simple pipeline that accepts S3 bucket/key for a PDF and logs this information
 
 This pipeline needs to be compiled (e.g., python pipeline/pdf-to-docling/pdf-pipeline.py produces simple_pdf_pipeline.tar.gz) and uploaded to your Kubeflow Pipelines instance on OpenShift AI.
 
-III. Setup and Deployment (GitOps with ArgoCD)
+## Setup and Deployment (GitOps with ArgoCD)
 This project is designed to be deployed and managed using ArgoCD.
 
-Prerequisites
+### Prerequisites
 OpenShift Cluster (4.x).
 
 Required Operators Installed (see "Required OpenShift Operators" section above). Ensure they are healthy and configured.
@@ -202,7 +202,7 @@ MinIO Client (mc) installed locally for initial bucket/event setup.
 
 (Optional) Tekton CLI (tkn).
 
-Initial Setup Steps:
+### Initial Setup Steps:
 Clone the Repository & Customize Placeholders:
 
 Clone this Git repository.
@@ -257,7 +257,7 @@ Push Changes to Your Git Repository: Commit all customized files.
 
 Apply the Root ArgoCD Application:
 
-# Apply to the namespace where ArgoCD is running (typically 'openshift-gitops')
+Apply to the namespace where ArgoCD is running (typically 'openshift-gitops')
 ```
 oc apply -f bootstrap/app-of-apps.yaml -n openshift-gitops
 ```
@@ -268,8 +268,8 @@ Once MinIO is deployed by ArgoCD and its Deployment includes the Kafka environme
 
 Run the setup_minio_events.sh script: This configures your MinIO bucket to send PDF upload events to the server-configured Kafka target.
 
-# Ensure environment variables from scripts/example.env are set and sourced.
-# KAFKA_TARGET_ID_IN_MINIO in the script MUST match the ID used in MinIO's env vars (e.g., "MYMINIOKAFKA").
+Ensure environment variables from scripts/example.env are set and sourced.
+KAFKA_TARGET_ID_IN_MINIO in the script MUST match the ID used in MinIO's env vars (e.g., "MYMINIOKAFKA").
 ```
 cd scripts/
 chmod +x setup_minio_events.sh
@@ -301,7 +301,7 @@ Prerequisites: Ensure Tekton ClusterTasks (git-clone, buildah), and your custom 
 
 Usage: To trigger a run manually (if not automated), modify and apply a PipelineRun YAML (e.g., based on .tekton/pipeline_run.yaml), setting parameters like Git URL, image URL, and skip flags.
 
-IV. API Usage & Testing
+### API Usage & Testing
 Mock API Endpoints
 Health Check: GET /api/v1/health
 
@@ -344,7 +344,6 @@ MinIO Pod(s): (minio namespace) oc logs -l app=minio -n minio -f (Check for Kafk
 
 Kafka Consumer (Debug): (kafka namespace, minio-bucket-notifications topic)
 
-# Replace <your-kafka-broker-pod-name> if different from kafka-cluster-kafka-0
 ```
 oc exec -n kafka kafka-cluster-kafka-0 -- bin/kafka-console-consumer.sh \
     --bootstrap-server localhost:9092 \
@@ -452,8 +451,3 @@ s3-event-handler Logs: Check for errors when calling KFP SDK (KFP_ENDPOINT reach
 KFP UI: Check for failed pipeline runs and examine their specific step logs.
 
 RBAC: Ensure the kfp-trigger-sa ServiceAccount (used by s3-event-handler) has permissions to create KFP runs in the target KFP namespace/project.
-
-VI. Contributing
-Fork the repository.
-
-Create a feature branch (`git checkout -b feature/my-
