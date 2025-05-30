@@ -5,3 +5,4 @@ resources:
   - rbac.yaml
   - knative-service.yaml
   - trigger.yaml
+  - simple_pdf_pipeline.yaml
