@@ -1,17 +1,63 @@
-# This assumes your KFP instance is user-namespaced or you target a specific namespace
-# where users run pipelines. Adjust namespace accordingly.
-# The namespace of the KFP service account (often 'kubeflow-pipelines' or similar if centralized)
-# or the user's project where pipelines will run.
-# For OpenShift AI, this would typically be the user's project or the OSAI project.
-
-# Let's assume your Knative service runs in 'your-serverless-project'
-# and KFP pipelines run in 'your-openshift-ai-project'
-
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: kfp-trigger-sa
   namespace: rag-pipeline-workshop
+  labels:
+    app: kfp-s3-trigger
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kfp-trigger-role
+  namespace: rag-pipeline-workshop
+  labels:
+    app: kfp-s3-trigger
+rules:
+  # Permissions for CloudEvents via Knative
+  - apiGroups: ["eventing.knative.dev"]
+    resources: ["triggers", "brokers", "eventtypes"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+  # Permissions for Knative Serving
+  - apiGroups: ["serving.knative.dev"]
+    resources: ["services", "revisions", "routes", "configurations"]
+    verbs: ["get", "list", "watch"]
+  # Additional permissions for sources
+  - apiGroups: ["sources.knative.dev"]
+    resources: ["kafkasources", "sinkbindings"]
+    verbs: ["get", "list", "watch", "create", "update"]
+  # Permissions for logs and general Kubernetes resources
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "services", "events", "configmaps", "secrets"]
+    verbs: ["get", "list", "watch"]
+  # CloudEvents specific permissions
+  - apiGroups: ["messaging.knative.dev"]
+    resources: ["channels", "subscriptions", "inmemorychannels"]
+    verbs: ["get", "list", "watch", "create"]
+  # Kafka messaging permissions
+  - apiGroups: ["kafka.strimzi.io"]
+    resources: ["kafkatopics", "kafkausers"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kfp-trigger-rolebinding
+  namespace: rag-pipeline-workshop
+  labels:
+    app: kfp-s3-trigger
+subjects:
+- kind: ServiceAccount
+  name: kfp-trigger-sa
+  namespace: rag-pipeline-workshop
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kfp-trigger-role
+
+# This assumes your KFP instance is in the opendatahub namespace 
+# and pipelines run in the rag-pipeline-workshop namespace
+# Below are additional permissions needed for pipeline execution
 
 ---
 # Role in the namespace where KFP creates PipelineRuns (Argo Workflows)
@@ -23,12 +69,29 @@ metadata:
   name: kfp-pipeline-runner-role
 rules:
 - apiGroups: ["argoproj.io"] # KFP uses Argo Workflows
-  resources: ["workflows"]
-  verbs: ["create", "get", "list", "watch", "patch"] # Permissions to manage workflows
+  resources: ["workflows", "workflowtemplates", "cronworkflows", "workfloweventbindings"]
+  verbs: ["create", "get", "list", "watch", "patch", "update", "delete"] # Full permissions to manage workflows
 - apiGroups: ["kubeflow.org"]
-  resources: ["pipelines", "pipelineruns", "experiments", "jobs"] # KFP specific resources
-  verbs: ["create", "get", "list", "patch", "update"] # Depending on SDK calls
-# Add other permissions if your pipeline components need to interact with k8s services
+  resources: ["pipelines", "pipelineruns", "experiments", "jobs", "scheduledworkflows"] # KFP specific resources
+  verbs: ["create", "get", "list", "patch", "update", "watch", "delete"] # Complete access for pipeline operations
+- apiGroups: ["tekton.dev"]
+  resources: ["pipelineruns", "taskruns", "pipelines", "tasks", "conditions"]
+  verbs: ["create", "get", "list", "watch", "patch", "update"]
+- apiGroups: [""]
+  resources: ["persistentvolumeclaims", "persistentvolumes"] # For pipeline artifacts
+  verbs: ["create", "get", "list", "watch", "patch", "update", "delete"]
+- apiGroups: [""]
+  resources: ["events"] # For watching pipeline events
+  verbs: ["get", "list", "watch", "create"]
+- apiGroups: [""]
+  resources: ["configmaps", "secrets"] # For pipeline configurations
+  verbs: ["get", "list", "watch", "create", "patch", "update"]
+- apiGroups: ["batch"]
+  resources: ["jobs"] # For batch jobs created by pipelines
+  verbs: ["create", "get", "list", "watch", "patch", "update", "delete"]
+- apiGroups: ["scheduling.k8s.io"]
+  resources: ["priorityclasses"] # For priority scheduling of pipeline pods
+  verbs: ["get", "list", "watch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -43,4 +106,47 @@ subjects:
 roleRef:
   kind: Role
   name: kfp-pipeline-runner-role
+  apiGroup: rbac.authorization.k8s.io
+---
+# Additional RoleBinding for the opendatahub namespace where KFP API service is running
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kfp-trigger-sa-can-access-kfp-api
+  namespace: hello-chris-ai  # KFP API namespace
+subjects:
+- kind: ServiceAccount
+  name: kfp-trigger-sa
+  namespace: rag-pipeline-workshop
+roleRef:
+  kind: ClusterRole  # Using existing ClusterRole that allows KFP API access
+  name: kubeflow-pipelines-edit  # This is a common KFP ClusterRole
+  apiGroup: rbac.authorization.k8s.io
+---
+# This allows the service account to manage PVCs for pipeline artifacts
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kfp-artifact-manager-role
+  namespace: rag-pipeline-workshop
+rules:
+- apiGroups: [""]
+  resources: ["persistentvolumeclaims"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["storage.k8s.io"]
+  resources: ["storageclasses"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kfp-trigger-sa-can-manage-artifacts
+  namespace: rag-pipeline-workshop
+subjects:
+- kind: ServiceAccount
+  name: kfp-trigger-sa
+  namespace: rag-pipeline-workshop
+roleRef:
+  kind: Role
+  name: kfp-artifact-manager-role
   apiGroup: rbac.authorization.k8s.io

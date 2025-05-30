@@ -4,4 +4,5 @@ kind: Kustomization
 resources:
 - knative-service.yaml
 - rbac.yaml
-- trigger.yaml
+# Using the trigger from base/services/knative
+# - trigger.yaml
