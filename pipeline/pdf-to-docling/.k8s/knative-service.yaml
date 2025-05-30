@@ -7,21 +7,34 @@ spec:
   template:
     metadata:
       annotations:
-        autoscaling.knative.dev/minScale: "0"
-        # How long to keep a pod after it scales to zero.
+        autoscaling.knative.dev/minScale: "1"
         autoscaling.knative.dev/scale-to-zero-pod-retention-period: "10m"
+        sidecar.istio.io/inject: "true"
+        # Queue-proxy port configuration
+        queue.serving.knative.dev/userPort: "8080"
+        queue.serving.knative.dev/targetPort: "8080"
+        queue.serving.knative.dev/serving-port: "8080"
+        # TLS configuration
+        networking.knative.dev/tls-secret: "knative-serving-cert"
+        networking.knative.dev/https-redirect: "true"
+        networking.knative.dev/enable-http2: "true"
+        # Protocol configuration
+        networking.istio.io/protocols: "https"
     spec:
-      serviceAccountName: kfp-trigger-sa # SA for KFP interaction (defined in rbac.yaml)
+      serviceAccountName: kfp-trigger-sa
       containers:
         - image: quay.io/cnuland/hello-chris-rag-pipeline-event:latest
-          # Or, if using OpenShift internal registry:
-          # image: image-registry.openshift-image-registry.svc:5000/your-serverless-project/s3-kfp-trigger:latest
           ports:
-            - containerPort: 8080 # Port your application listens on
+            - containerPort: 8080
+              name: https
+              protocol: TCP
+          volumeMounts:
+            - name: knative-serving-cert
+              mountPath: /etc/knative-serving-cert
+              readOnly: true
           env:
             - name: KFP_ENDPOINT
-              # CHANGEME: Correct Kubeflow Pipelines API endpoint URL
-              value: "http://ds-pipeline-your-osai-project.apps.your-cluster.com"
+              value: "https://ds-pipeline.rag-pipeline-workshop.svc.cluster.local"
             - name: KFP_PIPELINE_NAME
               value: "Simple PDF Processing Pipeline" # Must match uploaded KFP pipeline name
             - name: KFP_EXPERIMENT_NAME
@@ -37,6 +50,7 @@ spec:
             httpGet:
               path: /healthz # Use the new health check endpoint
               port: 8080
+              scheme: HTTPS
             initialDelaySeconds: 10 # Slightly increased initial delay just in case
             periodSeconds: 10
             timeoutSeconds: 5
@@ -45,7 +59,12 @@ spec:
             httpGet:
               path: /healthz # Use the new health check endpoint
               port: 8080
+              scheme: HTTPS
             initialDelaySeconds: 20 # Slightly increased initial delay
             periodSeconds: 20
             timeoutSeconds: 5
             failureThreshold: 3
+      volumes:
+        - name: knative-serving-cert
+          secret:
+            secretName: knative-serving-cert
