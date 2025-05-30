@@ -6,10 +6,10 @@ metadata:
   labels:
     app.kubernetes.io/instance: knative-broker
 data:
-  # Kafka broker settings
-  default.topic.partitions: "3"
-  default.topic.replication.factor: "1"
+  # Standard Knative Kafka configuration
   bootstrap.servers: "kafka-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
+  topic.numPartitions: "3"
+  topic.replicationFactor: "1"
 ---
 apiVersion: eventing.knative.dev/v1
 kind: Broker
