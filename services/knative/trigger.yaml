@@ -3,23 +3,20 @@ kind: Trigger
 metadata:
   name: minio-pdf-event-trigger # A descriptive name for this trigger
   namespace: rag-pipeline-workshop
+  labels:
+    app.kubernetes.io/instance: s3-event-handler
 spec:
   broker: kafka-broker # Subscribes to your Kafka-backed broker
   filter:
     attributes:
       # This is the typical CloudEvent type emitted by a Knative KafkaSource.
-      # Verify by inspecting an actual event if issues occur.
       type: "dev.knative.kafka.event"
-
-      # Recommended: Filter by the specific KafkaSource instance to be more precise.
-      # The KafkaSource is named 'minio-kafka-event-source' in the YAML above.
-      # The 'source' attribute is typically /<kind>/<namespace>/<name> or similar.
+      
+      # Filter by the specific KafkaSource instance
       source: "/kafkasource/rag-pipeline-workshop/minio-kafka-event-source"
       
-      # Note: We are NOT filtering on MinIO-specific event names like "s3:ObjectCreated:Put" here
-      # because those are now inside the 'data' payload of the CloudEvent produced by KafkaSource.
-      # Your 's3-event-handler' application (app.py) will inspect the 'data' payload
-      # to check for '.pdf' and the original MinIO eventName.
+      # We're not filtering on specific MinIO event types (like s3:ObjectCreated:Put) here
+      # because those are in the data payload that will be processed by the handler
   subscriber:
     ref:
       apiVersion: serving.knative.dev/v1
