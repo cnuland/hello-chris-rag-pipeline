@@ -9,14 +9,9 @@ spec:
   broker: kafka-broker # Subscribes to your Kafka-backed broker
   filter:
     attributes:
-      # This is the typical CloudEvent type emitted by a Knative KafkaSource.
-      type: "dev.knative.kafka.event"
-      
-      # Filter by the specific KafkaSource instance
-      source: "/kafkasource/rag-pipeline-workshop/minio-kafka-event-source"
-      
-      # We're not filtering on specific MinIO event types (like s3:ObjectCreated:Put) here
-      # because those are in the data payload that will be processed by the handler
+      type: dev.knative.kafka.event
+      source: /kafkasource/rag-pipeline-workshop/minio-kafka-event-source
+      # The actual MinIO event data will be in the CloudEvent's data field
   subscriber:
     ref:
       apiVersion: serving.knative.dev/v1
