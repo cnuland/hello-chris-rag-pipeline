@@ -14,24 +14,24 @@ spec:
         queue.serving.knative.dev/userPort: "8080"
         queue.serving.knative.dev/targetPort: "8080"
         queue.serving.knative.dev/serving-port: "8080"
-        # TLS configuration
-        networking.knative.dev/tls-secret: "knative-serving-cert"
+        # TLS configuration - only keep redirect for external traffic
         networking.knative.dev/https-redirect: "true"
         networking.knative.dev/enable-http2: "true"
         # Protocol configuration
-        networking.istio.io/protocols: "https"
+        networking.istio.io/protocols: "http"
+        # Additional network config for HTTP routing
+        networking.knative.dev/ingress.class: "istio.ingress.networking.knative.dev"
+        networking.knative.dev/visibility: "cluster-local"
+        # Health check path annotation to ensure probes work
+        serving.knative.dev/probePathTemplate: "/healthz"
     spec:
       serviceAccountName: kfp-trigger-sa
       containers:
         - image: quay.io/cnuland/hello-chris-rag-pipeline-event:latest
           ports:
             - containerPort: 8080
-              name: https
+              name: http1
               protocol: TCP
-          volumeMounts:
-            - name: knative-serving-cert
-              mountPath: /etc/knative-serving-cert
-              readOnly: true
           env:
             - name: KFP_ENDPOINT
               value: "https://ds-pipeline.rag-pipeline-workshop.svc.cluster.local"
@@ -39,6 +39,7 @@ spec:
               value: "Simple PDF Processing Pipeline" # Must match uploaded KFP pipeline name
             - name: KFP_EXPERIMENT_NAME
               value: "S3 Triggered PDF Runs"
+          # No volume mounts needed for HTTP
           resources: # Define appropriate resources
             requests:
               memory: "256Mi"
@@ -50,7 +51,7 @@ spec:
             httpGet:
               path: /healthz # Use the new health check endpoint
               port: 8080
-              scheme: HTTPS
+              scheme: HTTP
             initialDelaySeconds: 10 # Slightly increased initial delay just in case
             periodSeconds: 10
             timeoutSeconds: 5
@@ -59,12 +60,9 @@ spec:
             httpGet:
               path: /healthz # Use the new health check endpoint
               port: 8080
-              scheme: HTTPS
+              scheme: HTTP
             initialDelaySeconds: 20 # Slightly increased initial delay
             periodSeconds: 20
             timeoutSeconds: 5
             failureThreshold: 3
-      volumes:
-        - name: knative-serving-cert
-          secret:
-            secretName: knative-serving-cert
+      # No volumes needed for HTTP
