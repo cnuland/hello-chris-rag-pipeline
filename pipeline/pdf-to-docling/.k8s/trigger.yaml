@@ -1,17 +1,20 @@
-apiVersion: eventing.knative.dev/v1 # Standard Knative Eventing API
+apiVersion: eventing.knative.dev/v1
 kind: Trigger
 metadata:
-  name: s3-pdf-upload-trigger-to-kfp
-  namespace: rag-pipeline-workshop # CHANGEME: Target OpenShift project
+  name: s3-pdf-upload-trigger-to-kfp # Or minio-pdf-event-trigger if you prefer
+  namespace: rag-pipeline-workshop # CHANGEME: Your serverless application namespace
 spec:
-  broker: default # Must match the name of your Broker
+  broker: kafka-broker # ✅ CORRECTED: Point to your Kafka-backed broker
   filter:
     attributes:
-      # This 'type' should match the CloudEvent type produced by radiorabe/minio-cloudevents-service
-      type: "io.minio.objectcreated.put"
+      # This is the typical CloudEvent type emitted by a Knative KafkaSource.
+      type: "dev.knative.kafka.event"
+      # Optional: Filter by the specific KafkaSource instance if you have multiple.
+      # Assumes your KafkaSource is named 'minio-kafka-event-source'.
+      source: "/kafkasource/rag-pipeline-workshop/minio-kafka-event-source" # ✅ CHANGEME if KafkaSource name/namespace differs
   subscriber:
     ref:
       apiVersion: serving.knative.dev/v1
-      kind: Service # This is a Knative Service, not a Kubernetes Service
-      name: kfp-s3-trigger # Name of your Knative Service defined in knative-service.yaml
-    # uri: / # Optional: if your service needs events at a specific path
+      kind: Service
+      name: kfp-s3-trigger
+      namespace: rag-pipeline-workshop

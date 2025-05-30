@@ -2,45 +2,31 @@ apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
   name: kfp-s3-trigger
-  namespace: rag-pipeline-workshop
+  namespace: rag-pipeline-workshop # Ensure this namespace exists
 spec:
   template:
     metadata:
       annotations:
-        autoscaling.knative.dev/minScale: "1"
-        autoscaling.knative.dev/scale-to-zero-pod-retention-period: "10m"
-        sidecar.istio.io/inject: "true"
-        # Queue-proxy port configuration
-        queue.serving.knative.dev/userPort: "8080"
-        queue.serving.knative.dev/targetPort: "8080"
-        queue.serving.knative.dev/serving-port: "8080"
-        # TLS configuration - only keep redirect for external traffic
-        networking.knative.dev/https-redirect: "true"
-        networking.knative.dev/enable-http2: "true"
-        # Protocol configuration
-        networking.istio.io/protocols: "http"
-        # Additional network config for HTTP routing
-        networking.knative.dev/ingress.class: "istio.ingress.networking.knative.dev"
-        networking.knative.dev/visibility: "cluster-local"
-        # Health check path annotation to ensure probes work
-        serving.knative.dev/probePathTemplate: "/healthz"
+        # Keep pods active, good for debugging, adjust for production if scale-to-zero is desired
+        autoscaling.knative.dev/minScale: "1" 
+        # Standard annotation for queue-proxy to know your app's port
+        queue.serving.knative.dev/userPort: "8080" 
     spec:
       serviceAccountName: kfp-trigger-sa
       containers:
-        - image: quay.io/cnuland/hello-chris-rag-pipeline-event:latest
+        - image: quay.io/cnuland/hello-chris-rag-pipeline:latest # ✅ VERIFY THIS IMAGE NAME (removed -event)
           ports:
-            - containerPort: 8080
-              name: http1
-              protocol: TCP
+            - name: http1 # Knative convention, name is optional but good practice
+              containerPort: 8080
           env:
             - name: KFP_ENDPOINT
-              value: "https://ds-pipeline.rag-pipeline-workshop.svc.cluster.local"
+              # ✅ CHANGEME: Ensure this is the correct and reachable KFP API endpoint
+              value: "https://ds-pipeline.rag-pipeline-workshop.svc.cluster.local" 
             - name: KFP_PIPELINE_NAME
-              value: "Simple PDF Processing Pipeline" # Must match uploaded KFP pipeline name
+              value: "Simple PDF Processing Pipeline"
             - name: KFP_EXPERIMENT_NAME
               value: "S3 Triggered PDF Runs"
-          # No volume mounts needed for HTTP
-          resources: # Define appropriate resources
+          resources:
             requests:
               memory: "256Mi"
               cpu: "100m"
@@ -49,20 +35,19 @@ spec:
               cpu: "500m"
           readinessProbe:
             httpGet:
-              path: /healthz # Use the new health check endpoint
-              port: 8080
+              path: /healthz # Your Flask app MUST serve GET on this path with 200 OK
+              port: 8080 # Matches containerPort
               scheme: HTTP
-            initialDelaySeconds: 10 # Slightly increased initial delay just in case
+            initialDelaySeconds: 15 # Give app a bit more time to start
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 3
           livenessProbe:
             httpGet:
-              path: /healthz # Use the new health check endpoint
+              path: /healthz
               port: 8080
               scheme: HTTP
-            initialDelaySeconds: 20 # Slightly increased initial delay
+            initialDelaySeconds: 30 # Give app a bit more time to start
             periodSeconds: 20
             timeoutSeconds: 5
             failureThreshold: 3
-      # No volumes needed for HTTP
