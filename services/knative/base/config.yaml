@@ -8,8 +8,8 @@ metadata:
 data:
   # Standard Knative Kafka configuration
   bootstrap.servers: "kafka-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
-  num.partitions: "10"
-  replication.factor: "1"
+  num.partitions: 10
+  replication.factor: 1
 ---
 apiVersion: eventing.knative.dev/v1
 kind: Broker
