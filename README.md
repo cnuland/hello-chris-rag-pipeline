@@ -220,19 +220,19 @@ Identify your Istio control plane namespace (usually istio-system).
 
 Add Application Namespace to ServiceMeshMemberRoll:
 
-# Check current members (replace 'istio-system' if your SMCP is elsewhere)
+heck current members (replace 'istio-system' if your SMCP is elsewhere)
 ```
 oc get smmr default -n istio-system -o yaml 
 ```
 If rag-pipeline-workshop (or your serverless namespace) is not in spec.members:
 
-# Edit the ServiceMeshMemberRoll to add your namespace
+Edit the ServiceMeshMemberRoll to add your namespace
 ```
 oc edit smmr default -n istio-system 
 ```
 Add rag-pipeline-workshop to the spec.members list:
 
-# ...
+
 ```
 spec:
   members:
@@ -240,7 +240,7 @@ spec:
     - redhat-ods-applications-auth-provider # Keep existing members
     - rag-pipeline-workshop                 # <-- ADD YOUR NAMESPACE
 ```
-# ...
+
 
 Note: This step might ideally be managed via GitOps by having a manifest for the SMMR if you have cluster-admin rights or a process to update it. If not, it's a manual prerequisite.
 
