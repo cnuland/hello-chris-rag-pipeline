@@ -14,7 +14,7 @@ spec:
     spec:
       serviceAccountName: kfp-trigger-sa
       containers:
-        - image: quay.io/cnuland/hello-chris-rag-pipeline:latest # ✅ VERIFY THIS IMAGE NAME (removed -event)
+        - image: quay.io/cnuland/hello-chris-rag-pipeline-event:latest # ✅ VERIFY THIS IMAGE NAME (removed -event)
           ports:
             - name: http1 # Knative convention, name is optional but good practice
               containerPort: 8080
