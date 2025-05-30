@@ -3,11 +3,35 @@ kind: ConfigMap
 metadata:
   name: kafka-broker-config # Referenced by the Kafka-backed Broker
   namespace: rag-pipeline-workshop # CHANGEME: Your serverless application namespace
+  labels:
+    app.kubernetes.io/instance: knative-broker
 data:
   # These keys are standard for configuring the underlying KafkaChannel used by KafkaBroker
   bootstrap.servers: "kafka-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
   num.partitions: "3"      # Default number of partitions for the broker's internal Kafka topic(s)
   replication.factor: "1"  # Default replication factor. For a single-node Kafka, this MUST be 1.
-                           # For multi-node Kafka, adjust based on your broker count (e.g., 3).
+                          # For multi-node Kafka, adjust based on your broker count (e.g., 3).
   # You can add other Kafka topic properties here if needed, prefixed with "topic.config."
   # e.g., "topic.config.retention.ms": "604800000"
+---
+apiVersion: eventing.knative.dev/v1
+kind: Broker
+metadata:
+  annotations:
+    eventing.knative.dev/broker.class: Kafka
+  labels:
+    app.kubernetes.io/instance: knative-broker
+  name: kafka-broker
+  namespace: rag-pipeline-workshop
+spec:
+  # Configuration for the broker
+  config:
+    apiVersion: v1
+    kind: ConfigMap
+    name: kafka-broker-config
+    namespace: rag-pipeline-workshop
+  # Default delivery spec with exponential backoff
+  delivery:
+    backoffDelay: PT0.2S
+    backoffPolicy: exponential
+    retry: 10
