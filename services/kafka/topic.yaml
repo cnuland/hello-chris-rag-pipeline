@@ -2,13 +2,15 @@ apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
 metadata:
   name: minio-bucket-notifications # Name of your Kafka topic
-  namespace: kafka   # CHANGEME: Same namespace as your Kafka cluster
+  namespace: kafka                  # CHANGEME: Must be the SAME namespace as your Kafka cluster CR
   labels:
-    strimzi.io/cluster: kafka-cluster # Links this topic to the Kafka cluster defined above
+    # This label links the topic to the specific Kafka cluster managed by Strimzi
+    strimzi.io/cluster: kafka-cluster # MUST match metadata.name in your Kafka CR (kafka-cluster.yaml)
 spec:
-  partitions: 3  # Number of partitions for the topic
-  replicas: 1    # Replication factor. For a single-broker cluster, this must be 1.
-                 # For a multi-broker cluster, increase for fault tolerance (e.g., 3 if you have >= 3 brokers)
+  partitions: 3     # Number of partitions for the topic (e.g., 3 is a common starting point)
+  replicas: 1       # Replication factor for the topic messages.
+                    # For a single-broker Kafka cluster (as in the example above), this MUST be 1.
+                    # For a multi-broker Kafka cluster, set <= number of brokers (e.g., 3 for 3 brokers).
   config:
-    retention.ms: 604800000 # Retention period for messages in this topic (e.g., 7 days)
-    # min.insync.replicas: 1 # For a single replica topic
+    retention.ms: 604800000 # Example: 7 days message retention (optional)
+    # segment.bytes: 1073741824 # Example: 1 GB segment size (optional)

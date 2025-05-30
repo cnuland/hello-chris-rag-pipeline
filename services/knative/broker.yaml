@@ -1,41 +1,23 @@
 apiVersion: eventing.knative.dev/v1
 kind: Broker
 metadata:
-  name: default # The name 'default' is often used and matches your K_SINK config
-  namespace: rag-pipeline-workshop # CHANGEME: Set this to your actual project/namespace
-  # annotations:
-    # If you have specific broker classes configured (e.g., for Kafka, RabbitMQ)
-    # and want this broker to use one, you might specify it here.
-    # For OpenShift Serverless, the default BrokerClass is typically MTChannelBasedBroker (In-Memory).
-    # eventing.knative.dev/broker.class: "KafkaBroker" # Example if using Kafka
-    # eventing.knative.dev/broker.class: "RabbitMQBroker" # Example if using RabbitMQ
-    # If omitted, it uses the default BrokerClass configured for the namespace or cluster.
+  name: kafka-broker # The name for your Kafka-backed broker
+  namespace: rag-pipeline-workshop # CHANGEME: Your serverless application namespace
+  annotations:
+    eventing.knative.dev/broker.class: Kafka # Specifies to use the Kafka-backed broker implementation
 spec:
-  # Configuration for the broker, specific to the broker class.
-  # For the default MTChannelBasedBroker, you might configure:
-  # 1. The underlying channel template (e.g., InMemoryChannel, KafkaChannel)
-  # 2. Delivery options (e.g., retry, deadLetterSink) - these are often set on Triggers too.
-
-  # Example: If you wanted to explicitly use an InMemoryChannel for this Broker
-  # (though this is often the default for MTChannelBasedBroker if no other Channel default is set)
-  # config:
-  #   apiVersion: v1
-  #   kind: ConfigMap
-  #   name: imc-broker-config # You would need to create this ConfigMap
-  #   namespace: knative-eventing # Or where channel templates are defined
-
-  # For a basic, default broker, the spec can often be left empty or omitted.
-  # The system will use the default settings.
-  delivery:
-    # Example: Define a Dead Letter Sink (DLS) for events that cannot be delivered by any trigger.
-    # deadLetterSink:
-    #   ref:
-    #     kind: Service # Or KafkaSink, etc.
-    #     apiVersion: serving.knative.dev/v1
-    #     name: my-dead-letter-event-handler
-    #     namespace: your-serverless-project
-    #   # uri: /path # if needed
-    # retry: 5 # Number of retries
-    # backoffPolicy: exponential # linear or exponential
-    # backoffDelay: PT0.5S # ISO 8601 duration for delay
-    pass:
+  # Reference the ConfigMap created above for Kafka-specific settings
+  config:
+    apiVersion: v1
+    kind: ConfigMap
+    name: kafka-broker-config # Must match the name of the ConfigMap
+    namespace: rag-pipeline-workshop # Must match the namespace of the ConfigMap
+  # Optional: Define delivery specifications like Dead Letter Sink (DLS), retry policies
+  # delivery:
+  #   deadLetterSink:
+  #     ref:
+  #       apiVersion: serving.knative.dev/v1
+  #       kind: Service
+  #       name: your-dead-letter-service # You would need to create this service
+  #       namespace: rag-pipeline-workshop
+  #   retry: 5
