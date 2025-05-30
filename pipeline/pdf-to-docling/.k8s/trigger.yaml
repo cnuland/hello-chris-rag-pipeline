@@ -1,17 +1,15 @@
 apiVersion: eventing.knative.dev/v1
 kind: Trigger
 metadata:
-  name: s3-pdf-upload-trigger-to-kfp # Or minio-pdf-event-trigger if you prefer
-  namespace: rag-pipeline-workshop # CHANGEME: Your serverless application namespace
+  name: s3-pdf-upload-trigger-to-kfp # Or your chosen trigger name
+  namespace: rag-pipeline-workshop # Your serverless application namespace
 spec:
-  broker: kafka-broker # ✅ CORRECTED: Point to your Kafka-backed broker
+  broker: kafka-broker # Points to your Kafka-backed broker
   filter:
     attributes:
-      # This is the typical CloudEvent type emitted by a Knative KafkaSource.
-      type: "dev.knative.kafka.event"
-      # Optional: Filter by the specific KafkaSource instance if you have multiple.
-      # Assumes your KafkaSource is named 'minio-kafka-event-source'.
-      source: "/kafkasource/rag-pipeline-workshop/minio-kafka-event-source" # ✅ CHANGEME if KafkaSource name/namespace differs
+      type: "dev.knative.kafka.event" # Type from KafkaSource
+      # Ensure KafkaSource name is correct if this filter is used
+      source: "/kafkasource/rag-pipeline-workshop/minio-kafka-event-source" 
   subscriber:
     ref:
       apiVersion: serving.knative.dev/v1
