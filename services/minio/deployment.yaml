@@ -31,7 +31,7 @@ spec:
           value: "on"
         - name: MINIO_NOTIFY_KAFKA_BROKERS_MYMINIOKAFKA
           # This is the internal bootstrap service for your Kafka cluster
-          value: "my-kafka-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092" # Ensure 'kafka' is the correct namespace for your Kafka cluster
+          value: "kafka-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092" # Ensure 'kafka' is the correct namespace for your Kafka cluster
         - name: MINIO_NOTIFY_KAFKA_TOPIC_MYMINIOKAFKA
           value: "minio-bucket-notifications" # The Kafka topic you created
         - name: MINIO_ROOT_USER
