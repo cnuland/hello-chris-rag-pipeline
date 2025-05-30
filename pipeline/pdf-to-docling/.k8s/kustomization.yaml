@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
 - knative-service.yaml
 - rbac.yaml
+- trigger.yaml
