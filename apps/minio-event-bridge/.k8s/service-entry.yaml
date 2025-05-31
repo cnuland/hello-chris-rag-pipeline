@@ -1,0 +1,14 @@
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: minio-event-bridge-ext
+  namespace: rag-pipeline-workshop
+spec:
+  hosts:
+  - minio-event-bridge.rag-pipeline-workshop.svc.cluster.local
+  location: MESH_INTERNAL
+  ports:
+  - name: http
+    number: 8080
+    protocol: HTTP
+  resolution: DNS
