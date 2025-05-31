@@ -6,6 +6,8 @@ metadata:
   labels:
     app: minio-event-bridge
     app.kubernetes.io/part-of: rag-pipeline
+  annotations:
+    service.beta.openshift.io/serving-cert-secret-name: minio-event-bridge-tls
 spec:
   ports:
   - name: http
