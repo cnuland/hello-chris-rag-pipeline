@@ -6,9 +6,7 @@ metadata:
 spec:
   broker: kafka-broker
   filter:
-    attributes:
-      type: "dev.knative.kafka.event"
-      source: "/kafkasource/rag-pipeline-workshop/minio-kafka-event-source"
+    attributes: {}
   subscriber:
     ref:
       apiVersion: serving.knative.dev/v1
