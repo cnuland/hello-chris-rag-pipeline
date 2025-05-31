@@ -31,5 +31,5 @@ spec:
   - name: NO_PROXY
     value: "true"
   - name: working-dir
-    value: "apps/hello-chris-rag-pipeline-converter"
+    value: "apps/minio-event-bridge"
   # serviceAccountName: pipeline # Optional: if your pipeline needs specific permissions
