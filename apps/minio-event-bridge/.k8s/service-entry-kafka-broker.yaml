@@ -1,0 +1,22 @@
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: kafka-broker-ingress
+  namespace: rag-pipeline-workshop
+  labels:
+    app.kubernetes.io/instance: minio-event-bridge
+spec:
+  hosts:
+  - kafka-broker-ingress.knative-eventing.svc.cluster.local
+  location: MESH_INTERNAL
+  ports:
+  - number: 80
+    name: http
+    protocol: HTTP
+  - number: 443
+    name: https
+    protocol: HTTPS
+  resolution: DNS
+  endpoints:
+  - address: kafka-broker-ingress.knative-eventing.svc.cluster.local
+
