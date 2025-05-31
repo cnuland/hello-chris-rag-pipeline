@@ -8,7 +8,7 @@ WORKDIR /opt/app-root/src
 # Install OS packages if needed by KFP SDK or other dependencies (e.g., gcc for some pip installs)
 # RUN microdnf install -y gcc python3-devel && microdnf clean all
 
-COPY apps/s3-event-handler/requirements.txt .
+COPY apps/minio-event-bridge/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY apps/minio-event-bridge/app.py .
