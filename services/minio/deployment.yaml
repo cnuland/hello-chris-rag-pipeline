@@ -29,18 +29,6 @@ spec:
         - --console-address
         - :9090
         env:
-        - name: MINIO_NOTIFY_KAFKA_ENABLE_MYMINIOKAFKA
-          value: "on"
-        - name: MINIO_NOTIFY_KAFKA_BROKERS_MYMINIOKAFKA
-          value: "kafka-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
-        - name: MINIO_NOTIFY_KAFKA_TOPIC_MYMINIOKAFKA
-          value: "minio-bucket-notifications"
-        - name: MINIO_NOTIFY_KAFKA_TLS_MYMINIOKAFKA
-          value: "off"
-        - name: MINIO_NOTIFY_KAFKA_TLS_SKIP_VERIFY_MYMINIOKAFKA
-          value: "on"
-        - name: MINIO_NOTIFY_KAFKA_SASL_MYMINIOKAFKA
-          value: "off"
         - name: MINIO_NOTIFY_WEBHOOK_ENABLE_RAG
           value: "on"
         - name: MINIO_NOTIFY_WEBHOOK_ENDPOINT_RAG
