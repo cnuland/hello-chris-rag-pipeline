@@ -57,8 +57,16 @@ def configure_mc():
         print("Please set MINIO_SERVER_URL, MINIO_ACCESS_KEY, and MINIO_SECRET_KEY.")
         return False
     
+    # Use HTTP for localhost connections, keep original for others
+    if "localhost:9000" in minio_server_url:
+        if minio_server_url.startswith("https://"):
+            minio_server_url = minio_server_url.replace("https://", "http://")
+            print(f"🔄 Using HTTP for localhost connection: {minio_server_url}")
+    
     try:
         print(f"Configuring MinIO client with alias: {mc_alias}")
+        
+        # Set up command based on whether we're using localhost
         cmd = [
             "mc", "alias", "set", 
             mc_alias, 
@@ -66,6 +74,10 @@ def configure_mc():
             minio_access_key, 
             minio_secret_key
         ]
+        
+        # Only add --insecure flag for HTTPS connections
+        if not (minio_server_url.startswith("http://") and "localhost" in minio_server_url):
+            cmd.append("--insecure")  # Skip TLS certificate verification for non-localhost or HTTPS
         
         result = subprocess.run(cmd, capture_output=True, text=True)
         
@@ -87,6 +99,11 @@ def upload_to_minio(file_path):
     try:
         print(f"Uploading {file_path} to MinIO bucket {bucket_name}...")
         cmd = ["mc", "cp", str(file_path), f"{mc_alias}/{bucket_name}/"]
+        
+        # Get the current MinIO server URL to determine if we need --insecure
+        minio_server_url = os.environ.get("MINIO_SERVER_URL", "")
+        if not (minio_server_url.startswith("http://") and "localhost" in minio_server_url):
+            cmd.append("--insecure")  # Skip TLS certificate verification for non-localhost or HTTPS
         
         result = subprocess.run(cmd, capture_output=True, text=True)
         

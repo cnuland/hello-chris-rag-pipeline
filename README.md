@@ -248,6 +248,7 @@ spec:
     - knative-serving                         # Keep existing members
     - redhat-ods-applications-auth-provider # Keep existing members
     - rag-pipeline-workshop                 # <-- ADD YOUR NAMESPACE
+    - minio
 ```
 
 

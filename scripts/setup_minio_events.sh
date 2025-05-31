@@ -46,45 +46,39 @@ fi
 # 1. Set up mc alias
 echo ""
 echo "Attempting to set up mc alias '${MC_ALIAS_NAME}'..."
-if mc alias ls | grep -qF "${MC_ALIAS_NAME} "; then # Use -F for fixed string matching
+if mc alias ls --insecure | grep -qF "${MC_ALIAS_NAME} "; then # Use -F for fixed string matching
     echo "Alias '${MC_ALIAS_NAME}' already exists. Assuming it's correctly configured."
 else
-    mc alias set "${MC_ALIAS_NAME}" "${MINIO_SERVER_URL}" "${MINIO_ACCESS_KEY}" "${MINIO_SECRET_KEY}" --api "S3v4"
+    mc alias set "${MC_ALIAS_NAME}" "${MINIO_SERVER_URL}" "${MINIO_ACCESS_KEY}" "${MINIO_SECRET_KEY}" --api "S3v4" --insecure
     echo "Alias '${MC_ALIAS_NAME}' created successfully."
 fi
 
 # 2. Create the target bucket if it doesn't exist
 echo ""
 echo "Checking/Creating S3 bucket '${TARGET_BUCKET_NAME}' on alias '${MC_ALIAS_NAME}'..."
-if mc ls "${MC_ALIAS_NAME}/${TARGET_BUCKET_NAME}" > /dev/null 2>&1; then
+if mc ls "${MC_ALIAS_NAME}/${TARGET_BUCKET_NAME}" --insecure > /dev/null 2>&1; then
     echo "Bucket '${MC_ALIAS_NAME}/${TARGET_BUCKET_NAME}' already exists."
 else
-    mc mb "${MC_ALIAS_NAME}/${TARGET_BUCKET_NAME}"
+    mc mb "${MC_ALIAS_NAME}/${TARGET_BUCKET_NAME}" --insecure
     echo "Bucket '${MC_ALIAS_NAME}/${TARGET_BUCKET_NAME}' created successfully."
 fi
 
 # 3. Construct the ARN for the server-configured Webhook target
 # The ARN format for a Webhook target configured via MinIO server environment variables
 # uses the ID from those variables (e.g., HTTPBRIDGE).
-TARGET_ARN="arn:minio:webhook::${WEBHOOK_TARGET_ID_IN_MINIO}:"
+TARGET_ARN="arn:minio:sqs::${WEBHOOK_TARGET_ID_IN_MINIO}:webhook"
 
 echo ""
 echo "Adding event notification to bucket '${MC_ALIAS_NAME}/${TARGET_BUCKET_NAME}'..."
 echo "Using Target ARN (for server-configured Webhook target): ${TARGET_ARN}"
-echo "Events: s3:ObjectCreated:Put,s3:ObjectCreated:CompleteMultipartUpload"
+echo "Events: put (file creation/upload)"
 echo "Suffix Filter: .pdf"
 
-# Remove existing rules for this ARN first to ensure a clean state for these specific filters,
-# or if you want to update the filters (event types, suffix).
-# If --ignore-existing works for your mc version, this remove might be optional.
-# However, explicitly removing ensures the filters are set as intended if they changed.
-echo "Attempting to remove any existing event rule for ARN ${TARGET_ARN} on bucket ${MC_ALIAS_NAME}/${TARGET_BUCKET_NAME} to avoid conflicts..."
-mc event remove "${MC_ALIAS_NAME}/${TARGET_BUCKET_NAME}" "${TARGET_ARN}" --force || echo "No existing rule to remove for ARN ${TARGET_ARN}, or removal failed (which might be okay if it didn't exist)."
-
-echo "Adding new event rule..."
+echo "Adding event rule..."
 mc event add "${MC_ALIAS_NAME}/${TARGET_BUCKET_NAME}" "${TARGET_ARN}" \
-    --event "s3:ObjectCreated:Put,s3:ObjectCreated:CompleteMultipartUpload" \
-    --suffix ".pdf"
+    --event put \
+    --suffix ".pdf" \
+    --insecure
     # The --ignore-existing flag can be useful if the rule with these exact filters already exists
     # mc event add "${MC_ALIAS_NAME}/${TARGET_BUCKET_NAME}" "${TARGET_ARN}" \
     #    --event "s3:ObjectCreated:Put,s3:ObjectCreated:CompleteMultipartUpload" \
@@ -96,10 +90,10 @@ echo "Event notification rule for Webhook target added/updated."
 # 4. Verify the event notification rule
 echo ""
 echo "Verifying event notification rules for bucket '${MC_ALIAS_NAME}/${TARGET_BUCKET_NAME}' targeting ARN '${TARGET_ARN}':"
-mc event list "${MC_ALIAS_NAME}/${TARGET_BUCKET_NAME}" "${TARGET_ARN}"
+mc event list "${MC_ALIAS_NAME}/${TARGET_BUCKET_NAME}" "${TARGET_ARN}" --insecure
 echo ""
 echo "Listing all event rules for the bucket:"
-mc event list "${MC_ALIAS_NAME}/${TARGET_BUCKET_NAME}"
+mc event list "${MC_ALIAS_NAME}/${TARGET_BUCKET_NAME}" --insecure
 
 
 echo ""
