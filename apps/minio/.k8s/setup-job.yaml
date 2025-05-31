@@ -8,18 +8,21 @@ spec:
     spec:
       containers:
       - name: mc
-        image: quay.io/minio/mc:latest
+        image: registry.access.redhat.com/ubi8/ubi-minimal:latest
         command:
         - /bin/sh
         - -c
         - |
+          microdnf install -y curl
+          curl -O https://dl.min.io/client/mc/release/linux-amd64/mc
+          chmod +x mc
           export HOME=/tmp
           echo "Waiting for MinIO to be ready..."
           for i in $(seq 1 30); do
             if curl -s http://minio:9000/minio/health/live; then
               echo "MinIO is ready. Configuring webhook..."
-              mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} --insecure
-              if mc event add myminio/pdf-inbox arn:minio:webhook::RAG:webhook --event put --suffix .pdf; then
+              ./mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} --insecure
+              if ./mc event add myminio/pdf-inbox arn:minio:webhook::RAG:webhook --event put --suffix .pdf; then
                 echo "Webhook configuration successful"
                 exit 0
               fi
