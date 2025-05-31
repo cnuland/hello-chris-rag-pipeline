@@ -9,7 +9,7 @@ spec:
   broker: kafka-broker
   filter:
     attributes:
-      # Match MinIO's S3 event type
+      # Match CloudEvent type set by KafkaSource
       type: s3:ObjectCreated:Put
       # Optional: can also filter by bucket if needed
       # source: /buckets/pdf-inbox

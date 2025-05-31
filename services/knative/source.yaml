@@ -18,12 +18,8 @@ spec:
       name: kafka-broker # Sink events to your Kafka-backed broker
       namespace: rag-pipeline-workshop # Explicitly stating namespace
 
-  # KafkaSource wraps the Kafka message payload into a CloudEvent.
-  # The default CloudEvent 'type' is often 'dev.knative.kafka.event'.
-  # The 'source' attribute will identify this KafkaSource instance.
-  # The original MinIO JSON event will be in the 'data' field of the CloudEvent.
+  # Configure CloudEvent overrides for the KafkaSource
   ceOverrides:
+    type: s3:ObjectCreated:Put  # Match MinIO's S3 event type
     extensions:
       knativekafkasource: "true"
-    # Explicitly set the type to match the trigger's filter
-    type: s3:ObjectCreated:Put

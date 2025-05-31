@@ -163,6 +163,15 @@ Health Check Endpoint: /api/v1/health.
 An event-driven serverless application that listens for PDF file uploads to MinIO (via Kafka and Knative Eventing with Istio ingress) and triggers a Kubeflow Pipeline.
 
 Technical Stack (Serverless Trigger)
+
+networking
+1. External Route (TLS passthrough) -> port 443/https
+2. Istio Gateway Service maps 443 -> 8443
+3. Istio Gateway Pod listens on 8443
+4. VirtualService routes to port 80
+5. Service routes port 80 -> 8012 (queue-proxy)
+6. Queue-proxy forwards to 8080 (user container)
+
 Python 3.11, Flask (for Knative service)
 
 Kubeflow Pipelines SDK (kfp)
@@ -232,7 +241,7 @@ oc edit smmr default -n istio-system
 ```
 Add rag-pipeline-workshop to the spec.members list:
 
-
+`IMPORTANT`
 ```
 spec:
   members:
@@ -424,6 +433,16 @@ Sidecar Injection: Confirm istio-proxy is present in the kfp-s3-trigger pod (`oc
 
 net-istio-controller Logs: (in knative-serving namespace) `oc logs -l app=net-istio-controller -c controller -n knative-serving -f`. Look for errors creating/updating VirtualService for kfp-s3-trigger or probing errors.
 
+`IMPORTANT`
+The Knative ingress gateway is configured to only accept HTTPS traffic on port 443 with TLS using the "knative-serving-cert" credential. This explains why our HTTP request is failing.
+Let's check if the certificate exists and then modify the gateway to handle both HTTP and HTTPS traffic.
+The certificate exists, so let's keep the HTTPS configuration but add an HTTP port as well. This way, we can support both protocols. We'll update the Knative ingress gateway to handle both HTTP and HTTPS traffic.
+
+```
+kubectl patch gateway knative-ingress-gateway -n knative-serving --type=merge -p '{"spec":{"servers":[{"port":{"number":80,"name":"http","protocol":"HTTP"},"hosts":["*.apps.cluster-6wqbq.6wqbq.sandbox842.opentlc.com"]},{"port":{"number":443,"name":"https","protocol":"HTTPS"},"hosts":["*.apps.cluster-6wqbq.6wqbq.sandbox842.opentlc.com"],"tls":{"credentialName":"knative-serving-cert","mode":"SIMPLE"}}]}}'
+gateway.networking.istio.io/knative-ingress-gateway patched
+```
+
 VirtualService: `oc get vs -n rag-pipeline-workshop`. Ensure kfp-s3-trigger-ingress and/or kfp-s3-trigger-mesh exist. Examine their YAML (oc get vs <name> -n rag-pipeline-workshop -o yaml) for correct hosts, gateways, and route destinations.
 
 Istio Gateway(s): (istio-system or knative-serving) oc get gateway -A. Check the ones referenced by the VirtualService and the config-istio ConfigMap in knative-serving. Ensure they are correctly configured and their selector matches the Istio ingress gateway pods.
@@ -444,6 +463,7 @@ Kafka Broker Data Plane Logs: (Pods for kafka-broker-receiver / kafka-broker-dis
 
 Trigger Status: (minio-pdf-event-trigger in rag-pipeline-workshop) `oc get trigger minio-pdf-event-trigger -n rag-pipeline-workshop -o yaml`. Check status.subscriberUri and conditions. Ensure filters (type: "dev.knative.kafka.event", source: "/kafkasource/...") are correct for events from KafkaSource. If DependencyNotReady or SubscriberResolved: False, it points to issues with the kfp-s3-trigger ksvc.
 
+`IMPORTANT`
 The Knative service route is using edge termination, but we're using ISTIO_MUTUAL TLS in the gateway. Let's:
 1. First check the istio-ingressgateway service configuration
 2. Then patch the route to use passthrough termination to match our gateway's TLS settings
