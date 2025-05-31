@@ -1,0 +1,17 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-kafka-webhook-traffic
+  namespace: knative-eventing
+spec:
+  selector:
+    matchLabels:
+      app: kafka-webhook-eventing
+  action: ALLOW
+  rules:
+  - to:
+    - operation:
+        paths: ["/pods-defaulting", "/readyz", "/"]
+        methods: ["POST", "GET"]
+        ports: ["8443"]
+
