@@ -26,10 +26,23 @@ logger.info(f"Using broker URL: {BROKER_URL}")
 def health():
     return jsonify({"status": "ok"})
 
-@app.route('/webhook', methods=['POST'])
+@app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
     try:
+        logger.info(f"Received webhook request with method: {request.method}")
         logger.debug(f"Received webhook request with headers: {dict(request.headers)}")
+        
+        # Handle GET requests (for health checks, validation, or debugging)
+        if request.method == 'GET':
+            logger.info("Processing GET request to webhook endpoint")
+            return jsonify({
+                "status": "ok",
+                "message": "MinIO webhook endpoint is active and ready to receive event notifications",
+                "usage": "Send POST requests with MinIO notification payload to this endpoint",
+                "broker_url": BROKER_URL
+            })
+        
+        # Handle POST requests (actual webhook notifications)
         # Get the event data from MinIO
         minio_event = request.json
         logger.info(f"Received MinIO event: {json.dumps(minio_event, indent=2)}")
