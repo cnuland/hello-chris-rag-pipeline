@@ -7,7 +7,7 @@ spec:
   host: minio-event-bridge.rag-pipeline-workshop.svc.cluster.local
   trafficPolicy:
     tls:
-      mode: DISABLE
+      mode: ISTIO_MUTUAL
     connectionPool:
       http:
         h2UpgradePolicy: DEFAULT

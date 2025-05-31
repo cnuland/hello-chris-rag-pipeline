@@ -19,6 +19,8 @@ spec:
   selector:
     matchLabels:
       app: minio-event-bridge
+  mtls:
+    mode: PERMISSIVE
   portLevelMtls:
     "8080":
       mode: PERMISSIVE
