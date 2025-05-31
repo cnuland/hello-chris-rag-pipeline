@@ -1,4 +1,3 @@
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -6,6 +5,7 @@ metadata:
   namespace: minio
   labels:
     app: minio
+    app.kubernetes.io/instance: minio
 spec:
   replicas: 1
   selector:
@@ -34,7 +34,17 @@ spec:
         - name: MINIO_NOTIFY_WEBHOOK_ENABLE_RAG
           value: "on"
         - name: MINIO_NOTIFY_WEBHOOK_ENDPOINT_RAG
-          value: "http://minio-event-bridge.rag-pipeline-workshop.svc.cluster.local:8080/webhook"
+          value: "https://minio-event-bridge.rag-pipeline-workshop.svc.cluster.local:8080/webhook"
+        - name: MINIO_NOTIFY_WEBHOOK_AUTH_TOKEN_RAG
+          value: ""
+        - name: MINIO_NOTIFY_WEBHOOK_QUEUE_DIR_RAG
+          value: "/tmp/webhooks"
+        - name: MINIO_NOTIFY_WEBHOOK_QUEUE_LIMIT_RAG
+          value: "10000"
+        - name: MINIO_NOTIFY_WEBHOOK_CLIENT_CERT_RAG
+          value: ""
+        - name: MINIO_NOTIFY_WEBHOOK_COMMENT_RAG
+          value: "Event notifications for PDF uploads"
         - name: MINIO_SERVER_URL
           value: "https://minio-s3-minio.apps.cluster-6wqbq.6wqbq.sandbox842.opentlc.com"
         - name: MINIO_BROWSER_REDIRECT_URL
@@ -67,6 +77,6 @@ spec:
         - mountPath: /data
           name: minio
       volumes:
-      - persistentVolumeClaim:
+      - name: minio
+        persistentVolumeClaim:
           claimName: minio
-        name: minio
