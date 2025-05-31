@@ -7,3 +7,4 @@ resources:
   - authorization-policy.yaml
   - peer-authentication.yaml
   - service-entry.yaml
+  - destination-rule.yaml

@@ -1,0 +1,14 @@
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: minio-event-bridge
+  namespace: rag-pipeline-workshop
+spec:
+  host: minio-event-bridge.rag-pipeline-workshop.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+    connectionPool:
+      http:
+        h2UpgradePolicy: DEFAULT
+        maxRequestsPerConnection: 1
