@@ -20,24 +20,29 @@ spec:
     spec:
       containers:
       - name: minio
-        args:
-        - minio server /data --console-address :9090
-        command:
-        - /bin/bash
-        - -c
         image: quay.io/minio/minio:RELEASE.2023-06-19T19-52-50Z
+        args:
+        - server
+        - /data
+        - --console-address
+        - :9090
         env:
-        - name: MINIO_NOTIFY_KAFKA_ENABLE_MYMINIOKAFKA # Using "MYMINIOKAFKA" as <YOUR_ID>
+        - name: MINIO_NOTIFY_KAFKA_ENABLE_MYMINIOKAFKA
           value: "on"
         - name: MINIO_NOTIFY_KAFKA_BROKERS_MYMINIOKAFKA
-          # This is the internal bootstrap service for your Kafka cluster
-          value: "kafka-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092" # Ensure 'kafka' is the correct namespace for your Kafka cluster
+          value: "kafka-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
         - name: MINIO_NOTIFY_KAFKA_TOPIC_MYMINIOKAFKA
-          value: "minio-bucket-notifications" # The Kafka topic you created
+          value: "minio-bucket-notifications"
+        - name: MINIO_NOTIFY_KAFKA_TLS_MYMINIOKAFKA
+          value: "off"
+        - name: MINIO_NOTIFY_KAFKA_TLS_SKIP_VERIFY_MYMINIOKAFKA
+          value: "on"
+        - name: MINIO_NOTIFY_KAFKA_SASL_MYMINIOKAFKA
+          value: "off"
         - name: MINIO_ROOT_USER
           valueFrom:
             secretKeyRef:
-              name: minio-root-user # Assuming this secret exists in the 'minio' namespace
+              name: minio-root-user
               key: MINIO_ROOT_USER
         - name: MINIO_ROOT_PASSWORD
           valueFrom:
