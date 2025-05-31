@@ -21,6 +21,11 @@ spec:
       labels:
         app: minio
     spec:
+      hostAliases:
+      - ip: "172.30.209.182"  # From earlier DNS lookup
+        hostnames:
+        - "istiod-data-science-smcp.istio-system.svc"
+        - "istiod-data-science-smcp.istio-system.svc.cluster.local"
       containers:
       - name: minio
         image: quay.io/minio/minio:RELEASE.2023-06-19T19-52-50Z
