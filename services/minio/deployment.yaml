@@ -39,6 +39,10 @@ spec:
           value: "on"
         - name: MINIO_NOTIFY_KAFKA_SASL_MYMINIOKAFKA
           value: "off"
+        - name: MINIO_NOTIFY_WEBHOOK_ENABLE_RAG
+          value: "on"
+        - name: MINIO_NOTIFY_WEBHOOK_ENDPOINT_RAG
+          value: "http://minio-event-bridge.rag-pipeline-workshop.svc.cluster.local:8080/webhook"
         - name: MINIO_ROOT_USER
           valueFrom:
             secretKeyRef:

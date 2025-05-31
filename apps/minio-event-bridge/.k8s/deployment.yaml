@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-event-bridge
+  namespace: rag-pipeline-workshop
+  labels:
+    app: minio-event-bridge
+    app.kubernetes.io/part-of: rag-pipeline
+spec:
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: http
+  selector:
+    app: minio-event-bridge
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio-event-bridge
+  namespace: rag-pipeline-workshop
+  labels:
+    app: minio-event-bridge
+    app.kubernetes.io/part-of: rag-pipeline
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio-event-bridge
+  template:
+    metadata:
+      labels:
+        app: minio-event-bridge
+        app.kubernetes.io/part-of: rag-pipeline
+    spec:
+      containers:
+      - name: event-bridge
+        image: ${IMAGE_NAME}  # This will be replaced by the actual image name in the pipeline
+        imagePullPolicy: Always
+        env:
+        - name: BROKER_URL
+          value: "http://kafka-broker-ingress.knative-eventing.svc.cluster.local/rag-pipeline-workshop/default"
+        - name: LOG_LEVEL
+          value: "INFO"
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 20
+
