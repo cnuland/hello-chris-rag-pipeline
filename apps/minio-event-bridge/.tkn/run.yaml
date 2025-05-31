@@ -21,7 +21,7 @@ spec:
     value: "main" # Or your specific branch/commit
   - name: IMAGE
     # IMPORTANT: Replace with your Quay.io image URL
-    value: "quay.io/cnulandhello-chris-rag-pipeline-converter:latest"
+    value: "quay.io/cnuland/hello-chris-rag-pipeline-converter:latest"
   - name: dockerfile-path
     value: "Dockerfile" # Path to your main Dockerfile from the root of the git repo
   - name: context-path

@@ -7,3 +7,4 @@ resources:
   - app-knative-broker.yaml
   - app-event-handler.yaml
   - app-mock-api.yaml
+  - app-event-bridge.yaml

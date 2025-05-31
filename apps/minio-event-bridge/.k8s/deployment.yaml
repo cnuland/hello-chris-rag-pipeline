@@ -35,11 +35,11 @@ spec:
     spec:
       containers:
       - name: event-bridge
-        image: ${IMAGE_NAME}  # This will be replaced by the actual image name in the pipeline
+        image: quay.io/cnuland/hello-chris-rag-pipeline-converter:latest  # This will be replaced by the actual image name in the pipeline
         imagePullPolicy: Always
         env:
         - name: BROKER_URL
-          value: "http://kafka-broker-ingress.knative-eventing.svc.cluster.local/rag-pipeline-workshop/default"
+          value: "http://kafka-broker-ingress.knative-eventing.svc.cluster.local/rag-pipeline-workshop/kafka-broker"
         - name: LOG_LEVEL
           value: "INFO"
         ports:
