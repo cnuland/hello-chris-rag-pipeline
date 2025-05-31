@@ -5,6 +5,6 @@ metadata:
   namespace: kafka
 spec:
   controlPlaneRef:
-    name: basic
+    name: data-science-smcp
     namespace: istio-system
 
