@@ -7,7 +7,8 @@ spec:
   broker: kafka-broker
   filter:
     attributes:
-      type: "s3:ObjectCreated:Put"  # Match the EventName from MinIO's event
+      type: "dev.knative.kafka.event"
+      source: "/kafkasource/rag-pipeline-workshop/minio-kafka-event-source"
   subscriber:
     ref:
       apiVersion: serving.knative.dev/v1

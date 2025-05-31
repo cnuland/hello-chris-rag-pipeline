@@ -12,9 +12,6 @@ spec:
     - "minio-bucket-notifications"
   consumerGroup: knative-minio-consumer
   initialOffset: earliest
-  cloudEventOverrides:
-    extensions:
-      eventType: "${EventName}"  # This will use the EventName from MinIO's event
   sink:
     ref:
       apiVersion: eventing.knative.dev/v1
