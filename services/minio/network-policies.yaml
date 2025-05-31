@@ -76,6 +76,10 @@ spec:
       port: 15021
     - protocol: TCP
       port: 15090
+    - protocol: TCP
+      port: 15053
+    - protocol: UDP
+      port: 15053
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
