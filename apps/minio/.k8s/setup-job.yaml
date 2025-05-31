@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-setup
+  namespace: minio
+spec:
+  template:
+    spec:
+      containers:
+      - name: mc
+        image: quay.io/minio/mc:latest
+        command:
+        - /bin/sh
+        - -c
+        - |
+          export HOME=/tmp
+          mc alias set myminio http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} --insecure
+          mc event add myminio/pdf-inbox arn:minio:webhook::RAG:webhook --event put --suffix .pdf
+        env:
+        - name: MINIO_ROOT_USER
+          valueFrom:
+            secretKeyRef:
+              name: minio-root-user
+              key: MINIO_ROOT_USER
+        - name: MINIO_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: minio-root-user
+              key: MINIO_ROOT_PASSWORD
+      restartPolicy: Never
+  backoffLimit: 4
