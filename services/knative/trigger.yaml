@@ -1,18 +1,16 @@
 apiVersion: eventing.knative.dev/v1
 kind: Trigger
 metadata:
-  name: minio-pdf-event-trigger
+  name: minio-pdf-event-trigger # Or your actual trigger name
   namespace: rag-pipeline-workshop
-  labels:
-    app.kubernetes.io/instance: knative-broker
 spec:
   broker: kafka-broker
   filter:
     attributes:
-      # Match CloudEvent type set by KafkaSource
-      type: s3:ObjectCreated:Put
-      # Optional: can also filter by bucket if needed
-      # source: /buckets/pdf-inbox
+      # Filter for the default type from KafkaSource
+      type: "dev.knative.kafka.event"
+      # And specifically from your KafkaSource instance
+      source: "/kafkasource/rag-pipeline-workshop/minio-kafka-event-source"
   subscriber:
     ref:
       apiVersion: serving.knative.dev/v1

@@ -1,25 +1,21 @@
-apiVersion: sources.knative.dev/v1beta1 # Using stable v1 API for KafkaSource
+apiVersion: sources.knative.dev/v1beta1 # Or v1 if your cluster supports it and it was working
 kind: KafkaSource
 metadata:
-  name: minio-kafka-event-source   # A descriptive name for this source
-  namespace: rag-pipeline-workshop # CHANGEME: Your serverless application namespace
+  name: minio-kafka-event-source
+  namespace: rag-pipeline-workshop
 spec:
-  consumerGroup: knative-minio-consumer # As seen working in your logs
+  consumerGroup: knative-minio-consumer
   bootstrapServers:
-    # Must point to your Kafka cluster's internal listener
-    - "kafka-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092" # CHANGEME if Kafka details differ
+    - "kafka-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
   topics:
-    - "minio-bucket-notifications" # The Kafka topic where MinIO sends its events
-
+    - "minio-bucket-notifications"
   sink:
     ref:
       apiVersion: eventing.knative.dev/v1
       kind: Broker
-      name: kafka-broker # Sink events to your Kafka-backed broker
-      namespace: rag-pipeline-workshop # Explicitly stating namespace
-
-  # Configure CloudEvent overrides for the KafkaSource
-  ceOverrides:
-    type: s3:ObjectCreated:Put  # Match MinIO's S3 event type
-    extensions:
-      knativekafkasource: "true"
+      name: kafka-broker
+      namespace: rag-pipeline-workshop
+  # ceOverrides: REMOVE THIS SECTION FOR NOW
+  #   type: s3:ObjectCreated:Put
+  #   extensions:
+  #     knativekafkasource: "true"
