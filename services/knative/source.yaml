@@ -25,6 +25,3 @@ spec:
   ceOverrides:
     extensions:
       knativekafkasource: "true"
-  cloudEventOverrides:
-    extensions:
-      knativekafkasource: "true"
