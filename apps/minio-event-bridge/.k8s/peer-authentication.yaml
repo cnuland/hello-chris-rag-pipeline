@@ -8,5 +8,5 @@ spec:
     matchLabels:
       app: minio-event-bridge
   portLevelMtls:
-    8080:
+    "8080":
       mode: PERMISSIVE
