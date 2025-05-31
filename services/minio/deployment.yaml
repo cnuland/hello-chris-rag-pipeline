@@ -34,11 +34,15 @@ spec:
         - /data
         - --console-address
         - :9090
+        - --certs-dir
+        - /tmp/certs
         env:
         - name: MINIO_NOTIFY_WEBHOOK_ENABLE_RAG
           value: "on"
         - name: MINIO_NOTIFY_WEBHOOK_ENDPOINT_RAG
           value: "http://minio-event-bridge.rag-pipeline-workshop.svc.cluster.local:8080/webhook"
+        - name: MINIO_SERVER_URL
+          value: "https://minio-s3-minio.apps.cluster-6wqbq.6wqbq.sandbox842.opentlc.com"
         - name: MINIO_ROOT_USER
           valueFrom:
             secretKeyRef:
@@ -66,7 +70,12 @@ spec:
         volumeMounts:
         - mountPath: /data
           name: minio
+        - mountPath: /tmp/certs
+          name: minio-certs
       volumes:
       - persistentVolumeClaim:
           claimName: minio
         name: minio
+      - name: minio-certs
+        secret:
+          secretName: minio-tls
