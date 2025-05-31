@@ -11,4 +11,11 @@ spec:
       app: minio-event-bridge
   action: ALLOW
   rules:
-  - {}
+  - from:
+    - source:
+        namespaces: ["minio"]
+    to:
+    - operation:
+        methods: ["GET", "POST"]
+        paths: ["/webhook"]
+        ports: ["8080"]
