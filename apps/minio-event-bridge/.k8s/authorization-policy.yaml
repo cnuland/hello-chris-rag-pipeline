@@ -14,8 +14,3 @@ spec:
   - from:
     - source:
         namespaces: ["minio"]
-    to:
-    - operation:
-        methods: ["GET", "POST"]
-        paths: ["*"]
-        ports: ["8080"]
