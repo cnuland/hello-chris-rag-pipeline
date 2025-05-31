@@ -9,7 +9,6 @@ spec:
     - "kafka-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092" # Verified Kafka bootstrap service
   topics:
     - "minio-bucket-notifications" # The Kafka topic where MinIO sends its raw JSON events
-  # No ceOverrides section - let KafkaSource use its defaults
   sink:
     ref:
       apiVersion: eventing.knative.dev/v1

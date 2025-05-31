@@ -9,8 +9,10 @@ spec:
   broker: kafka-broker # Subscribes to your Kafka-backed broker
   filter:
     attributes:
-      type: "s3:ObjectCreated:Put"
-      source: "minio:s3"
+      "$data":
+        Records:
+          - eventSource: minio:s3
+            eventName: s3:ObjectCreated:Put
   subscriber:
     ref:
       apiVersion: serving.knative.dev/v1
