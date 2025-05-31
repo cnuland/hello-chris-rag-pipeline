@@ -5,8 +5,6 @@ metadata:
   namespace: rag-pipeline-workshop
 spec:
   broker: kafka-broker
-  filter:
-    attributes: {}
   subscriber:
     ref:
       apiVersion: serving.knative.dev/v1
