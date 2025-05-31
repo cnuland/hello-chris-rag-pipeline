@@ -51,6 +51,8 @@ spec:
               value: "Simple PDF Processing Pipeline" # Must match the name of the pipeline uploaded to KFP
             - name: KFP_EXPERIMENT_NAME
               value: "S3 Triggered PDF Runs"
+            - name: LOG_LEVEL
+              value: "DEBUG"
           resources:
             requests:
               memory: "256Mi"
