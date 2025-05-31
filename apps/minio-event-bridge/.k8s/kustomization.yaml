@@ -5,7 +5,5 @@ resources:
   - deployment.yaml
   - network-policies.yaml
   - authorization-policy.yaml
-
   - peer-authentication.yaml
-
   - service-entry.yaml
