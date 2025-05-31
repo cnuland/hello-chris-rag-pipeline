@@ -8,12 +8,11 @@ metadata:
     app: minio
   annotations:
     haproxy.router.openshift.io/timeout: 300s
-    haproxy.router.openshift.io/secure-backends: "true"
 spec:
   port:
     targetPort: console
   tls:
-    insecureEdgeTerminationPolicy: Redirect
+    insecureEdgeTerminationPolicy: Allow
     termination: edge
   to:
     kind: Service
@@ -31,14 +30,13 @@ metadata:
   annotations:
     haproxy.router.openshift.io/timeout: 300s
     haproxy.router.openshift.io/balance: roundrobin
-    haproxy.router.openshift.io/secure-backends: "true"
     haproxy.router.openshift.io/hsts_header: max-age=31536000;includeSubDomains
 spec:
   port:
     targetPort: api
   tls:
     termination: edge
-    insecureEdgeTerminationPolicy: Redirect
+    insecureEdgeTerminationPolicy: Allow
   to:
     kind: Service
     name: minio
