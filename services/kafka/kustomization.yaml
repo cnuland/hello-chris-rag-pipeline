@@ -6,6 +6,3 @@ resources:
   - topic.yaml
   - network-policy-kafka-knative.yaml
   - service-mesh-member.yaml
-
-patchesStrategicMerge:
-  - kafka-webhook-probe-patch.yaml
