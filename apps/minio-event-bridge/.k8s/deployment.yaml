@@ -16,16 +16,17 @@ spec:
     metadata:
       annotations:
         sidecar.istio.io/inject: "true"
+        sidecar.istio.io/logLevel: debug
       labels:
         app: minio-event-bridge
         app.kubernetes.io/part-of: rag-pipeline
     spec:
       containers:
       - name: event-bridge
-        image: quay.io/cnuland/hello-chris-rag-pipeline-converter:latest
-        imagePullPolicy: Always
         command: ["gunicorn"]
         args: ["--bind", "0.0.0.0:8080", "--log-level", "debug", "--capture-output", "--error-logfile", "-", "--access-logfile", "-", "app:app"]
+        image: quay.io/cnuland/hello-chris-rag-pipeline-converter:latest
+        imagePullPolicy: Always
         env:
         - name: BROKER_URL
           value: "http://kafka-broker-ingress.knative-eventing.svc.cluster.local/rag-pipeline-workshop/kafka-broker"
