@@ -43,6 +43,16 @@ spec:
       port: 53
     - protocol: TCP
       port: 53
+      
+  # Allow egress to cluster DNS service IP directly (more permissive)
+  - to:
+    - ipBlock:
+        cidr: 172.30.0.10/32  # OpenShift DNS service IP
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
   
   # Allow egress to Kafka
   - to:
