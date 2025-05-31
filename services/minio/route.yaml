@@ -6,6 +6,8 @@ metadata:
   namespace: minio
   labels:
     app: minio
+  annotations:
+    maistra.io/mesh-internal: "true"
 spec:
   port:
     targetPort: console
@@ -25,6 +27,8 @@ metadata:
   namespace: minio
   labels:
     app: minio
+  annotations:
+    maistra.io/mesh-internal: "true"
 spec:
   port:
     targetPort: api
