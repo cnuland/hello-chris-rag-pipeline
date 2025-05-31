@@ -24,7 +24,7 @@ spec:
       containers:
       - name: event-bridge
         command: ["gunicorn"]
-        args: ["--bind", "0.0.0.0:8080", "--certfile=/var/run/secrets/service-cert/tls.crt", "--keyfile=/var/run/secrets/service-cert/tls.key", "--log-level", "debug", "--capture-output", "--error-logfile", "-", "--access-logfile", "-", "app:app"]
+        args: ["--bind", "0.0.0.0:8080", "--log-level", "debug", "--capture-output", "--error-logfile", "-", "--access-logfile", "-", "app:app"]
         image: quay.io/cnuland/hello-chris-rag-pipeline-converter:latest
         imagePullPolicy: Always
         env:
@@ -38,14 +38,12 @@ spec:
           httpGet:
             path: /health
             port: 8080
-            scheme: HTTPS
           initialDelaySeconds: 5
           periodSeconds: 10
         livenessProbe:
           httpGet:
             path: /health
             port: 8080
-            scheme: HTTPS
           initialDelaySeconds: 15
           periodSeconds: 20
         resources:
@@ -55,10 +53,3 @@ spec:
           limits:
             cpu: "500m"
             memory: "256Mi"
-        volumeMounts:
-        - name: service-cert
-          mountPath: /var/run/secrets/service-cert
-      volumes:
-      - name: service-cert
-        secret:
-          secretName: minio-event-bridge-tls

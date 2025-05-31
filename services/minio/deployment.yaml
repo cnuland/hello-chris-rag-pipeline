@@ -34,7 +34,7 @@ spec:
         - name: MINIO_NOTIFY_WEBHOOK_ENABLE_RAG
           value: "on"
         - name: MINIO_NOTIFY_WEBHOOK_ENDPOINT_RAG
-          value: "https://minio-event-bridge.rag-pipeline-workshop.svc.cluster.local:8080/webhook"
+          value: "http://minio-event-bridge.rag-pipeline-workshop.svc.cluster.local:8080/webhook"
         - name: MINIO_NOTIFY_WEBHOOK_AUTH_TOKEN_RAG
           value: ""
         - name: MINIO_NOTIFY_WEBHOOK_QUEUE_DIR_RAG
