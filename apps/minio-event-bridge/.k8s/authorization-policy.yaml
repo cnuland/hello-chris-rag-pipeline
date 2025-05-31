@@ -6,22 +6,12 @@ metadata:
   labels:
     app.kubernetes.io/instance: minio-event-bridge
 spec:
-  action: ALLOW
-  rules:
-  - from:
-    - source:
-        namespaces:
-        - minio
-        principals:
-        - "cluster.local/ns/minio/sa/default"
-        - "*"
-    to:
-    - operation:
-        methods:
-        - POST
-        - GET
-        paths:
-        - /webhook
   selector:
     matchLabels:
       app: minio-event-bridge
+  action: ALLOW
+  rules:
+  - to:
+    - operation:
+        methods: ["POST", "GET"]
+        paths: ["/webhook", "/health"]
