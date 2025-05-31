@@ -12,6 +12,9 @@ spec:
     - source:
         namespaces:
         - minio
+        principals:
+        - "cluster.local/ns/minio/sa/default"
+        - "*"
     to:
     - operation:
         methods:
