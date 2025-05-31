@@ -3,7 +3,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: minio
-  nasmespace: minio
+  namespace: minio
   labels:
     app: minio
 spec:
