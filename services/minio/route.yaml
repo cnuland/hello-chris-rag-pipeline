@@ -6,6 +6,8 @@ metadata:
   namespace: minio
   labels:
     app: minio
+  annotations:
+    haproxy.router.openshift.io/timeout: 300s
 spec:
   port:
     targetPort: console
@@ -25,6 +27,9 @@ metadata:
   namespace: minio
   labels:
     app: minio
+  annotations:
+    haproxy.router.openshift.io/timeout: 300s
+    haproxy.router.openshift.io/balance: roundrobin
 spec:
   port:
     targetPort: api
