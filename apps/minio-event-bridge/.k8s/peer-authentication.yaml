@@ -1,0 +1,12 @@
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: minio-event-bridge-peer-auth
+  namespace: rag-pipeline-workshop
+spec:
+  selector:
+    matchLabels:
+      app: minio-event-bridge
+  portLevelMtls:
+    8080:
+      mode: PERMISSIVE
