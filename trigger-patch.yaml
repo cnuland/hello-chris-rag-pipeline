@@ -3,12 +3,11 @@ kind: Trigger
 metadata:
   name: minio-pdf-event-trigger
   namespace: rag-pipeline-workshop
-  annotations:
-    # This is a temporary configuration for testing
-    testing.knative.dev/accepting-all-events: "true"
 spec:
   broker: kafka-broker
-  # Temporarily removing filters to accept all events for testing
+  filter:
+    attributes:
+      type: "s3:ObjectCreated:Put"  # Match the EventName from MinIO
   subscriber:
     ref:
       apiVersion: serving.knative.dev/v1

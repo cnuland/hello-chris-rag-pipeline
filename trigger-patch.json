@@ -1,0 +1,9 @@
+{
+  "spec": {
+    "filter": {
+      "attributes": {
+        "EventName": "s3:ObjectCreated:Put"
+      }
+    }
+  }
+}

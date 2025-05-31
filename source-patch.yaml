@@ -3,15 +3,6 @@ kind: KafkaSource
 metadata:
   name: minio-kafka-event-source
   namespace: rag-pipeline-workshop
-  labels:
-    app.kubernetes.io/instance: knative-broker
-  annotations:
-    # Add source annotation to indicate origin
-    sources.knative.dev/creator: "MinIO S3 Event Source"
-    sources.knative.dev/provider: "S3 Storage Events"
-    # Add CloudEvent configuration annotations
-    cloudevents.io/subject-prefix: "minio-s3-event"
-    cloudevents.io/schema-url: "https://raw.githubusercontent.com/minio/minio/master/docs/event/events.json"
 spec:
   bootstrapServers:
     - "kafka-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
@@ -19,6 +10,9 @@ spec:
     - "minio-bucket-notifications"
   consumerGroup: knative-minio-consumer
   initialOffset: earliest
+  cloudEventOverrides:
+    extensions:
+      eventType: "${EventName}"  # This will use the EventName from MinIO's event
   sink:
     ref:
       apiVersion: eventing.knative.dev/v1
