@@ -5,4 +5,5 @@ resources:
   - kafka.yaml
   - topic.yaml
   - network-policy-kafka-knative.yaml
+  - service-mesh-member.yaml
 
