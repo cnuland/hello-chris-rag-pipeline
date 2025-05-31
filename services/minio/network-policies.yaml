@@ -93,5 +93,13 @@ spec:
   policyTypes:
   - Ingress
   ingress:
-  - {}
-
+  - ports:
+    # MinIO API port
+    - protocol: TCP
+      port: 9000
+    # MinIO Console port
+    - protocol: TCP
+      port: 9090
+    # Istio health check port
+    - protocol: TCP
+      port: 15021
