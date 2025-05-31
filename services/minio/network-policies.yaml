@@ -3,103 +3,93 @@ kind: NetworkPolicy
 metadata:
   name: allow-minio-egress
   namespace: minio
+  labels:
+    app.kubernetes.io/instance: minio
 spec:
   podSelector:
     matchLabels:
       app: minio
   policyTypes:
-  - Egress
+    - Egress
   egress:
-  # Allow egress to event-bridge webhook
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: rag-pipeline-workshop
-    ports:
-    - protocol: TCP
-      port: 8080
-  
-  # Allow egress to any OpenShift router/ingress
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          network.openshift.io/policy-group: ingress
-    ports:
-    - protocol: TCP
-      port: 80
-    - protocol: TCP
-      port: 443
-  
-  # Allow egress to DNS
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: openshift-dns
-      podSelector:
-        matchLabels:
-          dns.operator.openshift.io/daemonset-dns: default
-    ports:
-    - protocol: UDP
-      port: 53
-    - protocol: TCP
-      port: 53
-      
-  # Allow egress to cluster DNS service IP directly (more permissive)
-  - to:
-    - ipBlock:
-        cidr: 172.30.0.10/32  # OpenShift DNS service IP
-    ports:
-    - protocol: UDP
-      port: 53
-    - protocol: TCP
-      port: 53
-      
-  # Allow egress to Istio control plane
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: istio-system
-    ports:
-    - protocol: TCP
-      port: 15012
-    - protocol: TCP
-      port: 15017
-    - protocol: TCP
-      port: 15010
-    - protocol: TCP
-      port: 15014
-    - protocol: TCP
-      port: 443
-    - protocol: TCP
-      port: 8188
-    - protocol: TCP
-      port: 15021
-    - protocol: TCP
-      port: 15090
-    - protocol: TCP
-      port: 15053
-    - protocol: UDP
-      port: 15053
+    - to:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: rag-pipeline-workshop
+        podSelector:
+          matchLabels:
+            app: minio-event-bridge
+      ports:
+        - port: 8080
+          protocol: TCP
+    - to:
+      - namespaceSelector:
+          matchLabels:
+            network.openshift.io/policy-group: ingress
+      ports:
+        - port: 80
+          protocol: TCP
+        - port: 443
+          protocol: TCP
+    - to:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: openshift-dns
+        podSelector:
+          matchLabels:
+            dns.operator.openshift.io/daemonset-dns: default
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    - to:
+      - ipBlock:
+          cidr: 172.30.0.10/32
+      ports:
+        - port: 53
+          protocol: UDP
+        - port: 53
+          protocol: TCP
+    - to:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: istio-system
+      ports:
+        - port: 15012
+          protocol: TCP
+        - port: 15017
+          protocol: TCP
+        - port: 15010
+          protocol: TCP
+        - port: 15014
+          protocol: TCP
+        - port: 443
+          protocol: TCP
+        - port: 8188
+          protocol: TCP
+        - port: 15021
+          protocol: TCP
+        - port: 15090
+          protocol: TCP
+        - port: 15053
+          protocol: TCP
+        - port: 15053
+          protocol: UDP
+
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-all-to-minio
   namespace: minio
+  labels:
+    app.kubernetes.io/instance: minio
 spec:
   podSelector:
     matchLabels:
       app: minio
   policyTypes:
-  - Ingress
+    - Ingress
   ingress:
-  - ports:
-    # MinIO API port
-    - protocol: TCP
-      port: 9000
-    # MinIO Console port
-    - protocol: TCP
-      port: 9090
-    # Istio health check port
-    - protocol: TCP
-      port: 15021
+    - {}
