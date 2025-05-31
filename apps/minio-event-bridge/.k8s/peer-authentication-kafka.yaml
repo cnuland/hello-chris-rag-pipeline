@@ -1,0 +1,11 @@
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: kafka-namespace-permissive
+  namespace: kafka
+  labels:
+    app.kubernetes.io/instance: minio-event-bridge
+spec:
+  mtls:
+    mode: PERMISSIVE
+

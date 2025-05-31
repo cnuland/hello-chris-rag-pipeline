@@ -7,7 +7,9 @@ resources:
   - authorization-policy.yaml
   - authorization-policy-trigger.yaml
   - authorization-policy-kafka-broker.yaml
+  - authorization-policy-knative-eventing.yaml
   - peer-authentication.yaml
+  - peer-authentication-kafka.yaml
   - service-entry.yaml
   - service-entry-kafka-broker.yaml
   - destination-rule.yaml
