@@ -1,0 +1,37 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-minio-to-event-bridge
+  namespace: rag-pipeline-workshop
+spec:
+  podSelector:
+    matchLabels:
+      app: minio-event-bridge
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: minio
+    ports:
+    - protocol: TCP
+      port: 8080
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-minio-to-event-bridge
+  namespace: rag-pipeline-workshop
+spec:
+  selector:
+    matchLabels:
+      app: minio-event-bridge
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        namespaces: ["minio"]
+    to:
+    - operation:
+        methods: ["POST"]
+        paths: ["/webhook"]
+
