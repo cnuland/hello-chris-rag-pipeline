@@ -54,6 +54,9 @@ spec:
               value: "S3 Triggered PDF Runs"
             - name: LOG_LEVEL
               value: "DEBUG"
+            # Add an environment variable to enable more verbose logging of requests
+            - name: VERBOSE_REQUEST_LOGGING
+              value: "true"
           resources:
             requests:
               memory: "256Mi"

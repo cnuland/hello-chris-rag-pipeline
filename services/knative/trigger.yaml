@@ -1,14 +1,18 @@
 apiVersion: eventing.knative.dev/v1
 kind: Trigger
 metadata:
-  name: minio-pdf-event-trigger # Or your actual trigger name
+  name: minio-pdf-event-trigger # Or your chosen trigger name
   namespace: rag-pipeline-workshop
 spec:
   broker: kafka-broker
   filter:
     attributes:
-      # Filter for MinIO S3 object creation events
+      # Filter for the CloudEvent 'type' attribute that KafkaSource is now
+      # expected to set due to its corrected ceOverrides.
       type: "s3:ObjectCreated:Put"
+      # Optional: You can also filter by the KafkaSource's 'source' attribute
+      # for more specificity if you have multiple sources sending this event type.
+      # source: "/kafkasource/rag-pipeline-workshop/minio-kafka-event-source"
   subscriber:
     ref:
       apiVersion: serving.knative.dev/v1
