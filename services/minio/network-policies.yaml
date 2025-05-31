@@ -53,15 +53,6 @@ spec:
       port: 53
     - protocol: TCP
       port: 53
-  
-  # Allow egress to Kafka
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: kafka
-    ports:
-    - protocol: TCP
-      port: 9092
       
   # Allow egress to Istio control plane
   - to:
