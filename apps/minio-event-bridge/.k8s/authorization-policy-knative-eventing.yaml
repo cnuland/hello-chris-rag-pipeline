@@ -1,0 +1,18 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-minio-event-bridge-to-kafka-broker
+  namespace: knative-eventing
+  labels:
+    app.kubernetes.io/instance: minio-event-bridge
+spec:
+  action: ALLOW
+  rules:
+  - to:
+    - operation:
+        methods: ["POST", "GET"]
+        paths: ["/*"]
+  selector:
+    matchLabels:
+      app: kafka-broker-receiver
+
