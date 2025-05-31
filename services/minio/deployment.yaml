@@ -17,6 +17,7 @@ spec:
     metadata:
       annotations:
         sidecar.istio.io/inject: "true"
+        proxy.istio.io/config: '{"proxyMetadata": {"ISTIO_META_DNS_CAPTURE": "false", "ISTIO_META_DNS_AUTO_ALLOCATE": "false"}}'
       labels:
         app: minio
     spec:
