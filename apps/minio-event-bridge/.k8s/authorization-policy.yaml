@@ -11,7 +11,4 @@ spec:
       app: minio-event-bridge
   action: ALLOW
   rules:
-  - to:
-    - operation:
-        methods: ["POST", "GET"]
-        paths: ["/webhook", "/health"]
+  - {}
