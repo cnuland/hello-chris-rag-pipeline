@@ -11,7 +11,7 @@ spec:
   rules:
   - to:
     - operation:
-        paths: ["/pods-defaulting", "/readyz", "/"]
+        paths: ["/*"]
         methods: ["POST", "GET"]
-        ports: ["8443"]
+        ports: ["443", "9090"]
 
