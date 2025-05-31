@@ -1,4 +1,5 @@
-apiVersion: sources.knative.dev/v1beta1 # Or v1 if that's what your cluster uses
+# services/knative/source.yaml
+apiVersion: sources.knative.dev/v1beta1
 kind: KafkaSource
 metadata:
   name: minio-kafka-event-source
@@ -6,19 +7,16 @@ metadata:
 spec:
   consumerGroup: knative-minio-consumer
   bootstrapServers:
-    - "kafka-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092" # Ensure this is correct
+    - "kafka-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
   topics:
-    - "minio-bucket-notifications" # Topic where MinIO sends its raw JSON events
+    - "minio-bucket-notifications"
+  ceOverrides:
+    type: "s3:ObjectCreated:Put" # 'type' is a direct child of ceOverrides
+    # extensions: # Optional: if you also want to add custom extensions
+    #   myCustomExtension: "someValue"
   sink:
     ref:
       apiVersion: eventing.knative.dev/v1
       kind: Broker
-      name: kafka-broker # Your Kafka-backed broker
+      name: kafka-broker
       namespace: rag-pipeline-workshop
-  # CloudEvent Overrides:
-  # This attempts to set the main CloudEvent 'type' attribute.
-  ceOverrides:
-    type: "s3:ObjectCreated:Put" # 'type' is a direct child of ceOverrides
-    # You can still have other extensions if needed:
-    # extensions:
-    #   processedBy: "knative-kafka-source"
