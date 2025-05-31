@@ -29,6 +29,8 @@ spec:
       app: minio-event-bridge
   template:
     metadata:
+      annotations:
+        sidecar.istio.io/inject: "true"
       labels:
         app: minio-event-bridge
         app.kubernetes.io/part-of: rag-pipeline
