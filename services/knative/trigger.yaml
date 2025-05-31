@@ -1,17 +1,14 @@
 apiVersion: eventing.knative.dev/v1
 kind: Trigger
 metadata:
-  name: minio-pdf-event-trigger
+  name: minio-pdf-event-trigger # Or your preferred trigger name
   namespace: rag-pipeline-workshop
 spec:
-  broker: kafka-broker
-  filter:
-    attributes:
-      type: "s3.object.created"
-      source: "minio"
+  broker: kafka-broker # Subscribes to your Kafka-backed broker
+  filter: {} # Empty filter - forwards all events from the broker
   subscriber:
     ref:
       apiVersion: serving.knative.dev/v1
       kind: Service
-      name: kfp-s3-trigger
+      name: kfp-s3-trigger # Your Knative Service
       namespace: rag-pipeline-workshop

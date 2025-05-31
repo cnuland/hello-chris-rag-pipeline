@@ -1,34 +1,18 @@
-apiVersion: sources.knative.dev/v1
+apiVersion: sources.knative.dev/v1beta1 # Using the version your cluster serves for KafkaSource
 kind: KafkaSource
 metadata:
   name: minio-kafka-event-source
-  namespace: rag-pipeline-workshop
-  labels:
-    app.kubernetes.io/instance: knative-broker
-  annotations:
-    # Add source annotation to indicate origin
-    sources.knative.dev/creator: "MinIO S3 Event Source"
-    sources.knative.dev/provider: "S3 Storage Events"
-    # Add CloudEvent configuration annotations
-    cloudevents.io/subject-prefix: "minio-s3-event"
-    cloudevents.io/schema-url: "https://raw.githubusercontent.com/minio/minio/master/docs/event/events.json"
+  namespace: rag-pipeline-workshop # Your serverless application namespace
 spec:
+  consumerGroup: knative-minio-consumer # As seen working in your logs
   bootstrapServers:
-    - "kafka-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
+    - "kafka-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092" # Verified Kafka bootstrap service
   topics:
-    - "minio-bucket-notifications"
-  consumerGroup: knative-minio-consumer
-  initialOffset: earliest
-  ceOverrides:
-    type: "s3.object.created"
-    source: "minio"
-    extensions:
-      eventtype: "s3:ObjectCreated:Put"
-      bucket: "minio-bucket"
-      key: "document"
+    - "minio-bucket-notifications" # The Kafka topic where MinIO sends its raw JSON events
+  # No ceOverrides section - let KafkaSource use its defaults
   sink:
     ref:
       apiVersion: eventing.knative.dev/v1
       kind: Broker
-      name: kafka-broker
+      name: kafka-broker # Your Kafka-backed broker
       namespace: rag-pipeline-workshop
