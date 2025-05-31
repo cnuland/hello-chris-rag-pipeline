@@ -32,11 +32,15 @@ spec:
         args:
         - server
         - /data
+        - --address
+        - :9000
         - --console-address
         - :9090
         - --certs-dir
         - /tmp/certs
         env:
+        - name: MINIO_API_SECURE
+          value: "on"
         - name: MINIO_NOTIFY_WEBHOOK_ENABLE_RAG
           value: "on"
         - name: MINIO_NOTIFY_WEBHOOK_ENDPOINT_RAG
