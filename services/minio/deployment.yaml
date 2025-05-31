@@ -36,11 +36,9 @@ spec:
         - :9000
         - --console-address
         - :9090
-        - --certs-dir
-        - /tmp/certs
         env:
         - name: MINIO_API_SECURE
-          value: "on"
+          value: "off"
         - name: MINIO_NOTIFY_WEBHOOK_ENABLE_RAG
           value: "on"
         - name: MINIO_NOTIFY_WEBHOOK_ENDPOINT_RAG
@@ -76,12 +74,7 @@ spec:
         volumeMounts:
         - mountPath: /data
           name: minio
-        - mountPath: /tmp/certs
-          name: minio-certs
       volumes:
       - persistentVolumeClaim:
           claimName: minio
         name: minio
-      - name: minio-certs
-        secret:
-          secretName: minio-tls
