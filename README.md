@@ -225,13 +225,31 @@ spec:
     - rag-pipeline-workshop                 # <-- ADD YOUR APPLICATION NAMESPACE
     # - minio                               # Optional: if MinIO itself needs to be in the mesh
 ```
+
+
+NOTE: We don't need the above if adding this for each namesapce
+
+```
+apiVersion: maistra.io/v1
+kind: ServiceMeshMember
+metadata:
+  name: default
+  namespace: rag-pipeline-workshop
+spec:
+  controlPlaneRef:
+    name: data-science-smcp
+    namespace: istio-system
+```
     * **Ensure Knative Service YAMLs request Istio integration and sidecar injection:**
         Verify that Knative Service definitions for `minio-event-bridge` and `s3-event-handler` include in their `metadata.annotations`:
         `networking.knative.dev/ingress.class: "istio.ingress.networking.knative.dev"`
         And in `spec.template.metadata.annotations`:
         `sidecar.istio.io/inject: "true"`
     *Allow a minute or two for the Service Mesh Operator to reconcile.*
-
+also add    
+```
+oc patch smmr default -n istio-system --type='json' -p='[{"op": "add", "path": "/spec/members/-", "value": "knative-eventing"}]'
+```
 3.  **Push Changes to Your Git Repository:** Commit all customized files.
 
 4.  **Apply the Root ArgoCD Application:**
@@ -409,6 +427,34 @@ The script `scripts/generate_and_upload_pdf.py` will generate sample PDF files w
 python scripts/generate_and_upload_pdf.py
 ```
 
+OR you can manually trigger the pipeline as followed
+```
+kubectl exec -it debug-pod -n minio -- curl -v -X POST http://minio-event-bridge.rag-pipeline-workshop.svc.cluster.local:8080/webhook -H "Content-Type: application/json" -d '{"EventName":"s3:ObjectCreated:Put","Key":"event-test-20250531-182532.pdf","Records":[{"eventVersion":"2.0","eventSource":"minio:s3","awsRegion":"","eventTime":"2025-05-31T22:25:32Z","eventName":"s3:ObjectCreated:Put","userIdentity":{"principalId":"minio"},"requestParameters":{"accessKey":"minio","region":"","sourceIPAddress":"127.0.0.1"},"responseElements":{"x-amz-request-id":"","x-minio-deployment-id":""},"s3":{"s3SchemaVersion":"1.0","configurationId":"Config","bucket":{"name":"pdf-inbox","ownerIdentity":{"principalId":"minio"},"arn":"arn:aws:s3:::pdf-inbox"},"object":{"key":"event-test-20250531-182532.pdf","size":1024,"eTag":"","contentType":"application/pdf","userMetadata":null,"versionId":"","sequencer":""}}}]}'
+Note: Unnecessary use of -X or --request, POST is already inferred.
+* Host minio-event-bridge.rag-pipeline-workshop.svc.cluster.local:8080 was resolved.
+* IPv6: (none)
+* IPv4: 172.30.186.14
+*   Trying 172.30.186.14:8080...
+* Connected to minio-event-bridge.rag-pipeline-workshop.svc.cluster.local (172.30.186.14) port 8080
+* using HTTP/1.x
+> POST /webhook HTTP/1.1
+> Host: minio-event-bridge.rag-pipeline-workshop.svc.cluster.local:8080
+> User-Agent: curl/8.13.0
+> Accept: */*
+> Content-Type: application/json
+> Content-Length: 726
+> 
+* upload completely sent off: 726 bytes
+< HTTP/1.1 200 OK
+< server: envoy
+< date: Sat, 31 May 2025 22:25:50 GMT
+< content-type: application/json
+< content-length: 89
+< x-envoy-upstream-service-time: 10054
+< 
+{"broker_response":503,"message":"Event forwarded to Knative broker","status":"success"}
+* Connection #0 to host minio-event-bridge.rag-pipeline-workshop.svc.cluster.local left intact
+```
 ### 4. Monitor the Pipeline
 
 After uploading PDFs, you can monitor the event flow:

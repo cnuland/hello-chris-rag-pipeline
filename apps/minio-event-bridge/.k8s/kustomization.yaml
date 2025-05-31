@@ -15,3 +15,5 @@ resources:
   - destination-rule.yaml
   - service.yaml
   - virtual-service.yaml
+  - service-mesh-member.yaml
+
