@@ -1,4 +1,4 @@
-apiVersion: sources.knative.dev/v1beta1
+apiVersion: sources.knative.dev/v1
 kind: KafkaSource
 metadata:
   name: minio-kafka-event-source
@@ -19,6 +19,13 @@ spec:
     - "minio-bucket-notifications"
   consumerGroup: knative-minio-consumer
   initialOffset: earliest
+  ceOverrides:
+    type: "s3.object.created"
+    source: "minio"
+    extensions:
+      eventtype: "s3:ObjectCreated:Put"
+      bucket: "minio-bucket"
+      key: "document"
   sink:
     ref:
       apiVersion: eventing.knative.dev/v1
