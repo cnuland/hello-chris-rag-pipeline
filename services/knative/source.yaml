@@ -25,3 +25,5 @@ spec:
   ceOverrides:
     extensions:
       knativekafkasource: "true"
+    # Explicitly set the type to match the trigger's filter
+    type: s3:ObjectCreated:Put
