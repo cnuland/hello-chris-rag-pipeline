@@ -9,6 +9,7 @@ spec:
     - "kafka-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
   topics:
     - "minio-bucket-notifications"
+  initialOffset: earliest
   sink:
     ref:
       apiVersion: eventing.knative.dev/v1
