@@ -27,6 +27,9 @@ spec:
         # Optional, but can be helpful if probes are rewritten by Istio.
         # Knative system components in your KnativeServing CR had this.
         sidecar.istio.io/rewriteAppHTTPProbers: "true"
+        # Configure Istio traffic management
+        traffic.sidecar.istio.io/includeInboundPorts: "8080"
+        traffic.sidecar.istio.io/excludeInboundPorts: "8444,8022"
 
         # Optional: If you want new revisions to roll out immediately during development
         # serving.knative.dev/rollout-duration: "0s"
