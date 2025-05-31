@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - app-of-apps.yaml
+  - app-event-bridge.yaml
+  - app-event-handler.yaml
+  - app-kafka.yaml
+  - app-knative-broker.yaml
+  - app-minio.yaml
+  - app-mock-api.yaml
