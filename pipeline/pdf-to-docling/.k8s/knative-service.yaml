@@ -18,7 +18,7 @@ spec:
         networking.istio.io/protocol: "http"
         # Tell Knative to use specific ports for the queue proxy
         queue.serving.knative.dev/targetPort: "8080" # Target port on your container
-        queue.serving.knative.dev/servingPort: "8080" # Port queue-proxy serves on
+        queue.serving.knative.dev/servingPort: "8012" # Port queue-proxy serves on
 
         # --- ISTIO SIDECAR INJECTION ---
         # This is crucial for your pod to be part of the Istio mesh if Istio is the ingress.

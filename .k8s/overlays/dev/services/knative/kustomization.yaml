@@ -1,7 +1,7 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+
 resources:
-- ../../base/services/knative
-- broker.yaml
-- source.yaml
-- trigger.yaml
+- ../../../base/services/knative
+- minio-s3-trigger.yaml
+

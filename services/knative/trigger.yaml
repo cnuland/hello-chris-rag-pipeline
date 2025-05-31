@@ -1,20 +1,22 @@
 apiVersion: eventing.knative.dev/v1
 kind: Trigger
 metadata:
-  name: minio-pdf-event-trigger # A descriptive name for this trigger
+  name: minio-pdf-event-trigger
   namespace: rag-pipeline-workshop
   labels:
-    app.kubernetes.io/instance: s3-event-handler
+    app.kubernetes.io/instance: knative-broker
 spec:
-  broker: kafka-broker # Subscribes to your Kafka-backed broker
+  broker: kafka-broker
   filter:
     attributes:
+      # The KafkaSource wraps MinIO events in CloudEvents with these attributes
       type: dev.knative.kafka.event
       source: /kafkasource/rag-pipeline-workshop/minio-kafka-event-source
-      # The actual MinIO event data will be in the CloudEvent's data field
+      # Note: The MinIO event data (EventName="s3:ObjectCreated:Put", eventSource="minio:s3")
+      # is contained within the CloudEvent's data field and can't be filtered directly by the Trigger
   subscriber:
     ref:
       apiVersion: serving.knative.dev/v1
-      kind: Service # This is a Knative Service
-      name: kfp-s3-trigger # The name of your serverless function
-      namespace: rag-pipeline-workshop # CHANGEME if different
+      kind: Service
+      name: kfp-s3-trigger
+      namespace: rag-pipeline-workshop
