@@ -6,7 +6,6 @@ metadata:
 spec:
   hosts:
   - "minio.minio.svc.cluster.local"
-  - "*"  # Accept traffic for any host, routing will be controlled by gateway selection
   gateways:
   - mesh  # For in-cluster communication via service mesh
   http:
