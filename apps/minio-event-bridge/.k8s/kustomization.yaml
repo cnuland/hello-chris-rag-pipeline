@@ -9,3 +9,4 @@ resources:
   - service-entry.yaml
   - destination-rule.yaml
   - service.yaml
+  - virtual-service.yaml
