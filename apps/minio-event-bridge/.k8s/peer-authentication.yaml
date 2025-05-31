@@ -1,8 +1,20 @@
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
 metadata:
+  name: namespace-wide-permissive
+  namespace: rag-pipeline-workshop
+spec:
+  mtls:
+    mode: PERMISSIVE
+
+---
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
   name: minio-event-bridge-peer-auth
   namespace: rag-pipeline-workshop
+  labels:
+    app.kubernetes.io/instance: minio-event-bridge
 spec:
   selector:
     matchLabels:
