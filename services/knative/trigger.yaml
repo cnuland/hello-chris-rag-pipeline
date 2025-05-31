@@ -9,11 +9,10 @@ spec:
   broker: kafka-broker
   filter:
     attributes:
-      # The KafkaSource wraps MinIO events in CloudEvents with these attributes
-      type: dev.knative.kafka.event
-      source: /kafkasource/rag-pipeline-workshop/minio-kafka-event-source
-      # Note: The MinIO event data (EventName="s3:ObjectCreated:Put", eventSource="minio:s3")
-      # is contained within the CloudEvent's data field and can't be filtered directly by the Trigger
+      # Match MinIO's S3 event type
+      type: s3:ObjectCreated:Put
+      # Optional: can also filter by bucket if needed
+      # source: /buckets/pdf-inbox
   subscriber:
     ref:
       apiVersion: serving.knative.dev/v1
