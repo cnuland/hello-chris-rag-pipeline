@@ -11,6 +11,4 @@ spec:
       app: minio-event-bridge
   action: ALLOW
   rules:
-  - from:
-    - source:
-        namespaces: ["minio"]
+  - {}  # Empty rule means allow everything
