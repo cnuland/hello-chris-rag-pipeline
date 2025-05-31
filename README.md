@@ -444,6 +444,12 @@ Kafka Broker Data Plane Logs: (Pods for kafka-broker-receiver / kafka-broker-dis
 
 Trigger Status: (minio-pdf-event-trigger in rag-pipeline-workshop) `oc get trigger minio-pdf-event-trigger -n rag-pipeline-workshop -o yaml`. Check status.subscriberUri and conditions. Ensure filters (type: "dev.knative.kafka.event", source: "/kafkasource/...") are correct for events from KafkaSource. If DependencyNotReady or SubscriberResolved: False, it points to issues with the kfp-s3-trigger ksvc.
 
+The Knative service route is using edge termination, but we're using ISTIO_MUTUAL TLS in the gateway. Let's:
+1. First check the istio-ingressgateway service configuration
+2. Then patch the route to use passthrough termination to match our gateway's TLS settings
+oc patch route route-4cba4433-a979-46f3-b67e-5099b5857894-616331383865 -n istio-system -p '{"spec":{"tls":{"termination":"passthrough","insecureEdgeTerminationPolicy":"None"}}}' --type=merge
+route.route.openshift.io/route-4cba4433-a979-46f3-b67e-5099b5857894-616331383865 patched
+
 Kubeflow Pipelines (OpenShift AI):
 
 s3-event-handler Logs: Check for errors when calling KFP SDK (KFP_ENDPOINT reachability, authentication to KFP, pipeline name/ID validity, experiment name).
