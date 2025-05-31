@@ -9,7 +9,6 @@ spec:
     attributes:
       # Filter for MinIO S3 object creation events
       type: "s3:ObjectCreated:Put"
-      source: "minio:s3"
   subscriber:
     ref:
       apiVersion: serving.knative.dev/v1
