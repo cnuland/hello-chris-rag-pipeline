@@ -15,7 +15,3 @@ spec:
       kind: Broker
       name: kafka-broker
       namespace: rag-pipeline-workshop
-  # ceOverrides: REMOVE THIS SECTION FOR NOW
-  #   type: s3:ObjectCreated:Put
-  #   extensions:
-  #     knativekafkasource: "true"

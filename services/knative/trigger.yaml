@@ -7,10 +7,8 @@ spec:
   broker: kafka-broker
   filter:
     attributes:
-      # Filter for the default type from KafkaSource
-      type: "dev.knative.kafka.event"
-      # And specifically from your KafkaSource instance
-      source: "/kafkasource/rag-pipeline-workshop/minio-kafka-event-source"
+      # Filter for MinIO S3 object creation events
+      type: "s3:ObjectCreated:Put"
   subscriber:
     ref:
       apiVersion: serving.knative.dev/v1
