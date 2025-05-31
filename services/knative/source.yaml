@@ -22,6 +22,9 @@ spec:
   # The default CloudEvent 'type' is often 'dev.knative.kafka.event'.
   # The 'source' attribute will identify this KafkaSource instance.
   # The original MinIO JSON event will be in the 'data' field of the CloudEvent.
-  # ceOverrides: # Usually not needed for basic MinIO JSON events
-  #   extensions:
-  #     customSource: "MinIOBucketEvents"
+  ceOverrides:
+    extensions:
+      knativekafkasource: "true"
+  cloudEventOverrides:
+    extensions:
+      knativekafkasource: "true"
