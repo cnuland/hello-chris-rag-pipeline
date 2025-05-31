@@ -3,9 +3,14 @@ kind: Trigger
 metadata:
   name: minio-pdf-event-trigger # Or your preferred trigger name
   namespace: rag-pipeline-workshop
+  annotations:
+    kafka.eventing.knative.dev/delivery.enable.debug: "true"  # Enable debug logging
 spec:
   broker: kafka-broker # Subscribes to your Kafka-backed broker
-  filter: {} # Empty filter - forwards all events from the broker
+  filter:
+    attributes:
+      type: "s3:ObjectCreated:Put"
+      source: "minio:s3"
   subscriber:
     ref:
       apiVersion: serving.knative.dev/v1
