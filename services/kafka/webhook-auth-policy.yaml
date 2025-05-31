@@ -13,5 +13,5 @@ spec:
     - operation:
         paths: ["/*"]
         methods: ["POST", "GET"]
-        ports: ["443", "9090"]
+        ports: ["443", "8443", "9090"]
 
