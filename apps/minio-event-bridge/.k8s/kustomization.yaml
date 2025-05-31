@@ -8,3 +8,4 @@ resources:
   - peer-authentication.yaml
   - service-entry.yaml
   - destination-rule.yaml
+  - service.yaml
