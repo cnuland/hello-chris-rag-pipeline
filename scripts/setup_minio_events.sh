@@ -20,7 +20,7 @@ set -e
 # MINIO_NOTIFY_WEBHOOK_ENABLE_<YOUR_ID>, MINIO_NOTIFY_WEBHOOK_ENDPOINT_<YOUR_ID>, etc.
 # environment variables in your MinIO server's deployment.yaml.
 # For example, if you used 'HTTPBRIDGE' in those env vars, set this to "HTTPBRIDGE".
-: "${WEBHOOK_TARGET_ID_IN_MINIO:?Error: WEBHOOK_TARGET_ID_IN_MINIO is not set. This is the ID used in MinIO servers WEBHOOK notification env vars (e.g., HTTPBRIDGE).}"
+: "${WEBHOOK_TARGET_ID_IN_MINIO:=RAG}" # Default to RAG as used in the deployment.yaml
 
 # --- Script Logic ---
 

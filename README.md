@@ -56,7 +56,6 @@ This entire project is designed to be managed using a GitOps workflow powered by
 * **Declarative State:** The Git repository is the single source of truth. All desired states of the applications and infrastructure components are declared in YAML. ArgoCD continuously monitors the Git repository and applies changes to the cluster to match this desired state. This ensures consistency, auditability, and automated rollbacks/rollouts.
 
 ## Project Structure
-
 ```
 .
 ├── apps
@@ -70,13 +69,13 @@ This entire project is designed to be managed using a GitOps workflow powered by
 │   │   ├── app.py              # Contains the Flask webhook receiver and CloudEvent creation logic
 │   │   ├── Dockerfile
 │   │   └── requirements.txt
-│   │   └── .k8s/         # (Assumed) Knative Service definition for this bridge, managed by app-event-bridge.yaml
+│   │   └── .openshift/         # (Assumed) Knative Service definition for this bridge, managed by app-event-bridge.yaml
 │   │       └── kustomization.yaml # (And minio-event-bridge-ksvc.yaml)
 │   └── s3-event-handler        # Serverless KFP Trigger (Knative Service)
 │       ├── app.py
 │       ├── Dockerfile
 │       ├── requirements.txt
-│       └── .k8s/         # Knative Service, RBAC YAMLs for KFP trigger app, managed by app-event-handler.yaml
+│       └── .openshift/         # Knative Service, RBAC YAMLs for KFP trigger app, managed by app-event-handler.yaml
 │           ├── knative-service.yaml # Defines 'kfp-s3-trigger' ksvc
 │           ├── kustomization.yaml
 │           └── rbac.yaml
@@ -116,17 +115,17 @@ This entire project is designed to be managed using a GitOps workflow powered by
     │                           # This file can be removed if not used for other purposes.
     │   └── trigger.yaml        # Defines Knative Trigger for s3-event-handler, subscribes to kafka-broker.
     └── minio                   # MinIO S3 Storage deployment
-        ├── create-secret.yaml  # (Corrected from creeate-secret.yaml)
+        ├── create-secret.yaml
         ├── deployment.yaml     # This MUST contain MINIO_NOTIFY_WEBHOOK_* env vars pointing to minio-event-bridge
-        ├── kustomization.yaml  # Corrected from 'kustomization'
+        ├── kustomization.yaml
         ├── namespace.yaml
         ├── network-policies.yaml # NetworkPolicies for MinIO ingress/egress
         ├── pvc.yaml
         ├── route.yaml
         ├── sa.yaml
         └── service.yaml
-
 ```
+*(Note: Application-specific manifests like Knative Services for `minio-event-bridge` and `s3-event-handler` are typically located in their respective `apps/.../.openshift/` directories and managed by dedicated ArgoCD applications defined in `bootstrap/`. The `services/knative/trigger.yaml` defines the trigger linking the `kafka-broker` to the `s3-event-handler`.)*
 
 ---
 
@@ -216,16 +215,15 @@ oc get smmr default -n istio-system -o yaml
 # Edit the ServiceMeshMemberRoll to add your namespace
 oc edit smmr default -n istio-system
 ```
-        Add `rag-pipeline-workshop` to the `spec.members` list:
+        Add `rag-pipeline-workshop` to the `spec.members` list. Also include `minio` if MinIO pods are to be part of the mesh for direct webhook sending (though if MinIO is outside the mesh, ensure its egress to the bridge is allowed by NetworkPolicies).
 ```
-# ...
+# Example SMMR spec:
 spec:
   members:
     - knative-serving                         # Keep existing members
     - redhat-ods-applications-auth-provider # Keep existing members
     - rag-pipeline-workshop                 # <-- ADD YOUR APPLICATION NAMESPACE
     # - minio                               # Optional: if MinIO itself needs to be in the mesh
-# ...
 ```
     * **Ensure Knative Service YAMLs request Istio integration and sidecar injection:**
         Verify that Knative Service definitions for `minio-event-bridge` and `s3-event-handler` include in their `metadata.annotations`:
@@ -283,17 +281,17 @@ The `.tekton/` directory contains resources for an optional Tekton pipeline to b
 * **Service Requests:** Similar CRUD endpoints under `/api/v1/requests`.
 
 **Example `curl` (replace `<mock-api-route>` with actual route URL from `oc get route -n your-api-project`):**
-{# BEGIN_CODE_BLOCK bash #}
+```
 curl http://<mock-api-route>/api/v1/incidents?limit=2 | jq
-{# END_CODE_BLOCK #}
+```
 
 ### Testing Event-Driven Flow (Updated for Webhook Bridge)
 
 1.  **Verify Knative Services are `READY True True True`**:
-{# BEGIN_CODE_BLOCK bash #}
+```
 oc get ksvc minio-event-bridge -n rag-pipeline-workshop
 oc get ksvc kfp-s3-trigger -n rag-pipeline-workshop
-{# END_CODE_BLOCK #}
+```
     Test their `/health` or `/healthz` endpoints via their OpenShift Routes (get URLs from `oc get ksvc ...`).
 
 2.  **Upload a PDF file** to the MinIO bucket (e.g., `pdf-inbox` on your `osminio` alias) using `mc cp` or the `scripts/generate_and_upload_pdf.py` script.
@@ -360,8 +358,90 @@ A systematic approach is key. Start from the beginning of the event flow or the 
     * **RBAC:** Ensure the `kfp-trigger-sa` ServiceAccount (used by `s3-event-handler`) has permissions to create KFP runs in the target KFP namespace (usually the user's project or a dedicated KFP project).
 
 ---
+## VI. How to test the end to end solution for PDF upload
 
-## VI. Contributing
+This section guides you through testing the complete PDF upload and processing pipeline using the provided Python script.
+
+### 1. Set up Python Environment
+
+Create and activate a Python virtual environment:
+```
+# Create virtual environment
+python -m venv .venv
+
+# Activate virtual environment
+# On Linux/MacOS:
+source .venv/bin/activate
+# On Windows:
+# .venv\Scripts\activate
+
+# Install required packages
+pip install python-dotenv minio faker fpdf2
+```
+
+### 2. Configure Environment Variables
+
+1. Copy the example environment file:
+```
+cp scripts/example.env .env
+```
+
+2. Edit `.env` and set the following variables:
+```
+# MinIO connection details
+MINIO_ENDPOINT=<your-minio-route-without-http/https>  # e.g., minio-minio.apps.your-cluster.com
+MINIO_ACCESS_KEY=<your-minio-access-key>
+MINIO_SECRET_KEY=<your-minio-secret-key>
+MINIO_SECURE=true  # Use HTTPS if your MinIO route is HTTPS, false for HTTP
+MINIO_BUCKET_NAME=pdf-inbox  # Or your chosen bucket name
+
+# Optional: PDF generation settings
+PDF_COUNT=1  # Number of PDFs to generate
+PDF_PAGES_MIN=1  # Minimum pages per PDF
+PDF_PAGES_MAX=5  # Maximum pages per PDF
+```
+
+### 3. Run the Upload Script
+
+The script `scripts/generate_and_upload_pdf.py` will generate sample PDF files with random content and upload them to MinIO:
+```
+`# Ensure virtual environment is activated and .env is populated
+python scripts/generate_and_upload_pdf.py
+```
+
+### 4. Monitor the Pipeline
+
+After uploading PDFs, you can monitor the event flow:
+
+1. Check MinIO webhook delivery:
+```
+# View MinIO pod logs
+oc logs -l app=minio -n minio -f
+```
+
+2. Verify `minio-event-bridge` reception and CloudEvent creation:
+```
+# View minio-event-bridge logs
+oc logs -l app=minio-event-bridge -c user-container -n rag-pipeline-workshop -f
+```
+
+3. Monitor `s3-event-handler` (PDF processing trigger):
+```{# BEGIN_CODE_BLOCK bash #}```
+# View s3-event-handler logs
+oc logs -l serving.knative.dev/service=kfp-s3-trigger -c user-container -n rag-pipeline-workshop -f
+```
+
+4. Check Kubeflow Pipeline execution in the OpenShift AI dashboard under the "S3 Triggered PDF Runs" experiment.
+
+### Troubleshooting Upload Issues
+
+- **Connection errors**: Verify MinIO endpoint and credentials in `.env`. Check `MINIO_SECURE` matches the endpoint protocol.
+- **SSL/TLS errors**: If `MINIO_SECURE=true`, ensure your local system trusts the certificate for the MinIO endpoint, or that the MinIO route is correctly configured for TLS.
+- **Permission denied**: Check MinIO bucket permissions and access policy for the user/keys used by the script.
+- **Generate script errors**: Ensure all required Python packages (`python-dotenv`, `minio`, `faker`, `fpdf2`) are installed in your virtual environment.
+
+---
+## VII. Contributing
 
 1.  Fork the repository.
 2.  Create a feature branch (`git checkout -b feature/my-new-feature`).
@@ -371,6 +451,6 @@ A systematic approach is key. Start from the beginning of the event flow or the 
 
 ---
 
-## VII. License
+## VIII. License
 
 This project is licensed under the MIT License - see the `LICENSE` file for details.
