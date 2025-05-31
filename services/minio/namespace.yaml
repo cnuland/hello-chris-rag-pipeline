@@ -5,5 +5,6 @@ metadata:
   name: minio
   labels:
     app: minio
+    istio-injection: enabled
   annotations:
     openshift.io/display-name: "MinIO Object Storage"
