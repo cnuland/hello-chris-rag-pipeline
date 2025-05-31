@@ -5,15 +5,22 @@ import uuid
 import logging
 import os
 from datetime import datetime
+import json
 
 app = Flask(__name__)
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Configure logging based on environment variable
+LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO').upper()
+logging.basicConfig(
+    level=getattr(logging, LOG_LEVEL),
+    format='%(asctime)s [%(levelname)s] %(message)s'
+)
 logger = logging.getLogger(__name__)
+logger.info(f"Starting minio-event-bridge with LOG_LEVEL={LOG_LEVEL}")
 
-# Define broker URL
-BROKER_URL = "http://kafka-broker-ingress.knative-eventing.svc.cluster.local/rag-pipeline-workshop/kafka-broker"
+# Define broker URL from environment variable or use default
+BROKER_URL = os.environ.get('BROKER_URL', "http://kafka-broker-ingress.knative-eventing.svc.cluster.local/rag-pipeline-workshop/kafka-broker")
+logger.info(f"Using broker URL: {BROKER_URL}")
 
 @app.route('/health', methods=['GET'])
 def health():
@@ -22,9 +29,10 @@ def health():
 @app.route('/webhook', methods=['POST'])
 def webhook():
     try:
+        logger.debug(f"Received webhook request with headers: {dict(request.headers)}")
         # Get the event data from MinIO
         minio_event = request.json
-        logger.info(f"Received MinIO event: {minio_event}")
+        logger.info(f"Received MinIO event: {json.dumps(minio_event, indent=2)}")
         
         # Extract event information
         event_type = "s3:ObjectCreated:Put"  # Default type
@@ -32,9 +40,13 @@ def webhook():
         # Try to extract the actual event type if available in the event
         if 'EventName' in minio_event:
             event_type = minio_event['EventName']
+            logger.debug(f"Found EventName: {event_type}")
         elif 'Records' in minio_event and len(minio_event['Records']) > 0:
             if 'eventName' in minio_event['Records'][0]:
                 event_type = minio_event['Records'][0]['eventName']
+                logger.debug(f"Found eventName in Records: {event_type}")
+        
+        logger.info(f"Extracted event type: {event_type}")
         
         # Create a CloudEvent
         attributes = {
@@ -47,9 +59,11 @@ def webhook():
         
         # Create CloudEvent with MinIO event as data
         cloud_event = CloudEvent(attributes, minio_event)
+        logger.debug(f"Created CloudEvent with attributes: {attributes}")
         
         # Convert to HTTP structured content
         headers, body = to_structured(cloud_event)
+        logger.debug(f"CloudEvent headers: {headers}")
         
         # Forward the CloudEvent to the Knative broker
         response = requests.post(
@@ -59,6 +73,7 @@ def webhook():
         )
         
         logger.info(f"Forwarded CloudEvent to broker, response: {response.status_code}")
+        logger.debug(f"Broker response details: {response.text}")
         
         # Return status back to MinIO
         return jsonify({
@@ -68,7 +83,7 @@ def webhook():
         })
     
     except Exception as e:
-        logger.error(f"Error processing webhook: {str(e)}")
+        logger.error(f"Error processing webhook: {str(e)}", exc_info=True)
         return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
