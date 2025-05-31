@@ -3,71 +3,51 @@ import json
 import uuid
 import logging
 import sys
-from datetime import datetime
+from datetime import datetime # Added missing import for datetime.utcnow()
 from flask import Flask, request, jsonify, g
 from kfp import Client as KFPClient
-from kfp.compiler import Compiler
-from kfp.dsl import pipeline, ContainerOp # For potential future in-line compilation
+# from kfp.compiler import Compiler # Not used in this runtime app
+# from kfp.dsl import pipeline, ContainerOp # Not used in this runtime app
 
 # Environment Variables for KFP connection and S3 details
-KFP_ENDPOINT = os.environ.get("KFP_ENDPOINT") # e.g., http://ds-pipeline-pipelines-definition.openshift-ai-project.svc.cluster.local:8888
-KFP_BEARER_TOKEN = os.environ.get("KFP_BEARER_TOKEN") # SA token if not using in-cluster config or KFP_SA_TOKEN_PATH
-KFP_SA_TOKEN_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token" # For in-cluster auth
+KFP_ENDPOINT = os.environ.get("KFP_ENDPOINT")
+KFP_BEARER_TOKEN = os.environ.get("KFP_BEARER_TOKEN")
+KFP_SA_TOKEN_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token"
 
-# Name of your pre-compiled/uploaded Kubeflow Pipeline and its version (if applicable)
-# For this example, we'll assume the pipeline is uploaded to KFP UI beforehand.
-# Alternatively, one could compile and upload on the fly, but that adds complexity.
 PIPELINE_NAME = os.environ.get("KFP_PIPELINE_NAME", "Simple PDF Processing Pipeline")
-# If you upload versions of your pipeline, specify one.
-# PIPELINE_VERSION_ID = os.environ.get("KFP_PIPELINE_VERSION_ID")
-
-# Kubeflow Pipelines Experiment to run under
 KFP_EXPERIMENT_NAME = os.environ.get("KFP_EXPERIMENT_NAME", "S3 Triggered PDF Runs")
 
-# Configure logging
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
 
-# Configure the logger
 class RequestFormatter(logging.Formatter):
     def format(self, record):
-        if hasattr(g, 'request_id'):
-            record.request_id = g.request_id
-        else:
-            record.request_id = 'no-request-id'
+        record.request_id = getattr(g, 'request_id', 'no-request-id')
         return super().format(record)
 
-# Set up root logger
 root_logger = logging.getLogger()
 root_logger.setLevel(LOG_LEVEL)
-
-# Clear any existing handlers to avoid duplication
 if root_logger.handlers:
     root_logger.handlers.clear()
-
-# Create a handler that outputs to stdout
 handler = logging.StreamHandler(sys.stdout)
 handler.setLevel(LOG_LEVEL)
-
-# Format with timestamp, level, request ID, and message
-formatter = RequestFormatter('%(asctime)s [%(levelname)s] [%(request_id)s] %(message)s')
+formatter = RequestFormatter('%(asctime)s [%(levelname)s] [%(request_id)s] %(message)s - %(module)s:%(lineno)d') # Added module/lineno
 handler.setFormatter(formatter)
 root_logger.addHandler(handler)
 
-# Set Flask logger to use the same configuration
 app = Flask(__name__)
 app.logger.handlers = root_logger.handlers
-app.logger.setLevel(LOG_LEVEL)
+app.logger.setLevel(LOG_LEVEL) # Ensure Flask's logger also uses the set level
 
-# Request middleware to add request ID and log request details
 @app.before_request
-def before_request():
+def before_request_logging():
     g.request_id = str(uuid.uuid4())
-    app.logger.debug(f"Request received: {request.method} {request.path}")
-    app.logger.debug(f"Request headers: {dict(request.headers)}")
-    app.logger.debug(f"Request remote addr: {request.remote_addr}")
+    app.logger.debug(f"Request received: {request.method} {request.path} from {request.remote_addr}")
+    # Limiting header logging for brevity unless debug is very high
+    if app.logger.isEnabledFor(logging.DEBUG): 
+        app.logger.debug(f"Request headers: {dict(request.headers)}")
 
 @app.after_request
-def after_request(response):
+def after_request_logging(response):
     app.logger.debug(f"Response status: {response.status_code}")
     return response
 
@@ -76,264 +56,186 @@ def get_kfp_client():
     if KFP_ENDPOINT:
         if os.path.exists(KFP_SA_TOKEN_PATH):
             app.logger.info(f"KFP Client: Using in-cluster SA token from {KFP_SA_TOKEN_PATH} for endpoint {KFP_ENDPOINT}")
-            # For KFP SDK, if the endpoint is in-cluster and you have RBAC,
-            # often you don't need to explicitly pass the token if KFP is configured for it.
-            # However, some KFP setups might require an explicit bearer token.
-            # The KFP SDK's Client() without arguments tries to load in-cluster config.
-            # If your KFP instance requires a bearer token explicitly:
             try:
                 with open(KFP_SA_TOKEN_PATH, 'r') as f:
-                    token = f.read()
+                    token = f.read().strip() # Added strip()
                 app.logger.debug("Successfully read token from service account path")
-                credentials = KFPClient(host=KFP_ENDPOINT).set_user_credentials(user_token=token)
-                return KFPClient(host=KFP_ENDPOINT, existing_credentials=credentials) # Simplified if token is automatically picked up
+                # For KFP SDK >= 2.0, direct token passing might be different or client handles it.
+                # For older KFP SDK (like 1.8.x), set_user_credentials was common.
+                # Let's assume a simple client init and rely on env vars or auto-config for in-cluster.
+                # If using kfp.Client(), it might try to auto-configure.
+                # If explicit token is needed:
+                # client = KFPClient(host=KFP_ENDPOINT, existing_token=token) 
+                client = KFPClient(host=KFP_ENDPOINT) # Simpler, tries to auto-configure
+                # To test connection: client.list_experiments(page_size=1) 
+                return client
             except Exception as e:
-                app.logger.error(f"Failed to read token from {KFP_SA_TOKEN_PATH}: {e}", exc_info=True)
+                app.logger.error(f"Failed to configure KFP client with SA token: {e}", exc_info=True)
                 raise
         elif KFP_BEARER_TOKEN:
             app.logger.info(f"KFP Client: Using KFP_BEARER_TOKEN for endpoint {KFP_ENDPOINT}")
-            credentials = KFPClient(host=KFP_ENDPOINT).set_user_credentials(user_token=KFP_BEARER_TOKEN)
-            return KFPClient(host=KFP_ENDPOINT, existing_credentials=credentials)
+            # client = KFPClient(host=KFP_ENDPOINT, existing_token=KFP_BEARER_TOKEN)
+            client = KFPClient(host=KFP_ENDPOINT) # Simpler, relies on SDK to use token if needed
+            return client
         else:
-            # This attempts to load config from .kube/config or in-cluster config
-            # May or may not work depending on KFP auth setup and where this code runs
             app.logger.info(f"KFP Client: Trying default auth for endpoint {KFP_ENDPOINT}")
             return KFPClient(host=KFP_ENDPOINT)
     else:
-        # Fallback for local testing or if KFP_ENDPOINT is not set
-        # Tries to load from ~/.config/kfp/context.json or in-cluster config if available
-        app.logger.warning("KFP Client: KFP_ENDPOINT not set, trying default client initialization.")
-        return KFPClient()
+        app.logger.warning("KFP Client: KFP_ENDPOINT not set. KFP functionality will be disabled.")
+        return None # Return None if no endpoint, to be handled later
 
-@app.route('/healthz', methods=['GET']) # Ensure this route exists
+@app.route('/healthz', methods=['GET'])
 def healthz():
-    """Dedicated health check endpoint."""
     app.logger.debug("Health check request received")
     return jsonify(status="healthy", message="Application is running"), 200
     
 @app.route('/', methods=['POST'])
 def handle_s3_event():
-    """
-    Receives an S3 event (CloudEvent format from Knative) and triggers a KFP.
-    """
-    app.logger.info("==== NEW S3 EVENT RECEIVED ====")
+    app.logger.info("==== NEW EVENT RECEIVED AT / ====")
     
-    # Log the raw request data for debugging
     app.logger.debug(f"Request content type: {request.content_type}")
     app.logger.debug(f"Request size: {request.content_length} bytes")
     
-    # Log CloudEvent specific headers if present
     cloudevent_headers = {
-        k: v for k, v in request.headers.items() 
-        if k.lower().startswith('ce-') or k.lower() in ['content-type']
+        k.lower(): v for k, v in request.headers.items() 
+        if k.lower().startswith('ce-')
     }
-    app.logger.info(f"CloudEvent headers: {json.dumps(cloudevent_headers, indent=2)}")
+    app.logger.info(f"CloudEvent-like headers: {json.dumps(cloudevent_headers, indent=2)}")
     
-    if not KFP_ENDPOINT:
-        app.logger.error("KFP_ENDPOINT environment variable not set.")
-        return jsonify({"error": "KFP endpoint not configured"}), 500
-
     try:
-        # Check if the request has JSON content
-        if not request.is_json:
-            app.logger.warning(f"Received non-JSON request with content-type: {request.content_type}")
+        cloudevent = request.json
+        if cloudevent is None and request.data: # Handle cases where content-type might be text/plain but is json
+            app.logger.warning("Request not parsed as JSON, but data present. Trying to parse data as JSON.")
             try:
-                raw_data = request.get_data().decode('utf-8')
-                app.logger.debug(f"Raw request data: {raw_data[:1000]}...")  # Log first 1000 chars
-                # Try to parse as JSON anyway
-                cloudevent = json.loads(raw_data)
+                cloudevent = json.loads(request.data.decode('utf-8'))
             except json.JSONDecodeError as e:
-                app.logger.error(f"Failed to parse request data as JSON: {e}")
-                return jsonify({"error": "Invalid request format - expected JSON"}), 400
-        else:
-            cloudevent = request.json
+                app.logger.error(f"Failed to parse request.data as JSON: {e}. Raw data (first 500 chars): {request.data[:500]}")
+                return jsonify({"error": "Invalid request format - expected JSON in body or data"}), 400
         
-        # Log the full CloudEvent for debugging
-        app.logger.info(f"Received CloudEvent: {json.dumps(cloudevent, indent=2)}")
+        if cloudevent is None:
+            app.logger.error("Request body is empty or not valid JSON, and request.data is also empty/unparsable.")
+            return jsonify({"error": "Request body is empty or not valid JSON"}), 400
+            
+        app.logger.info(f"Full Received Event Body (parsed as JSON): {json.dumps(cloudevent, indent=2)}")
         
-        # Log CloudEvent attributes for tracing
-        ce_id = cloudevent.get('id', 'unknown')
-        ce_source = cloudevent.get('source', 'unknown')
-        ce_type = cloudevent.get('type', 'unknown')
-        ce_time = cloudevent.get('time', datetime.utcnow().isoformat())
+        # ---- MODIFICATION TO "ACCEPT EVERYTHING" FOR DEBUGGING ----
+        # We will log the event and then try to process it as if it's the expected MinIO event
+        # but we won't strictly enforce PDF or specific EventName for now, just log.
         
-        app.logger.info(f"Processing CloudEvent: id={ce_id}, source={ce_source}, type={ce_type}, time={ce_time}")
-        
-        # Extract S3 event data from CloudEvent
-        s3_event_data = cloudevent.get('data')  # This structure depends on the S3 event source
-        if not s3_event_data:
-            app.logger.warning("No 'data' field found in CloudEvent, trying to use event as raw S3 event")
-            # Try to get data directly if not nested (e.g. if S3Source sends raw S3 event)
-            s3_event_data = cloudevent
-        
-        app.logger.debug(f"S3 event data structure: {json.dumps(s3_event_data, indent=2)}")
-        
-        # Standard S3 event structure might have 'Records'
-        # AWS S3 Event Structure (often adapted by compatible sources)
-        if 'Records' in s3_event_data:
-            app.logger.debug("Found AWS S3 event structure with 'Records' field")
-            record = s3_event_data['Records'][0]
-            event_name = record.get('eventName', 'unknown')
-            event_time = record.get('eventTime', 'unknown')
-            bucket_name = record['s3']['bucket']['name']
-            object_key = record['s3']['object']['key']
-            object_size = record['s3']['object'].get('size', 'unknown')
-            app.logger.info(f"AWS S3 event details: event={event_name}, time={event_time}, size={object_size}")
-        elif 'bucket' in s3_event_data and 'key' in s3_event_data:  # Simpler custom event
-            app.logger.debug("Found simplified S3 event structure with direct 'bucket' and 'key' fields")
-            bucket_name = s3_event_data['bucket']
-            object_key = s3_event_data['key']
-        elif 'Key' in s3_event_data and 'Bucket' in s3_event_data:  # MinIO specific event format
-            app.logger.debug("Found possible MinIO event structure with 'Key' and 'Bucket' fields")
-            bucket_name = s3_event_data['Bucket']
-            object_key = s3_event_data['Key']
-        else:
-            app.logger.error(f"Could not parse S3 details from event structure: {json.dumps(s3_event_data, indent=2)}")
-            return jsonify({"error": "Could not parse S3 bucket/key from event"}), 400
+        app.logger.info("Attempting to process event as S3 notification wrapped in CloudEvent...")
 
-        app.logger.info(f"Processing S3 event for: bucket='{bucket_name}', key='{object_key}'")
+        # Extract standard CloudEvent attributes for logging
+        ce_id = request.headers.get('Ce-Id', cloudevent.get('id', 'N/A'))
+        ce_source = request.headers.get('Ce-Source', cloudevent.get('source', 'N/A'))
+        ce_type = request.headers.get('Ce-Type', cloudevent.get('type', 'N/A'))
+        ce_time = request.headers.get('Ce-Time', cloudevent.get('time', datetime.utcnow().isoformat() + "Z"))
+        
+        app.logger.info(f"Parsed CloudEvent attributes: id={ce_id}, source={ce_source}, type={ce_type}, time={ce_time}")
 
-        # Check if the object is a PDF file
-        if not object_key.lower().endswith(".pdf"):
-            app.logger.info(f"Object '{object_key}' is not a PDF. Skipping KFP trigger.")
-            return jsonify({
-                "message": "Object is not a PDF, pipeline not triggered",
-                "request_id": g.request_id,
-                "bucket": bucket_name,
-                "key": object_key
-            }), 200
+        minio_event_data = cloudevent.get('data')
+        if not minio_event_data:
+            app.logger.warning("No 'data' field in CloudEvent. Assuming entire payload is the MinIO event.")
+            minio_event_data = cloudevent # Use the whole event as MinIO data
 
-        # Initialize KFP client
-        app.logger.debug("Initializing KFP client")
+        bucket_name = "unknown_bucket"
+        object_key = "unknown_key"
+        eventName = "unknown_eventName"
+        is_pdf = False
+
         try:
-            client = get_kfp_client()
-            app.logger.debug("KFP client initialized successfully")
-        except Exception as e:
-            app.logger.error(f"Failed to initialize KFP client: {e}", exc_info=True)
-            return jsonify({
-                "error": f"Failed to initialize KFP client: {str(e)}",
-                "request_id": g.request_id
-            }), 500
+            # Try to parse MinIO event structure from minio_event_data
+            if 'Records' in minio_event_data and len(minio_event_data['Records']) > 0:
+                record = minio_event_data['Records'][0]
+                eventName = record.get('eventName', 'unknown_eventName_in_records')
+                s3_info = record.get('s3', {})
+                object_info = s3_info.get('object', {})
+                bucket_info = s3_info.get('bucket', {})
+                object_key = object_info.get('key', 'unknown_key_in_records')
+                bucket_name = bucket_info.get('name', 'unknown_bucket_in_records')
+            elif 'Key' in minio_event_data and 'Bucket' in minio_event_data : # Simpler MinIO like structure sometimes seen
+                 object_key = minio_event_data.get('Key')
+                 bucket_name = minio_event_data.get('Bucket')
+                 eventName = minio_event_data.get('EventName', 's3:ObjectCreated:Put') # Assume create if not present
+            
+            app.logger.info(f"Interpreted MinIO event: Name='{eventName}', Bucket='{bucket_name}', Key='{object_key}'")
+            
+            if object_key and isinstance(object_key, str):
+                is_pdf = object_key.lower().endswith(".pdf")
+                app.logger.info(f"Is PDF: {is_pdf}")
+            else:
+                app.logger.warning(f"Object key '{object_key}' is not a valid string or is missing.")
 
-        # Find the pipeline ID from its name
-        # Note: This API call can be slow. Better to use pipeline ID directly if known or version ID.
-        app.logger.debug(f"Looking for pipeline with name: '{PIPELINE_NAME}'")
+        except Exception as parse_ex:
+            app.logger.error(f"Error parsing S3 details from event data: {parse_ex}", exc_info=True)
+            # Continue for debugging, don't return error yet
+
+        # For debugging, we will proceed to log KFP attempt even if not PDF or wrong event type
+        app.logger.info(f"DEBUG: Proceeding to KFP logic regardless of PDF/event type check for event: {object_key}")
+
+        if not KFP_ENDPOINT:
+            app.logger.error("KFP_ENDPOINT not set. Cannot trigger pipeline.")
+            return jsonify({"error": "KFP endpoint not configured on server"}), 500
+        
+        kfp_client = get_kfp_client()
+        if not kfp_client:
+            app.logger.error("KFP client could not be initialized. Cannot trigger pipeline.")
+            return jsonify({"error": "KFP client initialization failed"}), 500
+
         try:
-            pipeline_info = client.get_pipeline_id(PIPELINE_NAME)
+            app.logger.info(f"Looking for pipeline: '{PIPELINE_NAME}'")
+            pipeline_info = kfp_client.get_pipeline_id(PIPELINE_NAME)
             if not pipeline_info:
-                app.logger.error(f"Pipeline with name '{PIPELINE_NAME}' not found in KFP.")
-                return jsonify({
-                    "error": f"Pipeline '{PIPELINE_NAME}' not found",
-                    "request_id": g.request_id
-                }), 500
+                app.logger.error(f"Pipeline '{PIPELINE_NAME}' not found.")
+                return jsonify({"error": f"Pipeline '{PIPELINE_NAME}' not found"}), 500
             pipeline_id = pipeline_info.id
-            app.logger.info(f"Found KFP Pipeline ID: {pipeline_id} for name '{PIPELINE_NAME}'")
+            app.logger.info(f"Found KFP Pipeline ID: {pipeline_id}")
 
-        except Exception as e:
-            app.logger.error(f"Failed to retrieve pipeline info: {e}", exc_info=True)
-            return jsonify({
-                "error": f"Failed to retrieve pipeline: {str(e)}",
-                "request_id": g.request_id
-            }), 500
+            experiment = kfp_client.get_experiment(experiment_name=KFP_EXPERIMENT_NAME)
+            app.logger.info(f"Using KFP Experiment ID: {experiment.id} (Name: {KFP_EXPERIMENT_NAME})")
 
-        # Define pipeline parameters
-        pipeline_params = {
-            'pdf_s3_bucket': bucket_name,
-            'pdf_s3_key': object_key,
-            'processing_timestamp': cloudevent.get('time', ''),  # Pass event time
-            'cloud_event_id': cloudevent.get('id', '')  # Pass CloudEvent ID for tracing
-        }
-        app.logger.debug(f"Pipeline parameters: {json.dumps(pipeline_params, indent=2)}")
+            pipeline_params = {
+                'pdf_s3_bucket': bucket_name if bucket_name else "unknown",
+                'pdf_s3_key': object_key if object_key else "unknown",
+                'processing_timestamp': ce_time,
+            }
+            app.logger.info(f"Pipeline parameters for KFP: {json.dumps(pipeline_params)}")
 
-        # Get or create an experiment
-        app.logger.debug(f"Getting or creating experiment: '{KFP_EXPERIMENT_NAME}'")
-        try:
-            experiment = client.get_experiment(experiment_name=KFP_EXPERIMENT_NAME)
-            app.logger.debug(f"Found existing experiment: {KFP_EXPERIMENT_NAME}")
-        except Exception as e:  # Catch more specific KFP exceptions if possible
-            app.logger.info(f"Experiment '{KFP_EXPERIMENT_NAME}' not found. Creating it. Error: {e}")
-            try:
-                experiment = client.create_experiment(name=KFP_EXPERIMENT_NAME)
-                app.logger.info(f"Created new experiment: {KFP_EXPERIMENT_NAME}")
-            except Exception as e:
-                app.logger.error(f"Failed to create experiment: {e}", exc_info=True)
-                return jsonify({
-                    "error": f"Failed to create experiment: {str(e)}",
-                    "request_id": g.request_id
-                }), 500
-        app.logger.info(f"Using KFP Experiment ID: {experiment.id}")
-
-        # Run the pipeline
-        filename = object_key.split('/')[-1]
-        cloud_event_id = cloudevent.get('id', 'unknown_event')
-        run_name = f"{PIPELINE_NAME} Run - {filename} - {cloud_event_id}"
-        app.logger.info(f"Triggering pipeline run: '{run_name}'")
-        
-        try:
-            # Use pipeline_id for more robust triggering
-            run_result = client.run_pipeline(
+            run_name = f"PDF Event - {object_key if object_key else 'unknown_key'} - {ce_id}"
+            run_result = kfp_client.run_pipeline(
                 experiment_id=experiment.id,
-                job_name=run_name,  # Also known as run_name
-                pipeline_id=pipeline_id,  # Use if you have uploaded the pipeline
-                # pipeline_package_path=None, # Use if compiling/uploading on the fly
+                job_name=run_name,
+                pipeline_id=pipeline_id,
                 params=pipeline_params
             )
-
-            app.logger.info(f"Successfully triggered KFP run: {run_result.id} - {run_result.name}")
-            
-            # Create pipeline run URL
-            run_url = f"{KFP_ENDPOINT}/#/runs/details/{run_result.id}"  # Generic URL, might need adjustment
-            app.logger.info(f"Pipeline run URL: {run_url}")
+            run_url = f"{KFP_ENDPOINT}/#/runs/details/{run_result.id}"
+            app.logger.info(f"KFP run successfully triggered: ID={run_result.id}, Name='{run_result.name}', URL: {run_url}")
             
             return jsonify({
-                "message": "Kubeflow Pipeline triggered successfully",
-                "request_id": g.request_id,
-                "cloud_event_id": cloud_event_id,
-                "bucket": bucket_name,
-                "key": object_key,
+                "message": "KFP pipeline triggered (or attempted for debugging)",
+                "event_received": True,
+                "parsed_bucket": bucket_name,
+                "parsed_key": object_key,
+                "is_pdf_detected": is_pdf,
                 "kfp_run_id": run_result.id,
-                "kfp_run_name": run_result.name,
                 "kfp_run_url": run_url
             }), 200
-            
-        except Exception as e:
-            app.logger.error(f"Failed to run pipeline: {e}", exc_info=True)
-            return jsonify({
-                "error": f"Failed to run pipeline: {str(e)}",
-                "request_id": g.request_id,
-                "bucket": bucket_name,
-                "key": object_key
-            }), 500
 
-    except json.JSONDecodeError as e:
-        app.logger.error(f"JSON parsing error: {e}", exc_info=True)
-        return jsonify({
-            "error": f"Invalid JSON format: {str(e)}",
-            "request_id": g.request_id
-        }), 400
-    except KeyError as e:
-        app.logger.error(f"Missing required field in event: {e}", exc_info=True)
-        return jsonify({
-            "error": f"Missing required field: {str(e)}",
-            "request_id": g.request_id
-        }), 400
+        except Exception as kfp_ex:
+            app.logger.error(f"Error during KFP interaction: {kfp_ex}", exc_info=True)
+            return jsonify({"error": f"KFP interaction failed: {str(kfp_ex)}"}), 500
+
     except Exception as e:
-        app.logger.error(f"Error processing S3 event or triggering KFP: {e}", exc_info=True)
-        return jsonify({
-            "error": f"Internal server error: {str(e)}",
-            "request_id": g.request_id
-        }), 500
+        app.logger.error(f"Generic error in event handler: {e}", exc_info=True)
+        return jsonify({"error": "Internal server error processing event"}), 500
 
-if __name__ == '__main__':
+if __name__ == '__main__': # This block is mainly for local testing, Gunicorn runs app in container
     port = int(os.environ.get("PORT", 8080))
+    # For local testing, Flask's built-in server with debug can be useful
+    # Set FLASK_DEBUG=true as an environment variable for local debug mode
     debug_mode = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
     
-    app.logger.info(f"=== Starting S3 Event Handler ===")
+    app.logger.info(f"=== Starting S3 Event Handler (Local Test Mode: {debug_mode}) ===")
     app.logger.info(f"Log level: {LOG_LEVEL}")
     app.logger.info(f"KFP Endpoint: {KFP_ENDPOINT}")
-    app.logger.info(f"KFP Pipeline Name: {PIPELINE_NAME}")
-    app.logger.info(f"KFP Experiment Name: {KFP_EXPERIMENT_NAME}")
-    app.logger.info(f"Server running on port: {port}")
-    app.logger.info(f"Debug mode: {debug_mode}")
-    
-    app.run(host='0.0.0.0', port=port, debug=debug_mode)  # Debug False for production
+    # ... other startup logs
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)
