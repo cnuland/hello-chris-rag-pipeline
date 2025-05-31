@@ -8,6 +8,7 @@ metadata:
     app: minio
   annotations:
     haproxy.router.openshift.io/timeout: 300s
+    haproxy.router.openshift.io/secure-backends: "true"
 spec:
   port:
     targetPort: console
@@ -30,6 +31,8 @@ metadata:
   annotations:
     haproxy.router.openshift.io/timeout: 300s
     haproxy.router.openshift.io/balance: roundrobin
+    haproxy.router.openshift.io/secure-backends: "true"
+    haproxy.router.openshift.io/hsts_header: max-age=31536000;includeSubDomains
 spec:
   port:
     targetPort: api
