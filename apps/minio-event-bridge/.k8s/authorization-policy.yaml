@@ -17,5 +17,5 @@ spec:
     to:
     - operation:
         methods: ["GET", "POST"]
-        paths: ["/webhook"]
+        paths: ["*"]
         ports: ["8080"]
