@@ -1,0 +1,24 @@
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-minio-to-event-bridge
+  namespace: rag-pipeline-workshop
+  labels:
+    app.kubernetes.io/instance: minio-event-bridge
+spec:
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        namespaces:
+        - minio
+    to:
+    - operation:
+        methods:
+        - POST
+        - GET
+        paths:
+        - /webhook
+  selector:
+    matchLabels:
+      app: minio-event-bridge
