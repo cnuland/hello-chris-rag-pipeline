@@ -1,15 +1,25 @@
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
-  name: kfp-s3-trigger-ingress
+  # You can choose a new name or decide to replace one of the existing ones.
+  # Using a new name like 'kfp-s3-trigger-unified-vs' is safer for testing.
+  name: kfp-s3-trigger-unified-vs 
   namespace: rag-pipeline-workshop
 spec:
   hosts:
+    # Host from your first VirtualService (for external ingress)
     - "kfp-s3-trigger-rag-pipeline-workshop.apps.cluster-6wqbq.6wqbq.sandbox842.opentlc.com"
+    # Host from your second VirtualService (for internal mesh traffic)
+    - "kfp-s3-trigger.rag-pipeline-workshop.svc.cluster.local"
   gateways:
-    - knative-serving/knative-ingress-gateway
+    # Gateway from your first VirtualService
+    - knative-serving/knative-ingress-gateway 
+    # Gateway from your second VirtualService (default for mesh internal)
+    - mesh 
   http:
     - match:
+        # This match condition from your first VirtualService is a common default.
+        # It will apply to requests for any of the hosts coming through any of the gateways.
         - uri:
             prefix: "/"
       route:
@@ -17,21 +27,8 @@ spec:
             host: kfp-s3-trigger.rag-pipeline-workshop.svc.cluster.local
             port:
               number: 80
-
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: kfp-s3-trigger
-  namespace: rag-pipeline-workshop
-spec:
-  hosts:
-  - "kfp-s3-trigger.rag-pipeline-workshop.svc.cluster.local"
-  gateways:
-  - mesh
-  http:
-  - route:
-    - destination:
-        host: kfp-s3-trigger.rag-pipeline-workshop.svc.cluster.local
-        port:
-          number: 80
-
+      # If you had specific headers or other match conditions for one gateway/host vs. the other,
+      # you might need separate 'http' route blocks with more specific 'match' clauses
+      # and potentially different 'gateways' listed within each match if the routing logic differed.
+      # But since both route to the same destination here with a general path prefix,
+      # this single http block should suffice.
