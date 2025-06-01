@@ -3,7 +3,6 @@ kind: Kustomization
 
 resources:
   - namespace.yaml # This creates the 'minio' namespace
-  - create-secret.yaml # WARNING: Contains placeholder credentials
   - sa.yaml
   - pvc.yaml
   - deployment.yaml
