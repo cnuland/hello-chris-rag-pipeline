@@ -1,0 +1,22 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-knative-kafka-access
+  namespace: kafka
+spec:
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        namespaces: ["knative-eventing", "knative-serving", "rag-pipeline-workshop", "minio"]
+    to:
+    - operation:
+        ports: ["9091", "9092", "9093"]
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
+  - from:
+    - source:
+        principals: ["*"]
+    to:
+    - operation:
+        ports: ["9091", "9092", "9093"]
+        paths: ["*"]
