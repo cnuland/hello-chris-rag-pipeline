@@ -4,3 +4,4 @@ resources:
 - trigger.yaml
 - config.yaml
 - service-mesh-event-member.yaml
+- networkpolicy.yaml
