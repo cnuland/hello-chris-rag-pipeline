@@ -1,25 +1,23 @@
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
-  # You can choose a new name or decide to replace one of the existing ones.
-  # Using a new name like 'kfp-s3-trigger-unified-vs' is safer for testing.
-  name: kfp-s3-trigger-unified-vs 
+  name: kfp-s3-trigger-unified-vs # Using the name from your first combined attempt
   namespace: rag-pipeline-workshop
 spec:
   hosts:
-    # Host from your first VirtualService (for external ingress)
+    # Host for external ingress (from kfp-s3-trigger-ingress and kfp-s3-trigger-unified-vs)
     - "kfp-s3-trigger-rag-pipeline-workshop.apps.cluster-6wqbq.6wqbq.sandbox842.opentlc.com"
-    # Host from your second VirtualService (for internal mesh traffic)
+    # Host for internal mesh traffic (from all three original VirtualServices)
     - "kfp-s3-trigger.rag-pipeline-workshop.svc.cluster.local"
   gateways:
-    # Gateway from your first VirtualService
+    # Gateway for external ingress (from kfp-s3-trigger-ingress and kfp-s3-trigger-unified-vs)
     - knative-serving/knative-ingress-gateway 
-    # Gateway from your second VirtualService (default for mesh internal)
+    # Gateway for internal mesh traffic (from kfp-s3-trigger-mesh and kfp-s3-trigger-unified-vs)
     - mesh 
   http:
     - match:
-        # This match condition from your first VirtualService is a common default.
-        # It will apply to requests for any of the hosts coming through any of the gateways.
+        # This general match condition applies to requests for any of the hosts 
+        # coming through any of the gateways, matching all paths.
         - uri:
             prefix: "/"
       route:
@@ -27,8 +25,9 @@ spec:
             host: kfp-s3-trigger.rag-pipeline-workshop.svc.cluster.local
             port:
               number: 80
-      # If you had specific headers or other match conditions for one gateway/host vs. the other,
-      # you might need separate 'http' route blocks with more specific 'match' clauses
-      # and potentially different 'gateways' listed within each match if the routing logic differed.
-      # But since both route to the same destination here with a general path prefix,
-      # this single http block should suffice.
+      # Timeout and Retries from your kfp-s3-trigger-mesh VirtualService
+      # These will now apply to traffic matched by this http route block.
+      timeout: 60s
+      retries:
+        attempts: 3
+        perTryTimeout: 20s

@@ -5,7 +5,5 @@ resources:
 - knative-service.yaml
 - rbac.yaml
 - kfp-s3-trigger-auth.yaml
-- vs-ingress.yaml
-- vs-mesh.yaml
 - network-policy.yaml
 - virtual-service.yaml
