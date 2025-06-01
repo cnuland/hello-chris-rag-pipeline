@@ -78,15 +78,18 @@ def webhook():
         headers, body = to_structured(cloud_event)
         logger.debug(f"CloudEvent headers: {headers}")
         
-        # Forward the CloudEvent to the Knative broker
+        logger.info(f"Attempting to POST CloudEvent to Broker. URL: {BROKER_URL}")
+        logger.info(f"CloudEvent HTTP Headers being sent: {json.dumps(headers, indent=2)}") # headers from to_structured()
+        logger.info(f"CloudEvent HTTP Body being sent: {body.decode('utf-8') if isinstance(body, bytes) else body}") # body from to_structured()
+
         response = requests.post(
             BROKER_URL,
             headers=headers,
             data=body
         )
-        
-        logger.info(f"Forwarded CloudEvent to broker, response: {response.status_code}")
-        logger.debug(f"Broker response details: {response.text}")
+        logger.info(f"Broker Ingress Response Status: {response.status_code}")
+        logger.info(f"Broker Ingress Response Headers: {json.dumps(dict(response.headers), indent=2)}")
+        logger.info(f"Broker Ingress Response Body (first 500 chars): {response.text[:500]}")
         
         # Return status back to MinIO
         return jsonify({
