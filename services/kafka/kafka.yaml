@@ -46,6 +46,14 @@ spec:
     storage:
       type: ephemeral           # Data lost on pod restart. Use 'persistent-claim' for production.
 
+    logging:
+      type: inline
+      loggers:
+        rootLogger.level: DEBUG
+        logger.kafka.level: DEBUG
+        logger.logcleaner.level: DEBUG
+        logger.authorizer.level: TRACE
+
     config:
       # Essential broker configurations for a single-node cluster
       broker.id: ${STRIMZI_BROKER_ID} # Strimzi injects this based on the pod ordinal
