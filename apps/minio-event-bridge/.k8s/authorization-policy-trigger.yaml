@@ -1,12 +1,11 @@
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-all-for-kfp-trigger-debug # New name or overwrite existing
+  name: kfp-s3-trigger-allow-all-debug
   namespace: rag-pipeline-workshop
 spec:
   selector:
     matchLabels:
       serving.knative.dev/service: kfp-s3-trigger
-  action: ALLOW
   rules:
-  - {} # Allow all sources, all methods, all paths
+  - {} # This allows ALL authenticated and unauthenticated traffic
