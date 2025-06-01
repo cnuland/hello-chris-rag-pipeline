@@ -2,74 +2,93 @@ apiVersion: kafka.strimzi.io/v1beta2
 kind: Kafka
 metadata:
   name: kafka-cluster       # Name of your Kafka cluster
-  namespace: kafka              # CHANGEME: Namespace where you want Kafka deployed (e.g., "kafka")
+  namespace: kafka              # Namespace where Kafka is deployed
 spec:
   kafka:
-    # Use a Kafka version compatible with your Strimzi/AMQ Streams operator version
-    version: "3.8.0"            # Example version, check compatibility
-    replicas: 1                 # Number of Kafka broker pods (use 3+ for production)
+    version: "3.8.0"            # Ensure this Kafka version is supported by your Strimzi operator
+    replicas: 1                 # Single broker for PoC/dev (use 3+ for production)
     listeners:
       # Plain listener for internal cluster communication (port 9092)
-      # This is what MinIO and Knative KafkaSource will typically use internally.
       - name: plain
         port: 9092
         type: internal
         tls: false
         configuration:
-          useServiceDnsDomain: true  # Ensures the service DNS domain (.cluster.local) is used
-      # TLS listener for internal cluster communication (port 9093) - good practice for added security
-      # If you enable this and want to use it, MinIO and KafkaSource would need TLS config.
+          # Strimzi will use the service FQDN for advertised.listeners for this listener
+          useServiceDnsDomain: true
+          # Kafka brokers will advertise themselves as:
+          # <pod-name>.kafka-cluster-kafka-brokers.kafka.svc.cluster.local:9092
+
+      # TLS listener for internal cluster communication (port 9093)
       - name: tls
         port: 9093
         type: internal
         tls: true
+        authentication:
+          type: tls # Enables TLS client authentication for this listener if needed by clients
         configuration:
-          useServiceDnsDomain: true  # Ensures the service DNS domain (.cluster.local) is used
-      # External listener (e.g., via OpenShift Route) - OPTIONAL
-      # - name: external
-      #   port: 9094
-      #   type: route # This will create an OpenShift Route for external access
-      #   tls: true
+          # Strimzi will use the service FQDN for advertised.listeners for this listener
+          useServiceDnsDomain: true
+          # Kafka brokers will advertise themselves as:
+          # <pod-name>.kafka-cluster-kafka-brokers.kafka.svc.cluster.local:9093
+          # Broker-to-broker communication will also use this if enabled.
+          # Ensure clients (like Knative components) are configured to use TLS and trust the CA
+          # if they connect to this port.
+
+    # Example of an optional external listener via OpenShift Route (not enabled here)
+    # - name: external
+    #   port: 9094
+    #   type: route
+    #   tls: true
+    #   authentication:
+    #     type: scram-sha-512 # Or tls, or oauth
+
     storage:
-      type: ephemeral           # Ephemeral storage (data lost on pod restart).
-                                # For production, use 'persistent-claim' with an appropriate storage class and size.
-                                # Example for persistent:
-                                # type: persistent-claim
-                                # size: 100Gi
-                                # deleteClaim: false # Set to true if PVCs should be deleted when Kafka CR is deleted
-    config: # Configuration for a single-broker setup
-      broker.id: ${STRIMZI_BROKER_ID}  # Use the Strimzi-injected broker ID
+      type: ephemeral           # Data lost on pod restart. Use 'persistent-claim' for production.
+
+    config:
+      # Essential broker configurations for a single-node cluster
+      broker.id: ${STRIMZI_BROKER_ID} # Strimzi injects this based on the pod ordinal
       offsets.topic.replication.factor: 1
       transaction.state.log.replication.factor: 1
       transaction.state.log.min.isr: 1
-      log.message.format.version: "3.8" # Match your Kafka version
-      inter.broker.protocol.version: "3.8" # Match your Kafka version
-      # Add explicit FQDN listener configuration to ensure cluster.local suffix is used
-      listener.name.plain.advertised.listeners: PLAINTEXT://${HOSTNAME}.kafka-cluster-kafka-brokers.kafka.svc.cluster.local:9092
-      listener.name.tls.advertised.listeners: SSL://${HOSTNAME}.kafka-cluster-kafka-brokers.kafka.svc.cluster.local:9093
-      # Ensure control plane also uses FQDNs consistently
-      # Additional host name verification settings
-      ssl.endpoint.identification.algorithm: https
-      # Ensure broker<->broker communication uses consistent DNS resolution
-      broker.id.generation.enable: true
-    # resources: # Define resource requests and limits for Kafka brokers for production
+      # Align with Kafka version
+      log.message.format.version: "3.8"
+      inter.broker.protocol.version: "3.8"
+      # For the TLS listener, ensure hostname verification is enabled if clients expect it.
+      # Strimzi usually handles the certs correctly for internal listeners.
+      # ssl.endpoint.identification.algorithm: https # Usually needed if clients verify hostname for TLS
+
+      # The explicit listener.name.<name>.advertised.listeners have been removed.
+      # Strimzi will now derive these from the `listeners` array configuration above,
+      # especially with `useServiceDnsDomain: true`.
+      # If you still face DNS issues from clients after the broker is stable,
+      # you might need to re-introduce them or use the global 'advertised.listeners' key.
+      # Example of global advertised.listeners (if you prefer to be very explicit):
+      # advertised.listeners: PLAINTEXT://kafka-cluster-kafka-0.kafka-cluster-kafka-brokers.kafka.svc.cluster.local:9092,SSL://kafka-cluster-kafka-0.kafka-cluster-kafka-brokers.kafka.svc.cluster.local:9093
+      # However, for a multi-broker setup, the ${HOSTNAME} variable or Strimzi's auto-config is better.
+
+    # Uncomment and adjust resources for production
+    # resources:
     #   requests:
     #     memory: 2Gi
     #     cpu: "1"
     #   limits:
     #     memory: 4Gi
     #     cpu: "2"
+
   zookeeper:
-    replicas: 1                 # Number of Zookeeper pods (use 3+ for production)
+    replicas: 1                 # Single Zookeeper for PoC/dev (use 3+ for production)
     storage:
-      type: ephemeral           # Ephemeral storage for Zookeeper. Use 'persistent-claim' for production.
-    # resources: # Define resource requests and limits for Zookeeper for production
+      type: ephemeral           # Use 'persistent-claim' for production.
+    # resources:
     #   requests:
     #     memory: 1Gi
     #     cpu: "500m"
     #   limits:
     #     memory: 2Gi
     #     cpu: "1"
+
   entityOperator:
-    topicOperator: {}           # Deploys an operator to manage KafkaTopic CRs within this Kafka cluster
-    userOperator: {}            # Deploys an operator to manage KafkaUser CRs (for Kafka ACLs)
+    topicOperator: {}           # Manages KafkaTopic CRs
+    userOperator: {}            # Manages KafkaUser CRs
