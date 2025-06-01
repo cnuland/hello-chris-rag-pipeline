@@ -1,7 +1,7 @@
 apiVersion: maistra.io/v1
 kind: ServiceMeshMember
 metadata:
-  name: knative
+  name: default
   namespace: knative-eventing
 spec:
   controlPlaneRef:

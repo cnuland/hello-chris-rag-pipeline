@@ -1,7 +1,7 @@
 apiVersion: maistra.io/v1
 kind: ServiceMeshMember
 metadata:
-  name: bridge
+  name: default
   namespace: rag-pipeline-workshop
 spec:
   controlPlaneRef:
