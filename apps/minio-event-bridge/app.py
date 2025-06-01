@@ -6,7 +6,7 @@ import logging
 import os
 from datetime import datetime, timezone # Ensure timezone is imported for UTC
 import json # For pretty printing logs
-
+import sys
 app = Flask(__name__)
 
 # Configure logging based on environment variable
