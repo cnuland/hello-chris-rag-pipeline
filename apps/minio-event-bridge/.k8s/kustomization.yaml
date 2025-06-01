@@ -4,16 +4,4 @@ kind: Kustomization
 resources:
   - deployment.yaml
   - network-policies.yaml
-  - authorization-policy.yaml
-  - authorization-policy-kafka-broker.yaml
-  - authorization-policy-knative-eventing.yaml
-  - peer-authentication.yaml
-  - peer-authentication-kafka.yaml
-  - service-entry.yaml
-  - service-entry-kafka-broker.yaml
-  - destination-rule.yaml
-  - destination-rule-kafka-broker.yaml
   - service.yaml
-  - virtual-service.yaml
-  - service-mesh-member.yaml
-
