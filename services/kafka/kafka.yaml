@@ -50,6 +50,12 @@ spec:
       # Additional DNS resolution settings
       advertised.listeners: PLAINTEXT://${HOSTNAME}.kafka-cluster-kafka-brokers.kafka.svc.cluster.local:9092,SSL://${HOSTNAME}.kafka-cluster-kafka-brokers.kafka.svc.cluster.local:9093
       listeners: PLAINTEXT://:9092,SSL://:9093
+      # Ensure control plane also uses FQDNs consistently
+      control.plane.listener.name: PLAINTEXT
+      # Additional host name verification settings
+      ssl.endpoint.identification.algorithm: https
+      # Ensure broker<->broker communication uses consistent DNS resolution
+      broker.id.generation.enable: true
     # resources: # Define resource requests and limits for Kafka brokers for production
     #   requests:
     #     memory: 2Gi
