@@ -1,9 +1,0 @@
-apiVersion: eventing.knative.dev/v1
-kind: Trigger
-metadata:
-  name: minio-pdf-event-trigger
-  namespace: rag-pipeline-workshop
-spec:
-  subscriber:
-    uri: http://kfp-s3-trigger.rag-pipeline-workshop.svc.cluster.local
-
