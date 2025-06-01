@@ -1,0 +1,16 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: kfp-s3-trigger-allow-all-debug
+  namespace: rag-pipeline-workshop
+spec:
+  action: ALLOW
+  rules:
+  - to:
+    - operation:
+        methods: ["*"]
+        paths: ["*"]
+  selector:
+    matchLabels:
+      serving.knative.dev/service: kfp-s3-trigger
+

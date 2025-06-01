@@ -1,0 +1,21 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: kfp-s3-trigger-ingress
+  namespace: rag-pipeline-workshop
+spec:
+  hosts:
+  - "kfp-s3-trigger.rag-pipeline-workshop.svc.cluster.local"
+  - "kfp-s3-trigger-rag-pipeline-workshop.apps.cluster-6wqbq.6wqbq.sandbox842.opentlc.com"
+  gateways:
+  - knative-serving/knative-ingress-gateway
+  http:
+  - match:
+    - uri:
+        prefix: "/"
+    route:
+    - destination:
+        host: kfp-s3-trigger.rag-pipeline-workshop.svc.cluster.local
+        port:
+          number: 80
+

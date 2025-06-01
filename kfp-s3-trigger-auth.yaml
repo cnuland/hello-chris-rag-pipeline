@@ -1,0 +1,21 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-knative-eventing-to-kfp-s3-trigger
+  namespace: rag-pipeline-workshop
+spec:
+  selector:
+    matchLabels:
+      serving.knative.dev/service: kfp-s3-trigger
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        namespaces: ["knative-eventing"]
+    - source:
+        principals: ["cluster.local/ns/knative-eventing/sa/kafka-broker-dispatcher"]
+    to:
+    - operation:
+        methods: ["*"]
+        paths: ["*"]
+

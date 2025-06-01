@@ -1,0 +1,21 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: kfp-s3-trigger-mesh
+  namespace: rag-pipeline-workshop
+spec:
+  hosts:
+  - kfp-s3-trigger.rag-pipeline-workshop.svc.cluster.local
+  gateways:
+  - mesh
+  http:
+  - route:
+    - destination:
+        host: kfp-s3-trigger.rag-pipeline-workshop.svc.cluster.local
+        port:
+          number: 80
+    timeout: 60s
+    retries:
+      attempts: 3
+      perTryTimeout: 20s
+
