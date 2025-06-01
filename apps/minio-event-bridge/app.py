@@ -1,7 +1,7 @@
-from flask import Flask, request, jsonify, g # Added g for request_id consistency
-from cloudevents.http import CloudEvent # CloudEvent object
-from cloudevents.conversion import to_binary, to_structured # to_binary is key
-from cloudevents.http import marshaller # For more control if needed, but to_binary is often enough
+from flask import Flask, request, jsonify, g
+from cloudevents.http import CloudEvent # Main CloudEvent object
+from cloudevents.conversion import to_binary, to_structured # Keep both for flexibility
+# REMOVE: from cloudevents.http import marshaller 
 import requests
 import uuid
 import logging
