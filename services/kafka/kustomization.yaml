@@ -6,4 +6,5 @@ resources:
   - topic.yaml
   - network-policy-kafka-knative.yaml
   - service-mesh-member.yaml
-  - webhook-auth-policy.yaml
+  -webhook-network-policy.yaml
+

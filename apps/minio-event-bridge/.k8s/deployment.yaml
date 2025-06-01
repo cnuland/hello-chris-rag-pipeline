@@ -29,7 +29,7 @@ spec:
         imagePullPolicy: Always
         env:
         - name: BROKER_URL
-          value: "https://kafka-broker-ingress.knative-eventing.svc.cluster.local/rag-pipeline-workshop/kafka-broker"
+          value: "http://kafka-broker-ingress.knative-eventing.svc.cluster.local/rag-pipeline-workshop/kafka-broker"
         - name: LOG_LEVEL
           value: "DEBUG"
         ports:
