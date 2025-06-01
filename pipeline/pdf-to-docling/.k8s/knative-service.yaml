@@ -17,20 +17,16 @@ spec:
         autoscaling.knative.dev/minScale: "1" # Keeps at least one pod running for faster response & easier debugging
         queue.serving.knative.dev/userPort: "8080" # Tells queue-proxy your app's actual listening port
         # Protocol configuration for Istio
-        networking.istio.io/protocol: "http"
         # Tell Knative to use specific ports for the queue proxy
         queue.serving.knative.dev/targetPort: "8080" # Target port on your container
 
         # --- ISTIO SIDECAR INJECTION ---
         # This is crucial for your pod to be part of the Istio mesh if Istio is the ingress.
-        sidecar.istio.io/inject: "true"
+        sidecar.istio.io/inject: "false"
 
         # Optional, but can be helpful if probes are rewritten by Istio.
         # Knative system components in your KnativeServing CR had this.
-        sidecar.istio.io/rewriteAppHTTPProbers: "true"
         # Configure Istio traffic management
-        traffic.sidecar.istio.io/includeInboundPorts: "8080"
-        traffic.sidecar.istio.io/excludeInboundPorts: "8444,8022"
 
         # Optional: If you want new revisions to roll out immediately during development
         # serving.knative.dev/rollout-duration: "0s"
@@ -59,11 +55,11 @@ spec:
               value: "true"
           resources:
             requests:
-              memory: "256Mi"
-              cpu: "100m"
+              memory: "512Mi"
+              cpu: "1"
             limits:
               memory: "512Mi"
-              cpu: "500m"
+              cpu: "1"
           readinessProbe:
             httpGet:
               path: /healthz # Your Flask app MUST serve GET on this path with HTTP 200 OK
