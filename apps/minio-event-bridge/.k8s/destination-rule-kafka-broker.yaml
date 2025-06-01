@@ -1,0 +1,13 @@
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: kafka-broker-tls-disable
+  namespace: rag-pipeline-workshop
+  labels:
+    app.kubernetes.io/instance: minio-event-bridge
+spec:
+  host: kafka-broker-ingress.knative-eventing.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+

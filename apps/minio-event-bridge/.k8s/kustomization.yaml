@@ -13,6 +13,7 @@ resources:
   - service-entry.yaml
   - service-entry-kafka-broker.yaml
   - destination-rule.yaml
+  - destination-rule-kafka-broker.yaml
   - service.yaml
   - virtual-service.yaml
   - service-mesh-member.yaml

@@ -16,6 +16,15 @@ spec:
   - number: 443
     name: https
     protocol: HTTPS
+  - number: 8080
+    name: http-alt
+    protocol: HTTP
+  - number: 8443
+    name: https-alt
+    protocol: HTTPS
+  - number: 9090
+    name: metrics
+    protocol: TCP
   resolution: DNS
   endpoints:
   - address: kafka-broker-ingress.knative-eventing.svc.cluster.local
