@@ -4,5 +4,8 @@ kind: Kustomization
 resources:
 - knative-service.yaml
 - rbac.yaml
-# Using the trigger from base/services/knative
-# - trigger.yaml
+- kfp-s3-trigger-auth.yaml
+- vs-ingress.yaml
+- vs-mesh.yaml
+- network-policy.yaml
+- virtual-service.yaml

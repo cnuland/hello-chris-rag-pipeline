@@ -9,5 +9,3 @@ resources:
   - app-knative-broker.yaml
   - app-minio.yaml
   - app-mock-api.yaml
-  - app-s3-trigger.yaml
-
