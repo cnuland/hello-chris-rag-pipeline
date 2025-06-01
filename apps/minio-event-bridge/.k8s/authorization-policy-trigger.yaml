@@ -1,20 +1,12 @@
 apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
-  name: allow-knative-eventing-to-trigger
+  name: allow-all-for-kfp-trigger-debug # New name or overwrite existing
   namespace: rag-pipeline-workshop
-  labels:
-    app.kubernetes.io/instance: s3-event-handler
 spec:
   selector:
     matchLabels:
       serving.knative.dev/service: kfp-s3-trigger
   action: ALLOW
   rules:
-  - from:
-    - source:
-        namespaces: ["knative-eventing"]
-    to:
-    - operation:
-        methods: ["POST", "GET"]
-        paths: ["/*"]
+  - {} # Allow all sources, all methods, all paths
