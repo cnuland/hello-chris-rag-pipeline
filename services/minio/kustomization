@@ -10,4 +10,3 @@ resources:
   - service.yaml
   - route.yaml
   - network-policies.yaml
-  - service-mesh-member.yaml

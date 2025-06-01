@@ -4,6 +4,4 @@ kind: Kustomization
 resources:
 - knative-service.yaml
 - rbac.yaml
-- kfp-s3-trigger-auth.yaml
 - network-policy.yaml
-- virtual-service.yaml
