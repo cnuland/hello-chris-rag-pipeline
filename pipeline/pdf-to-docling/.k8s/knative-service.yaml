@@ -7,13 +7,13 @@ metadata:
     networking.knative.dev/visibility: cluster-local
   annotations:
     # If ArgoCD is managing this, it might add its tracking annotations here.
-    kubectl.kubernetes.io/restartedAt: "2025-05-31T02:09:58Z"
+    kubectl.kubernetes.io/restartedAt: "2025-06-02T00:21:21Z"
 spec:
   template:
     metadata:
       annotations:
         # --- Essential Annotations for this Setup ---
-        kubectl.kubernetes.io/restartedAt: "2025-05-31T03:30:00Z" # Forces a new revision
+        kubectl.kubernetes.io/restartedAt: "2025-06-02T00:21:21Z" # Forces a new revision
         autoscaling.knative.dev/minScale: "1" # Keeps at least one pod running for faster response & easier debugging
         queue.serving.knative.dev/userPort: "8080" # Tells queue-proxy your app's actual listening port
         # Protocol configuration for Istio
