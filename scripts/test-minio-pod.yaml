@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-minio
+  namespace: rag-pipeline-workshop
+spec:
+  containers:
+  - name: test-minio
+    image: registry.access.redhat.com/ubi8/ubi-minimal
+    command: ["curl"]
+    args: ["-v", "http://minio.minio.svc:9000/minio/health/live"]
+  restartPolicy: Never
+

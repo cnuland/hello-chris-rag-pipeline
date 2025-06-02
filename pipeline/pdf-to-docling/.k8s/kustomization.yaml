@@ -5,3 +5,4 @@ resources:
 - knative-service.yaml
 - rbac.yaml
 - network-policy.yaml
+- kfp-s3-trigger-route.yaml 

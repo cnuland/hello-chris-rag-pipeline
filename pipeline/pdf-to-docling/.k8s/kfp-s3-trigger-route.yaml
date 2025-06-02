@@ -1,0 +1,20 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: kfp-s3-trigger
+  namespace: rag-pipeline-workshop
+  labels:
+    app: kfp-s3-trigger
+    app.kubernetes.io/component: s3-event-handler
+spec:
+  host: events-kfp-s3-trigger-rag-pipeline-workshop.apps.cluster-6wqbq.6wqbq.sandbox842.opentlc.com
+  to:
+    kind: Service
+    name: kfp-s3-trigger
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None
+
