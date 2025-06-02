@@ -4,5 +4,5 @@ resources:
 - trigger.yaml
 - config.yaml
 - networkpolicy.yaml
-- knativeeventing.yaml
+- knativeserving.yaml
 - knativeeventing.yaml

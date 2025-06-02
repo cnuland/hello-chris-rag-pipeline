@@ -1,0 +1,81 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: kfp-s3-trigger
+  namespace: rag-pipeline-workshop # Ensure this is your correct namespace
+  annotations:
+    # If ArgoCD is managing this, it might add its tracking annotations here.
+    kubectl.kubernetes.io/restartedAt: "2025-05-31T02:09:58Z"
+spec:
+  template:
+    metadata:
+      annotations:
+        # --- Essential Annotations for this Setup ---
+        kubectl.kubernetes.io/restartedAt: "2025-05-31T03:30:00Z" # Forces a new revision
+        autoscaling.knative.dev/minScale: "1" # Keeps at least one pod running for faster response & easier debugging
+        queue.serving.knative.dev/userPort: "8080" # Tells queue-proxy your app's actual listening port
+        # Protocol configuration for Istio
+        # Tell Knative to use specific ports for the queue proxy
+        queue.serving.knative.dev/targetPort: "8080" # Target port on your container
+
+        # --- ISTIO SIDECAR INJECTION ---
+        # This is crucial for your pod to be part of the Istio mesh if Istio is the ingress.
+        sidecar.istio.io/inject: "false"
+
+        # Optional, but can be helpful if probes are rewritten by Istio.
+        # Knative system components in your KnativeServing CR had this.
+        # Configure Istio traffic management
+
+        # Optional: If you want new revisions to roll out immediately during development
+        # serving.knative.dev/rollout-duration: "0s"
+    spec:
+      serviceAccountName: kfp-trigger-sa # Ensure this SA exists and has necessary permissions
+      containers:
+        - name: user-container # Standard name for the main application container in Knative
+          image: quay.io/cnuland/hello-chris-rag-pipeline-event:latest # Using image with '-event' suffix
+          ports:
+            - name: http1 # Knative convention, the port name is informational
+              containerPort: 8080 # Must match what your Gunicorn/Flask app listens on
+              protocol: TCP
+          env:
+            - name: KFP_ENDPOINT
+              # Internal HTTP URL for KFP ds-pipeline service
+              # Using the OpenShift AI/KFP standard namespace - adjust if your installation uses a different namespace
+              value: "KFP_ENDPOINT=http://ds-pipeline-dspa.hello-chris-ai.svc.cluster.local:8888"
+            - name: KFP_PIPELINE_NAME
+              value: "Simple PDF Processing Pipeline" # Must match the name of the pipeline uploaded to KFP
+            - name: KFP_EXPERIMENT_NAME
+              value: "S3 Triggered PDF Runs"
+            - name: LOG_LEVEL
+              value: "DEBUG"
+            # Add an environment variable to enable more verbose logging of requests
+            - name: VERBOSE_REQUEST_LOGGING
+              value: "true"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "1"
+            limits:
+              memory: "512Mi"
+              cpu: "1"
+          readinessProbe:
+            httpGet:
+              path: /healthz # Your Flask app MUST serve GET on this path with HTTP 200 OK
+              port: 8080    # This is the containerPort your application listens on
+              scheme: HTTP # Keep as HTTP for internal probes since the app itself uses HTTP
+            initialDelaySeconds: 15 # Give more time for app + sidecar to start
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+              scheme: HTTP # Keep as HTTP for internal probes since the app itself uses HTTP
+            initialDelaySeconds: 30 # Give more time for app + sidecar to start
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+      # timeoutSeconds: 300 # Default request timeout for the service revision
+      # Explicitly set container concurrency
+      containerConcurrency: 10 # Allow 10 concurrent requests per instance
