@@ -4,13 +4,15 @@ metadata:
   name: knative-serving
   namespace: knative-serving
 spec:
-  high-availability:
-    replicas: 1
   ingress:
     kourier:
       enabled: true
-  config:
-    domain:
-      "selector.app": "kourier"
-    network:
-      "ingress-class": "kourier-internal"
+  deployments:
+  - name: activator
+    replicas: 1
+  - name: autoscaler
+    replicas: 1
+  - name: controller
+    replicas: 1
+  - name: webhook
+    replicas: 1
