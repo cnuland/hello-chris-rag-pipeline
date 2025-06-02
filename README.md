@@ -477,6 +477,8 @@ oc logs -l app=minio-event-bridge -c user-container -n rag-pipeline-workshop -f
 oc logs -l serving.knative.dev/service=kfp-s3-trigger -c user-container -n rag-pipeline-workshop -f
 ```
 
+oc delete mutatingwebhookconfigurations webhook.serving.knative.dev && oc delete validatingwebhookconfigurations config.webhook.serving.knative.dev validation.webhook.serving.knative.dev
+
 4. Check Kubeflow Pipeline execution in the OpenShift AI dashboard under the "S3 Triggered PDF Runs" experiment.
 
 ### Troubleshooting Upload Issues
