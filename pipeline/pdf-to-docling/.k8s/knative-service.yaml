@@ -34,7 +34,7 @@ spec:
       serviceAccountName: kfp-trigger-sa # Ensure this SA exists and has necessary permissions
       containers:
         - name: user-container # Standard name for the main application container in Knative
-          image: quay.io/cnuland/hello-chris-rag-pipeline-event:20250602 # Using image with '-event' suffix
+          image: quay.io/cnuland/hello-chris-rag-pipeline-event:latest # Using image with '-event' suffix
           imagePullPolicy: Always
           ports:
             - name: http1 # Knative convention, the port name is informational
