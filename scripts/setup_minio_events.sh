@@ -63,6 +63,16 @@ else
     echo "Bucket '${MC_ALIAS_NAME}/${TARGET_BUCKET_NAME}' created successfully."
 fi
 
+# Create the pipelines bucket if it doesn't exist
+echo ""
+echo "Checking/Creating S3 bucket 'pipelines' on alias '${MC_ALIAS_NAME}'..."
+if mc ls "${MC_ALIAS_NAME}/pipelines" --insecure > /dev/null 2>&1; then
+    echo "Bucket '${MC_ALIAS_NAME}/pipelines' already exists."
+else
+    mc mb "${MC_ALIAS_NAME}/pipelines" --insecure
+    echo "Bucket '${MC_ALIAS_NAME}/pipelines' created successfully."
+fi
+
 # 3. Construct the ARN for the server-configured Webhook target
 # The ARN format for a Webhook target configured via MinIO server environment variables
 # uses the ID from those variables (e.g., HTTPBRIDGE).
