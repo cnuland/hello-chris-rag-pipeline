@@ -4,8 +4,6 @@ metadata:
   name: kfp-s3-trigger
   namespace: rag-pipeline-workshop # Ensure this is your correct namespace
   annotations:
-    # This annotation is CRITICAL because your KnativeServing CR has istio: enabled: true
-    networking.knative.dev/ingress.class: "istio.ingress.networking.knative.dev"
     # If ArgoCD is managing this, it might add its tracking annotations here.
     kubectl.kubernetes.io/restartedAt: "2025-05-31T02:09:58Z"
 spec:

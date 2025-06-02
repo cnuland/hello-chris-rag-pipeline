@@ -7,8 +7,6 @@ metadata:
   labels:
     app: minio
     app.kubernetes.io/instance: minio
-  annotations:
-    service.beta.openshift.io/serving-cert-secret-name: minio-tls
 spec:
   ports:
   - name: api
