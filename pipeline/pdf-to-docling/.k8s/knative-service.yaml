@@ -3,6 +3,8 @@ kind: Service
 metadata:
   name: kfp-s3-trigger
   namespace: rag-pipeline-workshop # Ensure this is your correct namespace
+  labels:
+    networking.knative.dev/visibility: cluster-local
   annotations:
     # If ArgoCD is managing this, it might add its tracking annotations here.
     kubectl.kubernetes.io/restartedAt: "2025-05-31T02:09:58Z"
