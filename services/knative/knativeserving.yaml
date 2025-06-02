@@ -9,3 +9,9 @@ spec:
   ingress:
     kourier:
       enabled: true
+  config:
+    domain:
+      selector:
+        app: kourier
+    network:
+      ingress-class: kourier-internal
