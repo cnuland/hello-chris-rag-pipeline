@@ -82,8 +82,8 @@ def get_kfp_client():
             except Exception as token_err:
                 app.logger.warning(f"Could not read service account token: {token_err}")
 
-        # Initialize the client with the exact KFP_ENDPOINT
-        client = KFPClient(host=KFP_ENDPOINT)
+        # Initialize the client with the exact KFP_ENDPOINT and disable SSL verification
+        client = KFPClient(host=KFP_ENDPOINT, ssl_verify=False)
         
         # Verify connection by making a simple API call
         try:
