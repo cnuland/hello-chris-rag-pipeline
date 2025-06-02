@@ -12,4 +12,4 @@ spec:
       # You can also add a filter for subject if needed, e.g., for *.pdf
       # subject: ".pdf" # Though this would be a suffix match, Knative filter might need exact or prefix
   subscriber:
-    uri: http://kfp-s3-trigger.rag-pipeline-workshop.svc.cluster.local
+    uri: http://kfp-s3-trigger-00001-private.rag-pipeline-workshop.svc.cluster.local
