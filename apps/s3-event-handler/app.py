@@ -63,27 +63,42 @@ def get_kfp_client():
     if not KFP_ENDPOINT:
         app.logger.error("KFP_ENDPOINT environment variable not set. Cannot initialize KFP client.")
         return None
+
+    # Validate KFP_ENDPOINT format
+    app.logger.info(f"Validating KFP endpoint: {KFP_ENDPOINT}")
+    if not KFP_ENDPOINT.startswith(('http://', 'https://')):
+        app.logger.error(f"Invalid KFP_ENDPOINT format. Must start with http:// or https://")
+        return None
+
     app.logger.info(f"Attempting to initialize KFP Client for endpoint: {KFP_ENDPOINT}")
     try:
-        # Simplified: Rely on KFP_BEARER_TOKEN or in-cluster config for KFP SDK >= 2.0
-        # If using older SDKs that require explicit token setting:
-        # if os.path.exists(KFP_SA_TOKEN_PATH):
-        #     with open(KFP_SA_TOKEN_PATH, 'r') as f: token = f.read().strip()
-        #     return KFPClient(host=KFP_ENDPOINT, existing_token=token)
-        # elif KFP_BEARER_TOKEN:
-        #     return KFPClient(host=KFP_ENDPOINT, existing_token=KFP_BEARER_TOKEN)
+        # Try to read the service account token if available
+        token = None
+        if os.path.exists(KFP_SA_TOKEN_PATH):
+            try:
+                with open(KFP_SA_TOKEN_PATH, 'r') as f:
+                    token = f.read().strip()
+                app.logger.debug("Successfully read service account token")
+            except Exception as token_err:
+                app.logger.warning(f"Could not read service account token: {token_err}")
+
+        # Initialize the client with the exact KFP_ENDPOINT
+        client = KFPClient(host=KFP_ENDPOINT)
         
-        # For KFP SDK v2+, it often auto-configures using SA token if available or kubeconfig.
-        # If KFP_BEARER_TOKEN is set, it might be used by the client implicitly or by setting credentials.
-        client = KFPClient(host=KFP_ENDPOINT) 
-        if KFP_BEARER_TOKEN: # If explicit token is there, try to use it (syntax varies with KFP SDK version)
-             app.logger.info("KFP_BEARER_TOKEN is set, attempting to use it (actual mechanism depends on KFP SDK version).")
-             # For some older SDKs, you might do: client.set_user_token(KFP_BEARER_TOKEN)
-             # For KFP SDK v2.0+, explicit token passing changed. The constructor is often enough if other auth is set.
-        app.logger.info("KFP Client object created.")
+        # Verify connection by making a simple API call
+        try:
+            client.get_pipeline_id("test-connection")
+            app.logger.info("Successfully verified KFP API connection")
+        except Exception as verify_err:
+            app.logger.warning(f"KFP client created but API verification failed (this is not fatal): {verify_err}")
+
         return client
+
     except Exception as e:
-        app.logger.error(f"Failed to initialize KFP client: {e}", exc_info=True)
+        app.logger.error(f"Failed to initialize KFP client: {str(e)}", exc_info=True)
+        app.logger.error(f"KFP_ENDPOINT used: {KFP_ENDPOINT}")
+        if token:
+            app.logger.debug("Service account token was available")
         return None
 
 @app.route('/healthz', methods=['GET'])
