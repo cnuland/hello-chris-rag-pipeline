@@ -5,3 +5,4 @@ resources:
 - config.yaml
 - networkpolicy.yaml
 - knativeeventing.yaml
+- knativeeventing.yaml
