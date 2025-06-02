@@ -41,7 +41,7 @@ spec:
             - name: KFP_ENDPOINT
               # Internal HTTP URL for KFP ds-pipeline service
               # Using the OpenShift AI/KFP standard namespace - adjust if your installation uses a different namespace
-              value: "http://ds-pipeline-pipelines-definition.hello-chris-ai.svc.cluster.local:8888"
+              value: "KFP_ENDPOINT=http://ds-pipeline-dspa.hello-chris-ai.svc.cluster.local:8888"
             - name: KFP_PIPELINE_NAME
               value: "Simple PDF Processing Pipeline" # Must match the name of the pipeline uploaded to KFP
             - name: KFP_EXPERIMENT_NAME
