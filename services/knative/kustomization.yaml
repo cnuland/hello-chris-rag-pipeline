@@ -6,3 +6,4 @@ resources:
 - networkpolicy.yaml
 - knativeserving.yaml
 - knativeeventing.yaml
+- knative-kafka.yaml
