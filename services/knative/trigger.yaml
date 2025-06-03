@@ -11,9 +11,9 @@ spec:
       source: "urn:minio:s3:::webhook" # This is what your bridge is now setting as the source
       # You can also add a filter for subject if needed, e.g., for *.pdf
       # subject: ".pdf" # Though this would be a suffix match, Knative filter might need exact or prefix
-  subscriber:
-    ref:
-      apiVersion: serving.knative.dev/v1
-      kind: Service
-      name: kfp-s3-trigger
-      namespace: rag-pipeline-workshop
+    subscriber:
+      ref:
+        apiVersion: serving.knative.dev/v1
+        kind: Service
+        name: kfp-s3-trigger
+        namespace: rag-pipeline-workshop
