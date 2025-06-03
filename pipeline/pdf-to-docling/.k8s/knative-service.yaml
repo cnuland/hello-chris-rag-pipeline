@@ -46,7 +46,7 @@ spec:
               # Using the OpenShift AI/KFP standard namespace - adjust if your installation uses a different namespace
               value: "https://ds-pipeline-dspa.hello-chris-ai.svc.cluster.local:8443"
             - name: KFP_PIPELINE_NAME
-              value: "Simple PDF Processing Pipeline" # Must match the name of the pipeline uploaded to KFP
+              value: "simple-pdf-processing-pipeline" # Must match the name of the pipeline uploaded to KFP
             - name: KFP_EXPERIMENT_NAME
               value: "S3 Triggered PDF Runs"
             - name: LOG_LEVEL
