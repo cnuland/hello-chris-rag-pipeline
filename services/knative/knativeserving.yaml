@@ -7,17 +7,3 @@ spec:
   ingress:
     kourier:
       enabled: true
-    istio:
-      enabled: false
-  deployments:
-  - name: activator
-    replicas: 1
-  - name: autoscaler
-    replicas: 1
-  - name: controller
-    replicas: 1
-  - name: webhook
-    replicas: 1
-  config:
-    deployment:
-      deployment-security-verify: "false"
