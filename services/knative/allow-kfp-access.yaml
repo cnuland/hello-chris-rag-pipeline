@@ -2,7 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-kfp-s3-trigger
-  namespace: rag-pipeline-workshop
+  namespace: hello-chris-ai
 spec:
   ingress:
   - from:

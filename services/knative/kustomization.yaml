@@ -6,4 +6,3 @@ resources:
 - networkpolicy.yaml
 - knativeserving.yaml
 - knativeeventing.yaml
-- allow-kfp-access.yaml
