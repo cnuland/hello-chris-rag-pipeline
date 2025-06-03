@@ -49,6 +49,8 @@ spec:
               value: "Simple PDF Processing Pipeline" # Must match the name of the pipeline uploaded to KFP
             - name: KFP_EXPERIMENT_NAME
               value: "S3 Triggered PDF Runs"
+            - name: KFP_BEARER_TOKEN
+              value: "sha256~WVKjITJ9Zmxkndm0OrDlDIvluvriyMd_0_Wdio5dHvY"
             - name: LOG_LEVEL
               value: "DEBUG"
             # Add an environment variable to enable more verbose logging of requests

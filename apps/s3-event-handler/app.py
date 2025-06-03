@@ -64,41 +64,75 @@ def get_kfp_client():
         app.logger.error("KFP_ENDPOINT environment variable not set. Cannot initialize KFP client.")
         return None
 
-    # Validate KFP_ENDPOINT format
-    app.logger.info(f"Validating KFP endpoint: {KFP_ENDPOINT}")
-    if not KFP_ENDPOINT.startswith(('http://', 'https://')):
-        app.logger.error(f"Invalid KFP_ENDPOINT format. Must start with http:// or https://")
-        return None
-
     app.logger.info(f"Attempting to initialize KFP Client for endpoint: {KFP_ENDPOINT}")
+    
     try:
-        # Try to read the service account token if available
-        token = None
-        if os.path.exists(KFP_SA_TOKEN_PATH):
-            try:
-                with open(KFP_SA_TOKEN_PATH, 'r') as f:
-                    token = f.read().strip()
-                app.logger.debug("Successfully read service account token")
-            except Exception as token_err:
-                app.logger.warning(f"Could not read service account token: {token_err}")
+        # For KFP SDK v1.x, ssl_verify is not a direct constructor argument.
+        # It typically uses the system's CA bundle or can be influenced by env vars for requests.
+        # If you need to disable SSL verification (e.g., for self-signed certs from the OpenShift service CA),
+        # you can sometimes do this by configuring the underlying requests session,
+        # or the KFP SDK might have an environment variable for it.
+        # A common approach for in-cluster is to ensure the pod's SA can access the KFP API
+        # and the certs are trusted.
 
-        # Initialize the client with the exact KFP_ENDPOINT and disable SSL verification
-        client = KFPClient(host=KFP_ENDPOINT, ssl_verify=False)
-        
-        # Verify connection by making a simple API call
+        # Let's try initializing without ssl_verify first, and rely on KFP_BEARER_TOKEN or SA token.
+        client = KFPClient(host=KFP_ENDPOINT)
+        app.logger.info(f"KFP Client object created for host: {KFP_ENDPOINT}")
+
+        # If KFP_BEARER_TOKEN is explicitly provided, some SDK versions might need it set.
+        # However, for in-cluster, the SA token mounted in the pod is often used automatically if
+        # the KFP API is configured to accept it, or if the KFP SDK client picks it up.
+        if KFP_BEARER_TOKEN:
+            app.logger.info("KFP_BEARER_TOKEN is set; KFP SDK might use it depending on its version and configuration.")
+            # For older SDKs: client.set_user_token(KFP_BEARER_TOKEN)
+            # For newer SDKs, constructor or environment variables are often preferred.
+
+        # A simple way to verify connectivity and auth is to try a harmless, authenticated call.
+        # Listing experiments is usually a good test if RBAC allows it.
         try:
-            client.get_pipeline_id("test-connection")
-            app.logger.info("Successfully verified KFP API connection")
+            # Try listing experiments as a basic API call to check connectivity & auth
+            # This might require 'list' permissions on 'experiments' for the SA
+            experiments = client.list_experiments(page_size=1)
+            app.logger.info(f"Successfully listed experiments (found {len(experiments.experiments if experiments else [])}). KFP API connection verified.")
+        except kfp_server_api.ApiException as e:
+            app.logger.error(f"KFP API call failed during client verification: {e.reason} (Status: {e.status}) Body: {e.body}", exc_info=False) # Set exc_info=False to avoid long stack trace for this specific check
+            # Don't return None yet, client might still be usable for other calls if this was just a permission issue for list_experiments
         except Exception as verify_err:
-            app.logger.warning(f"KFP client created but API verification failed (this is not fatal): {verify_err}")
+            app.logger.warning(f"KFP client created, but API verification call (list_experiments) failed: {str(verify_err)}. This might be an auth issue or endpoint issue.")
+            # Log full stack for unexpected errors during verification
+            if not isinstance(verify_err, kfp_server_api.ApiException):
+                 app.logger.error("Full stack trace for verification error:", exc_info=True)
+
+
+        # If your KFP API uses self-signed certificates or certs from OpenShift's internal CA,
+        # and your pod's default trust store doesn't include it, AND the KFP SDK's underlying
+        # HTTP client doesn't automatically pick up the service CA bundle from /var/run/secrets/kubernetes.io/serviceaccount/ca.crt,
+        # you might need to tell the HTTP client to not verify SSL (NOT for production) or provide the CA.
+        # This is complex and depends on the KFP SDK version's internals.
+        # For OpenShift, internal service FQDNs with :8443 often use the service-ca.
+        # The KFP SDK should ideally respect this if running in-cluster.
+
+        # If direct KFPClient(host=KFP_ENDPOINT) still has SSL issues (after fixing the TypeError):
+        # You might explore if KFP_SDK_SKIP_TLS_VERIFY=True as an env var works,
+        # or if you need to pass a custom `requests.Session` object to KFPClient if it supports it.
+        # Example (highly SDK version dependent):
+        # import urllib3
+        # urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        # client = KFPClient(host=KFP_ENDPOINT) # then try again
+        # OR
+        # from kfp.auth import ServiceAccountTokenVolumeCredentials
+        # credentials = ServiceAccountTokenVolumeCredentials()
+        # client = KFPClient(host=KFP_ENDPOINT, credentials=credentials)
+        # The above is more for KFP SDK v2.
 
         return client
 
+    except TypeError as te: # Catch the specific TypeError
+        app.logger.error(f"TypeError during KFPClient initialization (likely an invalid argument like ssl_verify): {str(te)}", exc_info=True)
+        app.logger.error(f"KFP_ENDPOINT used: {KFP_ENDPOINT}. Review KFP SDK version for correct constructor arguments.")
+        return None
     except Exception as e:
-        app.logger.error(f"Failed to initialize KFP client: {str(e)}", exc_info=True)
-        app.logger.error(f"KFP_ENDPOINT used: {KFP_ENDPOINT}")
-        if token:
-            app.logger.debug("Service account token was available")
+        app.logger.error(f"Generic exception during KFP client initialization: {str(e)}", exc_info=True)
         return None
 
 @app.route('/healthz', methods=['GET'])
