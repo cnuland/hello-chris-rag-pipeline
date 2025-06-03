@@ -2,9 +2,7 @@ apiVersion: operator.knative.dev/v1beta1
 kind: KnativeServing
 metadata:
   name: knative-serving
-  namespace: knative-serving
-  annotations:
-    kubectl.kubernetes.io/restartedAt: "2025-06-02T00:21:21Z"
+  namespace: openshift-serverless
 spec:
   ingress:
     kourier:
