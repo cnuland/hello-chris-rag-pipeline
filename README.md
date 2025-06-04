@@ -429,7 +429,50 @@ python scripts/generate_and_upload_pdf.py
 
 OR you can manually trigger the pipeline as followed
 ```
-kubectl exec -it debug-pod -n minio -- curl -v -X POST http://minio-event-bridge.rag-pipeline-workshop.svc.cluster.local:8080/webhook -H "Content-Type: application/json" -d '{"EventName":"s3:ObjectCreated:Put","Key":"event-test-20250531-182532.pdf","Records":[{"eventVersion":"2.0","eventSource":"minio:s3","awsRegion":"","eventTime":"2025-05-31T22:25:32Z","eventName":"s3:ObjectCreated:Put","userIdentity":{"principalId":"minio"},"requestParameters":{"accessKey":"minio","region":"","sourceIPAddress":"127.0.0.1"},"responseElements":{"x-amz-request-id":"","x-minio-deployment-id":""},"s3":{"s3SchemaVersion":"1.0","configurationId":"Config","bucket":{"name":"pdf-inbox","ownerIdentity":{"principalId":"minio"},"arn":"arn:aws:s3:::pdf-inbox"},"object":{"key":"event-test-20250531-182532.pdf","size":1024,"eTag":"","contentType":"application/pdf","userMetadata":null,"versionId":"","sequencer":""}}}]}'
+oc exec -n minio debug-pod -- curl -v -X POST http://minio-event-bridge.rag-pipeline-workshop.svc.cluster.local:8080/webhook -H "Content-Type: application/json" -d '{
+  "EventName": "s3:ObjectCreated:Put",
+  "Key": "pdf-inbox/test.pdf",
+  "Records": [{
+    "eventVersion": "2.0",
+    "eventSource": "minio:s3",
+    "awsRegion": "",
+    "eventTime": "2023-12-14T10:00:00.000Z",
+    "eventName": "s3:ObjectCreated:Put",
+    "userIdentity": {
+      "principalId": "minioadmin"
+    },
+    "requestParameters": {
+      "sourceIPAddress": "127.0.0.1"
+    },
+    "responseElements": {
+      "x-amz-request-id": "test123",
+      "x-minio-deployment-id": "test123"
+    },
+    "s3": {
+      "s3SchemaVersion": "1.0",
+      "configurationId": "Config",
+      "bucket": {
+        "name": "pdf-inbox",
+        "ownerIdentity": {
+          "principalId": "minioadmin"
+        },
+        "arn": "arn:aws:s3:::pdf-inbox"
+      },
+      "object": {
+        "key": "test.pdf",
+        "size": 1024,
+        "eTag": "test123",
+        "contentType": "application/pdf",
+        "sequencer": "test123"
+      }
+    },
+    "source": {
+      "host": "minio",
+      "port": "",
+      "userAgent": "MinIO"
+    }
+  }]
+}'
 Note: Unnecessary use of -X or --request, POST is already inferred.
 * Host minio-event-bridge.rag-pipeline-workshop.svc.cluster.local:8080 was resolved.
 * IPv6: (none)
