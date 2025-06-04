@@ -209,10 +209,10 @@ def handle_s3_event():
 
         # Step 2: Get latest version ID for the pipeline
         versions = kfp_client.list_pipeline_versions(pipeline_id=pipeline_id)
-        if not versions.versions:
+        if not versions.pipeline_versions:
             raise ValueError(f"No versions found for pipeline ID {pipeline_id}")
 
-        version_id = versions.versions[0].pipeline_version_id  # You can sort/filter as needed
+        version_id = versions.pipeline_versions[0].pipeline_version_id
 
         # Step 3: Run the pipeline
         run = kfp_client.run_pipeline(
