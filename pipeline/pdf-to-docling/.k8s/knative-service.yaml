@@ -13,7 +13,7 @@ spec:
     metadata:
       annotations:
         # --- Essential Annotations for this Setup ---
-        kubectl.kubernetes.io/restartedAt: "les do this7" # Forces a new revision
+        kubectl.kubernetes.io/restartedAt: "les do this9" # Forces a new revision
         autoscaling.knative.dev/minScale: "1" # Keeps at least one pod running for faster response & easier debugging
         queue.serving.knative.dev/userPort: "8080" # Tells queue-proxy your app's actual listening port
         # Protocol configuration for Istio
@@ -54,6 +54,8 @@ spec:
             # Add an environment variable to enable more verbose logging of requests
             - name: VERBOSE_REQUEST_LOGGING
               value: "true"
+            - name: REQUESTS_CA_BUNDLE
+              value: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
           resources:
             requests:
               memory: "512Mi"
