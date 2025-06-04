@@ -195,25 +195,25 @@ def handle_s3_event():
         app.logger.info(f"RID-{request_id}: Attempting to start pipeline")
         
         pipelines = kfp_client.list_pipelines()
-            pipeline_id = None
-            for p in pipelines.pipelines:
-                app.logger.info(p)
-                if p.name == "simple":
-                    pipeline_id = p.id
-                    break
+        pipeline_id = None
+        for p in pipelines.pipelines:
+            app.logger.info(p)
+            if p.name == "simple":
+                pipeline_id = p.id
+                break
 
-            if not pipeline_id:
-                raise ValueError("Pipeline named 'simple' not found")
+        if not pipeline_id:
+            raise ValueError("Pipeline named 'simple' not found")
 
-            # Start the pipeline
-            run = kfp_client.run_pipeline(
-                experiment_id=experiment.id,
-                job_name=f"simple-run-{datetime.now().strftime('%Y%m%d%H%M%S')}",
-                pipeline_id=pipeline_id,
+        # Start the pipeline
+        run = kfp_client.run_pipeline(
+            experiment_id=experiment.id,
+            job_name=f"simple-run-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            pipeline_id=pipeline_id,
                 params={}  # Replace with {"param_name": "value"} if your pipeline requires input parameters
             )
         
-        if experiments_response and experiments_response.experiments is not None:
+        if run is not None:
             app.logger.info(f"RID-{request_id}: Sent request to start pipeline")
 
             return jsonify({ 
