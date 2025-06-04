@@ -8,17 +8,16 @@ from flask import Flask, request, jsonify, g, has_request_context
 
 # KFP SDK v2.x imports (for kfp==2.7.0 compatibility)
 from kfp import Client as KFPClient
-# We are avoiding explicit KFPConfiguration and KFPApiClient for client init
+# kfp_server_api.configuration and api_client are not explicitly used for client setup in this simplified version
 import kfp_server_api 
 import urllib3 # For disabling InsecureRequestWarning
 
 # --- Environment Variables ---
 KFP_ENDPOINT = os.environ.get("KFP_ENDPOINT")
-KFP_SA_TOKEN_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token"
-KFP_MANUAL_BEARER_TOKEN = os.environ.get("KFP_BEARER_TOKEN") 
+KFP_SA_TOKEN_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token" # Default path for SA token
 
-PIPELINE_NAME = os.environ.get("KFP_PIPELINE_NAME", "simple-pdf-processing-pipeline")
-KFP_EXPERIMENT_NAME = os.environ.get("KFP_EXPERIMENT_NAME", "S3 Triggered PDF Runs") # Corrected from "S3 Triggered PDF Run"
+PIPELINE_NAME = os.environ.get("KFP_PIPELINE_NAME", "simple-pdf-processing-pipeline") # Kept for context, not used in this test
+KFP_EXPERIMENT_NAME = os.environ.get("KFP_EXPERIMENT_NAME", "S3 Triggered PDF Runs") # Kept for context, not used in this test
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "DEBUG").upper()
 KFP_VERIFY_SSL = os.environ.get("KFP_VERIFY_SSL", "true").lower() == "true"
 REQUESTS_CA_BUNDLE = os.environ.get("REQUESTS_CA_BUNDLE", "/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt")
@@ -62,14 +61,11 @@ gunicorn_access_logger.setLevel(effective_log_level)
 
 app.logger.info(f"Flask app initialized. Log level: {LOG_LEVEL}")
 app.logger.info(f"KFP_ENDPOINT: {KFP_ENDPOINT if KFP_ENDPOINT else 'NOT SET'}")
-app.logger.info(f"KFP_PIPELINE_NAME: {PIPELINE_NAME}")
-app.logger.info(f"KFP_EXPERIMENT_NAME: {KFP_EXPERIMENT_NAME}")
+app.logger.info(f"KFP_PIPELINE_NAME: {PIPELINE_NAME} (not directly used in this simplified test version)")
+app.logger.info(f"KFP_EXPERIMENT_NAME: {KFP_EXPERIMENT_NAME} (not directly used in this simplified test version)")
 app.logger.info(f"KFP_VERIFY_SSL: {KFP_VERIFY_SSL}")
 app.logger.info(f"REQUESTS_CA_BUNDLE path: {REQUESTS_CA_BUNDLE}")
-if KFP_MANUAL_BEARER_TOKEN:
-    app.logger.info("KFP_BEARER_TOKEN is SET. Will use this with 'existing_token'.")
-else:
-    app.logger.info(f"KFP_BEARER_TOKEN is NOT SET. Will attempt to use SA token from {KFP_SA_TOKEN_PATH} with 'existing_token'.")
+app.logger.info(f"KFP_SA_TOKEN_PATH: {KFP_SA_TOKEN_PATH}. Will attempt to use this token.")
 
 
 @app.before_request
@@ -100,7 +96,7 @@ def after_request_logging_extended(response):
     return response
 
 def get_kfp_client():
-    """Initializes and returns a KFP client using existing_token and direct ssl_ca_cert."""
+    """Initializes and returns a KFP client using SA token with existing_token and direct ssl_ca_cert."""
     request_id_str = "KFP_CLIENT_INIT_NO_CTX" 
     if has_request_context() and hasattr(g, 'request_id'):
         request_id_str = g.request_id
@@ -113,25 +109,16 @@ def get_kfp_client():
 
     current_app_logger.info(f"RID-{request_id_str}: Initializing KFP Client for endpoint: {KFP_ENDPOINT}")
     
-    token_to_use = None
-    token_source = "None"
-
-    if KFP_MANUAL_BEARER_TOKEN:
-        token_to_use = KFP_MANUAL_BEARER_TOKEN
-        token_source = "KFP_BEARER_TOKEN environment variable"
-        current_app_logger.info(f"RID-{request_id_str}: Using manually provided token from {token_source}.")
-    elif os.path.exists(KFP_SA_TOKEN_PATH):
+    sa_token = None
+    if os.path.exists(KFP_SA_TOKEN_PATH):
         try:
             with open(KFP_SA_TOKEN_PATH, 'r') as f:
-                token_to_use = f.read().strip()
-            token_source = f"SA token file ({KFP_SA_TOKEN_PATH})"
-            current_app_logger.info(f"RID-{request_id_str}: Using token from {token_source}.")
+                sa_token = f.read().strip()
+            current_app_logger.info(f"RID-{request_id_str}: Successfully read SA token from {KFP_SA_TOKEN_PATH}.")
         except Exception as token_err:
-            current_app_logger.error(f"RID-{request_id_str}: Could not read SA token from {KFP_SA_TOKEN_PATH}: {token_err}. Proceeding without explicit token.", exc_info=True)
-            token_source = "SA token file (read failed)"
+            current_app_logger.error(f"RID-{request_id_str}: Could not read SA token from {KFP_SA_TOKEN_PATH}: {token_err}. KFP calls requiring auth may fail.", exc_info=True)
     else:
-        current_app_logger.warning(f"RID-{request_id_str}: KFP_MANUAL_BEARER_TOKEN not set and SA token path {KFP_SA_TOKEN_PATH} not found. Proceeding without explicit token.")
-        token_source = "None (no token found)"
+        current_app_logger.warning(f"RID-{request_id_str}: SA token path {KFP_SA_TOKEN_PATH} not found. KFP calls requiring auth may fail.")
 
     ssl_ca_cert_to_use = None
     if KFP_ENDPOINT.startswith('https://'):
@@ -141,11 +128,10 @@ def get_kfp_client():
                 current_app_logger.info(f"RID-{request_id_str}: KFP SSL verification ENABLED. Will pass ssl_ca_cert: {ssl_ca_cert_to_use}")
             else:
                 current_app_logger.warning(f"RID-{request_id_str}: KFP SSL verification ENABLED, but CA bundle '{REQUESTS_CA_BUNDLE}' not found. Will pass ssl_ca_cert=None (relying on system CAs or KFPClient default).")
-                # Passing None might make it use system CAs, or fail if cert is self-signed and not in system CAs.
         else: 
             current_app_logger.warning(f"RID-{request_id_str}: KFP_VERIFY_SSL is false. Will pass ssl_ca_cert=None and disable urllib3 warnings. This effectively disables SSL verification.")
             urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-            # Note: KFPClient itself does not have a `verify_ssl=False` param. Disabling is via ssl_ca_cert=None and hoping underlying lib doesn't verify.
+            ssl_ca_cert_to_use = None # Explicitly set to None if KFP_VERIFY_SSL is false
     else:
         current_app_logger.info(f"RID-{request_id_str}: KFP_ENDPOINT is HTTP. SSL verification not applicable.")
 
@@ -153,32 +139,19 @@ def get_kfp_client():
     try:
         client_init_kwargs = {
             'host': KFP_ENDPOINT,
-            'existing_token': token_to_use # Will be None if no token was found/read
+            'existing_token': sa_token # Use the SA token read from file (or None if not found/readable)
         }
-        # Only add ssl_ca_cert if it's an HTTPS endpoint
         if KFP_ENDPOINT.startswith('https://'):
             client_init_kwargs['ssl_ca_cert'] = ssl_ca_cert_to_use
-            # If KFP_VERIFY_SSL is false, ssl_ca_cert_to_use will be None.
-            # The KFPClient for 2.7.0 doesn't have a direct `verify_ssl` param.
-            # Setting `ssl_ca_cert=None` is the closest to disabling verification via constructor.
-
-        current_app_logger.info(f"RID-{request_id_str}: Initializing KFPClient with: host='{KFP_ENDPOINT}', existing_token (from {token_source}), ssl_ca_cert='{ssl_ca_cert_to_use}'")
+        
+        current_app_logger.info(f"RID-{request_id_str}: Initializing KFPClient with: host='{KFP_ENDPOINT}', existing_token (from SA token file), ssl_ca_cert='{ssl_ca_cert_to_use}'")
         client = KFPClient(**client_init_kwargs)
         
         current_app_logger.info(f"RID-{request_id_str}: KFP Client object created for host: {KFP_ENDPOINT}.")
-
-        # Verification call
-        try:
-            current_app_logger.info(f"RID-{request_id_str}: Verifying KFP client connection by listing experiments...")
-            response = client.list_experiments(page_size=1) 
-            exp_count = len(response.experiments) if response and hasattr(response, 'experiments') and response.experiments is not None else 0
-            current_app_logger.info(f"RID-{request_id_str}: Successfully listed experiments (found {exp_count}). KFP API connection verified.")
-        except kfp_server_api.ApiException as e_kfp_api: 
-            current_app_logger.error(f"RID-{request_id_str}: KFP API call (list_experiments) failed: Status {e_kfp_api.status}, Reason: {e_kfp_api.reason}, Body: {e_kfp_api.body}", exc_info=False) 
-        except Exception as verify_err:
-            current_app_logger.warning(f"RID-{request_id_str}: KFP client created, but API verification call (list_experiments) failed: {str(verify_err)}.")
-            if not isinstance(verify_err, kfp_server_api.ApiException): 
-                 current_app_logger.error(f"RID-{request_id_str}: Full stack trace for KFP verification error:", exc_info=True)
+        
+        # Verification call - this is part of the client initialization in KFP SDK 2.7.0
+        # If it fails here, the client object might not be fully functional or might be None.
+        # The try/except below for list_experiments in handle_s3_event will be the actual test.
         
         return client
 
@@ -196,164 +169,59 @@ def healthz():
 @app.route('/', methods=['POST'])
 def handle_s3_event():
     request_id = getattr(g, 'request_id', "S3_EVENT_NO_G_ROUTE") 
-    app.logger.info(f"RID-{request_id}: ==== POST / request received by KFP-S3-TRIGGER user-container ==== - {__file__}")
+    app.logger.info(f"RID-{request_id}: ==== SIMPLIFIED TEST: POST / request received by KFP-S3-TRIGGER user-container ====")
     
     app.logger.info(f"RID-{request_id}: Request Content-Type: {request.content_type}")
     
+    # Basic event logging
     cloudevent_headers = { k.lower(): v for k, v in request.headers.items() if k.lower().startswith('ce-')}
     if cloudevent_headers:
         app.logger.info(f"RID-{request_id}: Received CloudEvent HTTP headers: {json.dumps(cloudevent_headers, indent=2)}")
+    
+    if request.data:
+        try:
+            body_sample = request.get_data(as_text=True)[:200] + ('...' if len(request.data) > 200 else '')
+            app.logger.info(f"RID-{request_id}: Received request body sample: {body_sample}")
+        except Exception:
+            app.logger.info(f"RID-{request_id}: Received request body (could not decode as text for sample).")
 
-    minio_event_data = None
-    cloud_event_id_received = cloudevent_headers.get("ce-id", "N/A")
+
+    kfp_client = get_kfp_client()
+    if not kfp_client:
+        app.logger.error(f"RID-{request_id}: KFP client could not be initialized. Cannot proceed with test.")
+        return jsonify({"status": "error", "message": "KFP client initialization failed", "request_id": request_id}), 500
 
     try:
-        if "application/cloudevents+json" in str(request.content_type).lower():
-            full_payload = request.json
-            app.logger.info(f"RID-{request_id}: Parsed as structured CloudEvent (application/cloudevents+json).")
-            minio_event_data = full_payload.get('data') if isinstance(full_payload, dict) else None
-            if isinstance(full_payload, dict) and 'id' in full_payload:
-                 cloud_event_id_received = full_payload.get('id')
-        elif cloudevent_headers.get("ce-specversion") and request.data:
-            app.logger.info(f"RID-{request_id}: Detected binary CloudEvent mode based on ce-* headers and request data.")
-            minio_event_data = json.loads(request.data.decode('utf-8'))
-            app.logger.info(f"RID-{request_id}: Parsed request.data as JSON for binary CloudEvent data.")
-        elif request.is_json: 
-            minio_event_data = request.json
-            app.logger.warning(f"RID-{request_id}: Request Content-Type was 'application/json' (not a CloudEvent). Assuming body is MinIO event data.")
-        elif request.data : 
-            try:
-                minio_event_data = json.loads(request.data.decode('utf-8'))
-                app.logger.warning(f"RID-{request_id}: Request data present, Content-Type not JSON. Attempted to parse as JSON.")
-            except json.JSONDecodeError:
-                app.logger.error(f"RID-{request_id}: Request data present but could not be parsed as JSON.")
-                raw_body_sample_err = request.get_data(as_text=True)[:500]
-                app.logger.debug(f"RID-{request_id}: Raw request body sample (first 500 chars for non-JSON): {raw_body_sample_err}")
-                return jsonify({"error": "Request body not decodable/parsable as JSON", "request_id": request_id}), 400
+        app.logger.info(f"RID-{request_id}: Attempting to list experiments...")
+        experiments_response = kfp_client.list_experiments(page_size=5) # List a few experiments
+        
+        if experiments_response and experiments_response.experiments is not None:
+            app.logger.info(f"RID-{request_id}: Successfully listed experiments. Count: {len(experiments_response.experiments)}")
+            # Log details of the first few experiments for more info
+            for i, exp in enumerate(experiments_response.experiments):
+                if i < 3: # Log details for up to 3 experiments
+                    app.logger.info(f"RID-{request_id}: Experiment {i+1}: ID={exp.experiment_id}, Name='{exp.display_name}', CreatedAt={exp.created_at}")
+            return jsonify({
+                "message": "Successfully listed KFP experiments.",
+                "experiment_count": len(experiments_response.experiments),
+                "first_few_experiments": [{"id": exp.experiment_id, "name": exp.display_name} for exp in experiments_response.experiments[:3]],
+                "request_id": request_id
+            }), 200
         else:
-            app.logger.error(f"RID-{request_id}: Request body is empty or unsupported Content-Type for direct parsing.")
-            return jsonify({"error": "Empty request body or unsupported Content-Type for direct parsing", "request_id": request_id}), 400
+            app.logger.warning(f"RID-{request_id}: list_experiments returned a response, but no experiments found or experiments attribute is None.")
+            return jsonify({"message": "Listed experiments, but no experiments found or response malformed.", "request_id": request_id}), 200
 
-        if not minio_event_data or not isinstance(minio_event_data, dict):
-            app.logger.error(f"RID-{request_id}: Could not extract a dictionary for MinIO event data after parsing. Data: {str(minio_event_data)[:500]}")
-            return jsonify({"error": "Could not determine MinIO event data structure from payload", "request_id": request_id}), 400
-        
-        app.logger.info(f"RID-{request_id}: Effective MinIO event data to parse: {json.dumps(minio_event_data, indent=2)}")
-
-        bucket_name = "unknown_bucket"
-        object_key = "unknown_key"
-        eventName = minio_event_data.get('EventName') 
-
-        if 'Records' in minio_event_data and isinstance(minio_event_data.get('Records'), list) and len(minio_event_data['Records']) > 0:
-            record = minio_event_data['Records'][0]
-            if not eventName and 'eventName' in record:
-                eventName = record.get('eventName')
-            s3_info = record.get('s3', {})
-            if isinstance(s3_info, dict):
-                object_info = s3_info.get('object', {})
-                bucket_info = s3_info.get('bucket', {})
-                if isinstance(object_info, dict): object_key = object_info.get('key', object_key)
-                if isinstance(bucket_info, dict): bucket_name = bucket_info.get('name', bucket_name)
-        elif 'Key' in minio_event_data: 
-             object_key = minio_event_data.get('Key', object_key)
-             if 'Bucket' in minio_event_data and isinstance(minio_event_data.get('Bucket'), dict) and 'name' in minio_event_data['Bucket']:
-                 bucket_name = minio_event_data['Bucket']['name']
-             elif 'bucket' in minio_event_data and isinstance(minio_event_data.get('bucket'), dict) and 'name' in minio_event_data['bucket']:
-                 bucket_name = minio_event_data['bucket']['name']
-
-        if not eventName: eventName = "s3:ObjectCreated:Put"
-
-        app.logger.info(f"RID-{request_id}: Parsed S3 details: EventName='{eventName}', Bucket='{bucket_name}', Key='{object_key}'")
-        
-        is_pdf = False
-        if object_key and isinstance(object_key, str) and object_key != "unknown_key":
-            is_pdf = object_key.lower().endswith(".pdf")
-        app.logger.info(f"RID-{request_id}: Is PDF: {is_pdf}")
-
-        app.logger.info(f"RID-{request_id}: DEBUG MODE: Proceeding to KFP logic for bucket='{bucket_name}', key='{object_key}' (PDF check: {is_pdf})")
-
-        if not KFP_ENDPOINT:
-            app.logger.error(f"RID-{request_id}: KFP_ENDPOINT not set. Cannot trigger pipeline.")
-            return jsonify({"error": "KFP endpoint not configured on server", "request_id": request_id}), 500
-        
-        kfp_client = get_kfp_client()
-        if not kfp_client:
-            app.logger.error(f"RID-{request_id}: KFP client could not be initialized. Cannot trigger KFP pipeline.")
-            return jsonify({"error": "KFP client initialization failed", "request_id": request_id}), 500
-
-        app.logger.info(f"RID-{request_id}: Looking for KFP pipeline: '{PIPELINE_NAME}'")
-        pipeline_id = None
-        try:
-            pipelines_response = kfp_client.list_pipelines(page_size=100, filter=json.dumps({"predicates": [{"key": "name", "op": "EQUALS", "string_value": PIPELINE_NAME}]}))
-            if pipelines_response and pipelines_response.pipelines:
-                pipeline_id = pipelines_response.pipelines[0].pipeline_id
-            else:
-                app.logger.error(f"RID-{request_id}: Pipeline '{PIPELINE_NAME}' not found using list_pipelines.")
-        except Exception as e_get_id:
-            app.logger.error(f"RID-{request_id}: Error getting KFP Pipeline ID for '{PIPELINE_NAME}': {str(e_get_id)}", exc_info=True)
-            
-        if not pipeline_id:
-            app.logger.error(f"RID-{request_id}: Pipeline '{PIPELINE_NAME}' not found in KFP or error retrieving ID.")
-            return jsonify({"error": f"Pipeline '{PIPELINE_NAME}' not found or error retrieving ID", "request_id": request_id}), 404
-        app.logger.info(f"RID-{request_id}: Found KFP Pipeline ID: {pipeline_id}")
-
-        experiment = None
-        try:
-            experiments_response = kfp_client.list_experiments(page_size=1, filter=json.dumps({"predicates": [{"key": "name", "op": "EQUALS", "string_value": KFP_EXPERIMENT_NAME}]}))
-            if experiments_response and experiments_response.experiments:
-                experiment = experiments_response.experiments[0]
-                app.logger.info(f"RID-{request_id}: Using existing KFP Experiment ID: {experiment.experiment_id} (Name: {KFP_EXPERIMENT_NAME})")
-            else:
-                app.logger.warning(f"RID-{request_id}: Experiment '{KFP_EXPERIMENT_NAME}' not found. Attempting to create it.")
-                experiment = kfp_client.create_experiment(experiment_name=KFP_EXPERIMENT_NAME) 
-                app.logger.info(f"RID-{request_id}: Created KFP Experiment ID: {experiment.experiment_id} (Name: {KFP_EXPERIMENT_NAME})")
-        except Exception as exp_e: 
-            app.logger.error(f"RID-{request_id}: Failed to get or create KFP experiment '{KFP_EXPERIMENT_NAME}': {exp_e}", exc_info=True)
-            return jsonify({"error": f"Failed to get or create KFP experiment: {exp_e}", "request_id": request_id}), 500
-        
-        pipeline_params = {
-            'pdf_s3_bucket': bucket_name,
-            'pdf_s3_key': object_key,
-            'processing_timestamp': datetime.now(timezone.utc).isoformat()
-        }
-        app.logger.info(f"RID-{request_id}: Pipeline parameters for KFP run: {json.dumps(pipeline_params)}")
-
-        run_name = f"PDF Event - {object_key.replace('/', '-').replace('.pdf', '')} - {request_id[:8]}"
-        app.logger.info(f"RID-{request_id}: Submitting KFP run with name: {run_name}")
-        
-        run_result = kfp_client.create_run_from_pipeline_id(
-            pipeline_id=pipeline_id,
-            arguments=pipeline_params,
-            run_name=run_name,
-            experiment_name=KFP_EXPERIMENT_NAME 
-        )
-        
-        run_id_str = getattr(run_result, 'run_id', "N/A") 
-        run_name_str = getattr(run_result, 'name', run_name) 
-        run_url = f"{KFP_ENDPOINT}/#/runs/details/{run_id_str}" if run_id_str != "N/A" else "N/A" 
-        
-        app.logger.info(f"RID-{request_id}: KFP run successfully triggered: ID={run_id_str}, Name='{run_name_str}', URL: {run_url}")
-        
-        return jsonify({
-            "message": "KFP pipeline successfully triggered",
-            "kfp_run_id": run_id_str,
-            "kfp_run_url": run_url,
-            "processed_bucket": bucket_name,
-            "processed_key": object_key,
-            "cloud_event_id_received": cloud_event_id_received,
-            "request_id": request_id
-        }), 200
-
-    except json.JSONDecodeError as e_json:
-        app.logger.error(f"RID-{request_id}: JSONDecodeError processing event: {str(e_json)}. Raw body sample (first 500 chars): {request.get_data(as_text=True)[:500]}", exc_info=True)
-        return jsonify({"status": "error", "message": f"Invalid JSON in payload: {str(e_json)}", "request_id": request_id}), 400
+    except kfp_server_api.ApiException as e_kfp_api: 
+        app.logger.error(f"RID-{request_id}: KFP API call (list_experiments) failed: Status {e_kfp_api.status}, Reason: {e_kfp_api.reason}", exc_info=False)
+        app.logger.debug(f"RID-{request_id}: KFP API Exception Body: {e_kfp_api.body}")
+        return jsonify({"status": "error", "message": f"KFP API error: {e_kfp_api.reason}", "details": str(e_kfp_api.body), "request_id": request_id}), 500
     except Exception as e: 
-        app.logger.error(f"RID-{request_id}: Global exception in handle_s3_event: {str(e)}", exc_info=True)
-        return jsonify({"status": "error", "message": f"Internal server error: {str(e)}", "request_id": request_id}), 500
+        app.logger.error(f"RID-{request_id}: Global exception during list_experiments test: {str(e)}", exc_info=True)
+        return jsonify({"status": "error", "message": f"Internal server error during KFP test: {str(e)}", "request_id": request_id}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))
     flask_debug_mode = os.environ.get("FLASK_DEBUG", "false").lower() in ('true', '1', 't') 
     
-    app.logger.info(f"=== S3 Event Handler Starting (Direct Flask Run) ===")
+    app.logger.info(f"=== S3 Event Handler Starting (Direct Flask Run - SIMPLIFIED TEST VERSION) ===")
     app.run(host='0.0.0.0', port=port, debug=flask_debug_mode)
