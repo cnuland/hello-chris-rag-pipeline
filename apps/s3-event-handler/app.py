@@ -192,19 +192,32 @@ def handle_s3_event():
         return jsonify({"status": "error", "message": "KFP client initialization failed", "request_id": request_id}), 500
 
     try:
-        app.logger.info(f"RID-{request_id}: Attempting to list experiments...")
-        experiments_response = kfp_client.list_experiments(page_size=5) # List a few experiments
+        app.logger.info(f"RID-{request_id}: Attempting to start pipeline")
+        
+        pipelines = kfp_client.list_pipelines()
+            pipeline_id = None
+            for p in pipelines.pipelines:
+                app.logger.info(p)
+                if p.name == "simple":
+                    pipeline_id = p.id
+                    break
+
+            if not pipeline_id:
+                raise ValueError("Pipeline named 'simple' not found")
+
+            # Start the pipeline
+            run = kfp_client.run_pipeline(
+                experiment_id=experiment.id,
+                job_name=f"simple-run-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                pipeline_id=pipeline_id,
+                params={}  # Replace with {"param_name": "value"} if your pipeline requires input parameters
+            )
         
         if experiments_response and experiments_response.experiments is not None:
-            app.logger.info(f"RID-{request_id}: Successfully listed experiments. Count: {len(experiments_response.experiments)}")
-            # Log details of the first few experiments for more info
-            for i, exp in enumerate(experiments_response.experiments):
-                if i < 3: # Log details for up to 3 experiments
-                    app.logger.info(f"RID-{request_id}: Experiment {i+1}: ID={exp.experiment_id}, Name='{exp.display_name}', CreatedAt={exp.created_at}")
-            return jsonify({
-                "message": "Successfully listed KFP experiments.",
-                "experiment_count": len(experiments_response.experiments),
-                "first_few_experiments": [{"id": exp.experiment_id, "name": exp.display_name} for exp in experiments_response.experiments[:3]],
+            app.logger.info(f"RID-{request_id}: Sent request to start pipeline")
+
+            return jsonify({ 
+                "message": "Successfully started KFP pipeline.",
                 "request_id": request_id
             }), 200
         else:
