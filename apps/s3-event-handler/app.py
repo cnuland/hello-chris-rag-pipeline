@@ -204,7 +204,7 @@ def handle_s3_event():
 
         if not pipeline_id:
             raise ValueError("Pipeline named 'simple' not found")
-
+        experiment = kfp_client.create_experiment(name="test")
         # Start the pipeline
         run = kfp_client.run_pipeline(
             experiment_id=experiment.id,
