@@ -13,7 +13,7 @@ spec:
     metadata:
       annotations:
         # --- Essential Annotations for this Setup ---
-        kubectl.kubernetes.io/restartedAt: "les do this12" # Forces a new revision
+        kubectl.kubernetes.io/restartedAt: "les do this9" # Forces a new revision
         autoscaling.knative.dev/minScale: "1" # Keeps at least one pod running for faster response & easier debugging
         queue.serving.knative.dev/userPort: "8080" # Tells queue-proxy your app's actual listening port
         # Protocol configuration for Istio
@@ -58,6 +58,8 @@ spec:
               value: "true" 
             - name: REQUESTS_CA_BUNDLE # Explicitly set this
               value: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
+            - name: KFP_BEARER_TOKEN # Add this line
+              value: "sha256~3boHr2LRG2ahhZJDO95n496KLj3p8U7IPxQYnLAVllU" # Paste the token
           resources:
             requests:
               memory: "512Mi"
