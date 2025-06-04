@@ -4,17 +4,17 @@ import uuid
 import logging
 import sys
 from datetime import datetime, timezone
-from flask import Flask, request, jsonify, g, has_request_context # Added has_request_context
+from flask import Flask, request, jsonify, g, has_request_context
 from kfp import Client as KFPClient
 from kfp_server_api.configuration import Configuration as KFPConfiguration
 # ApiClient is used by KFPClient internally, we configure its default
 import kfp_server_api # For KFP API specific exceptions
-import urllib3 # To disable SSL warnings if verify_ssl is False
+import urllib3 # To disable SSL warnings if verify_ssl is set to False
 
 # --- Environment Variables ---
 KFP_ENDPOINT = os.environ.get("KFP_ENDPOINT")
 KFP_SA_TOKEN_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token"
-PIPELINE_NAME = os.environ.get("KFP_PIPELINE_NAME", "simple-pdf-processing-pipeline") # Matches your pipeline definition
+PIPELINE_NAME = os.environ.get("KFP_PIPELINE_NAME", "simple-pdf-processing-pipeline")
 KFP_EXPERIMENT_NAME = os.environ.get("KFP_EXPERIMENT_NAME", "S3 Triggered PDF Runs")
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "DEBUG").upper()
 
@@ -55,7 +55,7 @@ gunicorn_access_logger.handlers = root_logger.handlers
 gunicorn_access_logger.setLevel(effective_log_level)
 
 app.logger.info(f"Flask app initialized. Log level: {LOG_LEVEL}")
-app.logger.info(f"KFP_ENDPOINT: {KFP_ENDPOINT}")
+app.logger.info(f"KFP_ENDPOINT: {KFP_ENDPOINT if KFP_ENDPOINT else 'NOT SET'}")
 app.logger.info(f"KFP_PIPELINE_NAME: {PIPELINE_NAME}")
 app.logger.info(f"KFP_EXPERIMENT_NAME: {KFP_EXPERIMENT_NAME}")
 
@@ -89,7 +89,7 @@ def after_request_logging_extended(response):
 
 def get_kfp_client():
     """Initializes and returns a KFP client."""
-    request_id_str = "KFP_CLIENT_INIT_NO_CTX" # Default if no request context
+    request_id_str = "KFP_CLIENT_INIT_NO_CTX"
     if has_request_context() and hasattr(g, 'request_id'):
         request_id_str = g.request_id
     
@@ -119,41 +119,43 @@ def get_kfp_client():
         current_app_logger.info(f"RID-{request_id_str}: SA token path {KFP_SA_TOKEN_PATH} not found. Proceeding without SA token from file.")
 
     try:
-        # Configure the default KFP API client configuration
-        # This is used by KFPClient() when it internally creates an ApiClient instance.
-        default_kfp_config = KFPConfiguration.get_default_copy()
-        default_kfp_config.host = KFP_ENDPOINT
+        # Configure the default kfp_server_api.Configuration
+        # This ensures that any ApiClient created by KFPClient uses these settings.
+        default_config = KFPConfiguration.get_default_copy()
+        default_config.host = KFP_ENDPOINT
 
         service_ca_path = "/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt"
         if KFP_ENDPOINT.startswith('https://'):
             if os.path.exists(service_ca_path):
                 current_app_logger.info(f"RID-{request_id_str}: Configuring KFP client with service CA: {service_ca_path}")
-                default_kfp_config.ssl_ca_cert = service_ca_path
-                default_kfp_config.verify_ssl = True 
+                default_config.ssl_ca_cert = service_ca_path
+                default_config.verify_ssl = True 
             else:
                 current_app_logger.warning(f"RID-{request_id_str}: Service CA bundle not found at {service_ca_path}. KFP client will use default system CAs. SSL errors may occur if KFP API uses internal certs.")
-                # Forcing SSL_VERIFY_FALSE - ONLY FOR DEBUGGING, NOT PRODUCTION
+                # Fallback for DEV/DEBUG if service CA doesn't work (NOT RECOMMENDED FOR PROD)
                 # current_app_logger.warning(f"RID-{request_id_str}: DEBUG FALLBACK: Disabling KFP client SSL verification.")
-                # default_kfp_config.verify_ssl = False
+                # default_config.verify_ssl = False
                 # urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
         
         if token:
-            default_kfp_config.api_key['authorization'] = token
-            default_kfp_config.api_key_prefix['authorization'] = 'Bearer'
+            default_config.api_key['authorization'] = token
+            default_config.api_key_prefix['authorization'] = 'Bearer'
             current_app_logger.info(f"RID-{request_id_str}: KFP client default config prepared with SA token for Bearer auth.")
         
-        KFPConfiguration.set_default(default_kfp_config) # Apply this as the default
+        KFPConfiguration.set_default(default_config)
 
-        # Initialize KFPClient. It will use the default_kfp_config we just set.
-        # The `existing_token` parameter is suitable for KFP SDK v1.x.
+        # Initialize KFPClient. For KFP SDK v1.x, it often uses the default config implicitly.
+        # The `existing_token` argument is a common way to pass the token.
         if token:
             client = KFPClient(host=KFP_ENDPOINT, existing_token=token)
+            current_app_logger.info(f"RID-{request_id_str}: KFPClient initialized with host and existing_token.")
         else:
-            client = KFPClient(host=KFP_ENDPOINT) # Relies on ambient auth or unauthenticated if KFP API allows
+            client = KFPClient(host=KFP_ENDPOINT) # Will use default config, might rely on ambient auth
+            current_app_logger.info(f"RID-{request_id_str}: KFPClient initialized with host only (no explicit token).")
         
         current_app_logger.info(f"RID-{request_id_str}: KFP Client object created.")
 
-        # Verification call
+        # Verification call (optional, but good for debugging)
         try:
             current_app_logger.info(f"RID-{request_id_str}: Verifying KFP client connection by listing experiments...")
             experiments = client.list_experiments(page_size=1)
@@ -168,7 +170,7 @@ def get_kfp_client():
         
         return client
 
-    except Exception as e:
+    except Exception as e: # Catch any other exception during client initialization
         current_app_logger.error(f"RID-{request_id_str}: Exception during KFP client initialization: {str(e)}", exc_info=True)
         return None
 
@@ -262,17 +264,18 @@ def handle_s3_event():
             app.logger.error(f"RID-{request_id}: KFP_ENDPOINT not set. Cannot trigger pipeline.")
             return jsonify({"error": "KFP endpoint not configured on server", "request_id": request_id}), 500
         
-        kfp_client = get_kfp_client() # This should now work
+        kfp_client = get_kfp_client()
         if not kfp_client:
-            app.logger.error(f"RID-{request_id}: KFP client could not be initialized (see previous logs from get_kfp_client). Cannot trigger KFP pipeline.")
+            app.logger.error(f"RID-{request_id}: KFP client could not be initialized. Cannot trigger KFP pipeline.")
             return jsonify({"error": "KFP client initialization failed", "request_id": request_id}), 500
 
         app.logger.info(f"RID-{request_id}: Looking for KFP pipeline: '{PIPELINE_NAME}'")
         pipeline_id = None
         try:
             pipeline_id = kfp_client.get_pipeline_id(PIPELINE_NAME)
-        except Exception as e_get_id:
+        except Exception as e_get_id: # Catching generic exception to ensure block is terminated
             app.logger.error(f"RID-{request_id}: Error getting KFP Pipeline ID for '{PIPELINE_NAME}': {str(e_get_id)}", exc_info=True)
+            # pipeline_id remains None
             
         if not pipeline_id:
             app.logger.error(f"RID-{request_id}: Pipeline '{PIPELINE_NAME}' not found in KFP or error retrieving ID.")
@@ -336,5 +339,5 @@ if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))
     flask_debug_mode = os.environ.get("FLASK_DEBUG", "false").lower() in ('true', '1', 't') 
     
-    app.logger.info(f"=== S3 Event Handler Starting (Direct Flask Run) ===") # Changed from "Local Flask Server"
+    app.logger.info(f"=== S3 Event Handler Starting (Direct Flask Run) ===")
     app.run(host='0.0.0.0', port=port, debug=flask_debug_mode)
