@@ -6,9 +6,9 @@ import sys
 from datetime import datetime, timezone
 from flask import Flask, request, jsonify, g, has_request_context
 
-# KFP SDK v2.x imports (compatible with kfp==2.7.0)
+# KFP SDK v2.x imports (for kfp==2.7.0 compatibility)
 from kfp import Client as KFPClient
-from kfp_server_api.configuration import Configuration as KFPConfiguration
+# We are avoiding explicit KFPConfiguration and KFPApiClient for client init
 import kfp_server_api 
 import urllib3 # For disabling InsecureRequestWarning
 
@@ -18,10 +18,9 @@ KFP_SA_TOKEN_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token"
 KFP_MANUAL_BEARER_TOKEN = os.environ.get("KFP_BEARER_TOKEN") 
 
 PIPELINE_NAME = os.environ.get("KFP_PIPELINE_NAME", "simple-pdf-processing-pipeline")
-KFP_EXPERIMENT_NAME = os.environ.get("KFP_EXPERIMENT_NAME", "S3 Triggered PDF Runs")
+KFP_EXPERIMENT_NAME = os.environ.get("KFP_EXPERIMENT_NAME", "S3 Triggered PDF Runs") # Corrected from "S3 Triggered PDF Run"
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "DEBUG").upper()
 KFP_VERIFY_SSL = os.environ.get("KFP_VERIFY_SSL", "true").lower() == "true"
-# REQUESTS_CA_BUNDLE will be used if KFP_VERIFY_SSL is true
 REQUESTS_CA_BUNDLE = os.environ.get("REQUESTS_CA_BUNDLE", "/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt")
 
 
@@ -68,9 +67,9 @@ app.logger.info(f"KFP_EXPERIMENT_NAME: {KFP_EXPERIMENT_NAME}")
 app.logger.info(f"KFP_VERIFY_SSL: {KFP_VERIFY_SSL}")
 app.logger.info(f"REQUESTS_CA_BUNDLE path: {REQUESTS_CA_BUNDLE}")
 if KFP_MANUAL_BEARER_TOKEN:
-    app.logger.info("KFP_BEARER_TOKEN is SET. Will use 'existing_token' for KFPClient.")
+    app.logger.info("KFP_BEARER_TOKEN is SET. Will use this with 'existing_token'.")
 else:
-    app.logger.info("KFP_BEARER_TOKEN is NOT SET. Will attempt to use SA token from file via KFPConfiguration.")
+    app.logger.info(f"KFP_BEARER_TOKEN is NOT SET. Will attempt to use SA token from {KFP_SA_TOKEN_PATH} with 'existing_token'.")
 
 
 @app.before_request
@@ -101,7 +100,7 @@ def after_request_logging_extended(response):
     return response
 
 def get_kfp_client():
-    """Initializes and returns a KFP client."""
+    """Initializes and returns a KFP client using existing_token and direct ssl_ca_cert."""
     request_id_str = "KFP_CLIENT_INIT_NO_CTX" 
     if has_request_context() and hasattr(g, 'request_id'):
         request_id_str = g.request_id
@@ -112,69 +111,63 @@ def get_kfp_client():
         current_app_logger.error(f"RID-{request_id_str}: KFP_ENDPOINT environment variable not set.")
         return None
 
-    current_app_logger.info(f"RID-{request_id_str}: Validating KFP endpoint: {KFP_ENDPOINT}")
-    if not KFP_ENDPOINT.startswith(('http://', 'https://')):
-        current_app_logger.error(f"RID-{request_id_str}: Invalid KFP_ENDPOINT format. Must start with http:// or https://. Got: {KFP_ENDPOINT}")
-        return None
-
-    current_app_logger.info(f"RID-{request_id_str}: Attempting to initialize KFP Client for endpoint: {KFP_ENDPOINT}")
+    current_app_logger.info(f"RID-{request_id_str}: Initializing KFP Client for endpoint: {KFP_ENDPOINT}")
     
-    # 1. Configure SSL settings globally for kfp_server_api.ApiClient
-    # This default configuration will be used by KFPClient() if no specific config is passed,
-    # or it should influence the SSL context even if existing_token is used.
-    default_kfp_config = KFPConfiguration.get_default_copy()
-    default_kfp_config.host = KFP_ENDPOINT # Ensure host is set on the config
+    token_to_use = None
+    token_source = "None"
 
+    if KFP_MANUAL_BEARER_TOKEN:
+        token_to_use = KFP_MANUAL_BEARER_TOKEN
+        token_source = "KFP_BEARER_TOKEN environment variable"
+        current_app_logger.info(f"RID-{request_id_str}: Using manually provided token from {token_source}.")
+    elif os.path.exists(KFP_SA_TOKEN_PATH):
+        try:
+            with open(KFP_SA_TOKEN_PATH, 'r') as f:
+                token_to_use = f.read().strip()
+            token_source = f"SA token file ({KFP_SA_TOKEN_PATH})"
+            current_app_logger.info(f"RID-{request_id_str}: Using token from {token_source}.")
+        except Exception as token_err:
+            current_app_logger.error(f"RID-{request_id_str}: Could not read SA token from {KFP_SA_TOKEN_PATH}: {token_err}. Proceeding without explicit token.", exc_info=True)
+            token_source = "SA token file (read failed)"
+    else:
+        current_app_logger.warning(f"RID-{request_id_str}: KFP_MANUAL_BEARER_TOKEN not set and SA token path {KFP_SA_TOKEN_PATH} not found. Proceeding without explicit token.")
+        token_source = "None (no token found)"
+
+    ssl_ca_cert_to_use = None
     if KFP_ENDPOINT.startswith('https://'):
         if KFP_VERIFY_SSL:
             if os.path.exists(REQUESTS_CA_BUNDLE):
-                current_app_logger.info(f"RID-{request_id_str}: KFP SSL verification ENABLED. Using CA bundle: {REQUESTS_CA_BUNDLE}")
-                default_kfp_config.ssl_ca_cert = REQUESTS_CA_BUNDLE
-                default_kfp_config.verify_ssl = True
+                ssl_ca_cert_to_use = REQUESTS_CA_BUNDLE
+                current_app_logger.info(f"RID-{request_id_str}: KFP SSL verification ENABLED. Will pass ssl_ca_cert: {ssl_ca_cert_to_use}")
             else:
-                current_app_logger.warning(f"RID-{request_id_str}: KFP SSL verification ENABLED, but CA bundle not found at {REQUESTS_CA_BUNDLE}. SSL errors may occur if the KFP API cert is not publicly trusted. Will rely on system default CAs.")
-                default_kfp_config.verify_ssl = True 
+                current_app_logger.warning(f"RID-{request_id_str}: KFP SSL verification ENABLED, but CA bundle '{REQUESTS_CA_BUNDLE}' not found. Will pass ssl_ca_cert=None (relying on system CAs or KFPClient default).")
+                # Passing None might make it use system CAs, or fail if cert is self-signed and not in system CAs.
         else: 
-            current_app_logger.warning(f"RID-{request_id_str}: KFP_VERIFY_SSL is false. Disabling SSL certificate verification for KFP client. NOT FOR PRODUCTION.")
-            default_kfp_config.verify_ssl = False
-            if KFP_ENDPOINT.startswith('https://'): # Only disable warnings for HTTPS with verify_ssl=False
-                urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-    else: # HTTP endpoint
-        default_kfp_config.verify_ssl = False # No SSL to verify for HTTP
-
-    # Apply the SSL configuration globally before KFPClient instantiation
-    KFPConfiguration.set_default(default_kfp_config)
+            current_app_logger.warning(f"RID-{request_id_str}: KFP_VERIFY_SSL is false. Will pass ssl_ca_cert=None and disable urllib3 warnings. This effectively disables SSL verification.")
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+            # Note: KFPClient itself does not have a `verify_ssl=False` param. Disabling is via ssl_ca_cert=None and hoping underlying lib doesn't verify.
+    else:
+        current_app_logger.info(f"RID-{request_id_str}: KFP_ENDPOINT is HTTP. SSL verification not applicable.")
 
     client = None
     try:
-        if KFP_MANUAL_BEARER_TOKEN:
-            current_app_logger.info(f"RID-{request_id_str}: Initializing KFPClient with existing_token (using KFP_BEARER_TOKEN).")
-            # KFPClient should pick up global SSL settings from KFPConfiguration.get_default()
-            client = KFPClient(host=KFP_ENDPOINT, existing_token=KFP_MANUAL_BEARER_TOKEN, ssl_ca_cert=REQUESTS_CA_BUNDLE)
-        elif os.path.exists(KFP_SA_TOKEN_PATH):
-            try:
-                with open(KFP_SA_TOKEN_PATH, 'r') as f:
-                    sa_token = f.read().strip()
-                current_app_logger.debug(f"RID-{request_id_str}: Successfully read SA token from {KFP_SA_TOKEN_PATH}.")
-                # For SA token, we need to ensure it's on the global config KFPClient will use.
-                # We've already set the global default, now we ensure the token is on it.
-                # This is slightly redundant if KFPClient re-reads global config, but ensures clarity.
-                active_config = KFPConfiguration.get_default()
-                active_config.api_key['authorization'] = sa_token
-                active_config.api_key_prefix['authorization'] = 'Bearer'
-                KFPConfiguration.set_default(active_config) # Re-apply if modified
-                current_app_logger.info(f"RID-{request_id_str}: Initializing KFPClient using default configuration (with SA token from file).")
-                client = KFPClient(host=KFP_ENDPOINT)
-            except Exception as token_err:
-                current_app_logger.error(f"RID-{request_id_str}: Could not read SA token from {KFP_SA_TOKEN_PATH}: {token_err}. Initializing KFPClient without explicit token.", exc_info=True)
-                client = KFPClient(host=KFP_ENDPOINT) # Will use global SSL config, no explicit token
-        else:
-            current_app_logger.warning(f"RID-{request_id_str}: KFP_BEARER_TOKEN not set and SA token path {KFP_SA_TOKEN_PATH} not found. Initializing KFPClient without explicit token.")
-            client = KFPClient(host=KFP_ENDPOINT) # Will use global SSL config, no explicit token
-        
-        current_app_logger.info(f"RID-{request_id_str}: KFP Client object created. Host: {client.get_config().host if client.get_config() else 'N/A'}")
+        client_init_kwargs = {
+            'host': KFP_ENDPOINT,
+            'existing_token': token_to_use # Will be None if no token was found/read
+        }
+        # Only add ssl_ca_cert if it's an HTTPS endpoint
+        if KFP_ENDPOINT.startswith('https://'):
+            client_init_kwargs['ssl_ca_cert'] = ssl_ca_cert_to_use
+            # If KFP_VERIFY_SSL is false, ssl_ca_cert_to_use will be None.
+            # The KFPClient for 2.7.0 doesn't have a direct `verify_ssl` param.
+            # Setting `ssl_ca_cert=None` is the closest to disabling verification via constructor.
 
-        # Optional: Verification call to ensure the client can communicate with the KFP API
+        current_app_logger.info(f"RID-{request_id_str}: Initializing KFPClient with: host='{KFP_ENDPOINT}', existing_token (from {token_source}), ssl_ca_cert='{ssl_ca_cert_to_use}'")
+        client = KFPClient(**client_init_kwargs)
+        
+        current_app_logger.info(f"RID-{request_id_str}: KFP Client object created for host: {KFP_ENDPOINT}.")
+
+        # Verification call
         try:
             current_app_logger.info(f"RID-{request_id_str}: Verifying KFP client connection by listing experiments...")
             response = client.list_experiments(page_size=1) 
