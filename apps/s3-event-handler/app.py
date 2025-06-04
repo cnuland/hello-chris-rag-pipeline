@@ -206,7 +206,7 @@ def handle_s3_event():
         experiment = kfp_client.create_experiment(name="test")
         # Start the pipeline
         run = kfp_client.run_pipeline(
-            experiment_id=experiment.id,
+            experiment_id=experiment.experiment_id,
             job_name=f"simple-run-{datetime.now().strftime('%Y%m%d%H%M%S')}",
             pipeline_id=pipeline_id,
                 params={}  # Replace with {"param_name": "value"} if your pipeline requires input parameters
