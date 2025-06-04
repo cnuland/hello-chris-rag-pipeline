@@ -58,6 +58,7 @@ spec:
               value: "true" 
             - name: REQUESTS_CA_BUNDLE # Explicitly set this
               value: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
+          resources:
             requests:
               memory: "512Mi"
               cpu: "1"
