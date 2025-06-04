@@ -194,6 +194,9 @@ def handle_s3_event():
     try:
         app.logger.info(f"RID-{request_id}: Attempting to start pipeline")
         
+        experiment = kfp_client.create_experiment(name="test")
+
+        # Step 1: Find the pipeline
         pipelines = kfp_client.list_pipelines()
         pipeline_id = None
         for p in pipelines.pipelines:
@@ -203,15 +206,23 @@ def handle_s3_event():
 
         if not pipeline_id:
             raise ValueError("Pipeline named 'simple' not found")
-        experiment = kfp_client.create_experiment(name="test")
-        # Start the pipeline
+
+        # Step 2: Get latest version ID for the pipeline
+        versions = kfp_client.list_pipeline_versions(pipeline_id=pipeline_id)
+        if not versions.versions:
+            raise ValueError(f"No versions found for pipeline ID {pipeline_id}")
+
+        version_id = versions.versions[0].pipeline_version_id  # You can sort/filter as needed
+
+        # Step 3: Run the pipeline
         run = kfp_client.run_pipeline(
             experiment_id=experiment.experiment_id,
             job_name=f"simple-run-{datetime.now().strftime('%Y%m%d%H%M%S')}",
             pipeline_id=pipeline_id,
-                params={}  # Replace with {"param_name": "value"} if your pipeline requires input parameters
-            )
-        
+            version_id=version_id,
+            params={}  # Add parameters if required
+        )
+
         if run is not None:
             app.logger.info(f"RID-{request_id}: Sent request to start pipeline")
 
