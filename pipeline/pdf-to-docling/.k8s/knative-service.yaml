@@ -54,6 +54,8 @@ spec:
             # Add an environment variable to enable more verbose logging of requests
             - name: VERBOSE_REQUEST_LOGGING
               value: "true"
+            - name: KFP_VERIFY_SSL
+              value: "false" # Ensure this is a string "false"
           resources:
             requests:
               memory: "512Mi"

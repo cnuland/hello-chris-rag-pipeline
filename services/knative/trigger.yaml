@@ -1,15 +1,18 @@
 apiVersion: eventing.knative.dev/v1
 kind: Trigger
 metadata:
-  name: minio-pdf-event-trigger
+  name: minio-pdf-event-trigger # Or your trigger name
   namespace: rag-pipeline-workshop
 spec:
-  broker: kafka-broker
+  broker: kafka-broker # Your broker name
   filter:
     attributes:
-      type: "s3:ObjectCreated:Put" 
-      source: "urn:minio:s3:::webhook" # This is what your bridge is now setting as the source
-      # You can also add a filter for subject if needed, e.g., for *.pdf
-      # subject: ".pdf" # Though this would be a suffix match, Knative filter might need exact or prefix
+      source: "urn:minio:s3:::webhook" # Match what minio-event-bridge sends
+      type: "s3:ObjectCreated:Put"    # Match what minio-event-bridge sends
   subscriber:
-    uri: http://kfp-s3-trigger-00016-private.rag-pipeline-workshop.svc.cluster.local:8012
+    ref:
+      apiVersion: serving.knative.dev/v1
+      kind: Service
+      name: kfp-s3-trigger # Name of your Knative Service
+      namespace: rag-pipeline-workshop
+  #  uri: http://kfp-s3-trigger-0000-private.rag-pipeline-workshop.svc.cluster.local:8012
