@@ -197,8 +197,7 @@ def handle_s3_event():
         pipelines = kfp_client.list_pipelines()
         pipeline_id = None
         for p in pipelines.pipelines:
-            app.logger.info(p)
-            if p.name == "simple":
+            if p.display_name == "simple":
                 pipeline_id = p.id
                 break
 
