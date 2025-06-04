@@ -1,4 +1,4 @@
 Flask==2.3.3
 gunicorn==21.2.0
-kfp==1.8.22 # Kubeflow Pipelines SDK (ensure compatibility with your KFP version)
+kfp==2.13.0 # Kubeflow Pipelines SDK (ensure compatibility with your KFP version)
 # Add other dependencies if needed, e.g., for specific S3 clients if not just parsing event
