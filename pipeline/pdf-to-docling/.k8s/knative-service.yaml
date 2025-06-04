@@ -13,7 +13,7 @@ spec:
     metadata:
       annotations:
         # --- Essential Annotations for this Setup ---
-        kubectl.kubernetes.io/restartedAt: "les do this3" # Forces a new revision
+        kubectl.kubernetes.io/restartedAt: "les do this4" # Forces a new revision
         autoscaling.knative.dev/minScale: "1" # Keeps at least one pod running for faster response & easier debugging
         queue.serving.knative.dev/userPort: "8080" # Tells queue-proxy your app's actual listening port
         # Protocol configuration for Istio
