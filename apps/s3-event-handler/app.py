@@ -5,23 +5,24 @@ import logging
 import sys
 from datetime import datetime, timezone
 from flask import Flask, request, jsonify, g, has_request_context
+
+# KFP SDK v2.x imports (compatible with kfp==2.7.0)
 from kfp import Client as KFPClient
 from kfp_server_api.configuration import Configuration as KFPConfiguration
 import kfp_server_api 
-import urllib3
+import urllib3 # For disabling InsecureRequestWarning
 
 # --- Environment Variables ---
 KFP_ENDPOINT = os.environ.get("KFP_ENDPOINT")
-# KFP_SA_TOKEN_PATH is the default path for the pod's service account token
 KFP_SA_TOKEN_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token"
-# New environment variable for a manually provided bearer token
 KFP_MANUAL_BEARER_TOKEN = os.environ.get("KFP_BEARER_TOKEN") 
 
 PIPELINE_NAME = os.environ.get("KFP_PIPELINE_NAME", "simple-pdf-processing-pipeline")
 KFP_EXPERIMENT_NAME = os.environ.get("KFP_EXPERIMENT_NAME", "S3 Triggered PDF Runs")
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "DEBUG").upper()
-# Environment variable to control SSL verification
 KFP_VERIFY_SSL = os.environ.get("KFP_VERIFY_SSL", "true").lower() == "true"
+# REQUESTS_CA_BUNDLE will be used if KFP_VERIFY_SSL is true
+REQUESTS_CA_BUNDLE = os.environ.get("REQUESTS_CA_BUNDLE", "/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt")
 
 
 # --- Logging Setup ---
@@ -65,15 +66,15 @@ app.logger.info(f"KFP_ENDPOINT: {KFP_ENDPOINT if KFP_ENDPOINT else 'NOT SET'}")
 app.logger.info(f"KFP_PIPELINE_NAME: {PIPELINE_NAME}")
 app.logger.info(f"KFP_EXPERIMENT_NAME: {KFP_EXPERIMENT_NAME}")
 app.logger.info(f"KFP_VERIFY_SSL: {KFP_VERIFY_SSL}")
+app.logger.info(f"REQUESTS_CA_BUNDLE path: {REQUESTS_CA_BUNDLE}")
 if KFP_MANUAL_BEARER_TOKEN:
-    app.logger.info("KFP_BEARER_TOKEN is SET (token value masked in logs).")
+    app.logger.info("KFP_BEARER_TOKEN is SET. Will use 'existing_token' for KFPClient.")
 else:
-    app.logger.info("KFP_BEARER_TOKEN is NOT SET, will attempt to use SA token.")
+    app.logger.info("KFP_BEARER_TOKEN is NOT SET. Will attempt to use SA token from file via KFPConfiguration.")
 
 
 @app.before_request
 def before_request_logging_extended():
-    """Log detailed request information before processing."""
     g.request_id = str(uuid.uuid4()) 
     app.logger.debug(f"RID-{g.request_id}: Request received: {request.method} {request.path} from {request.remote_addr}")
     if app.logger.isEnabledFor(logging.DEBUG): 
@@ -94,14 +95,13 @@ def before_request_logging_extended():
 
 @app.after_request
 def after_request_logging_extended(response):
-    """Log response information after processing."""
     request_id = getattr(g, 'request_id', 'NO_REQUEST_ID_IN_G_AFTER') 
     response_data_sample = response.get_data(as_text=True)[:200] + ('...' if len(response.get_data(as_text=True)) > 200 else '')
     app.logger.debug(f"RID-{request_id}: Response status: {response.status_code}, Response data sample: {response_data_sample}")
     return response
 
 def get_kfp_client():
-    """Initializes and returns a KFP client, compatible with KFP SDK v2.x."""
+    """Initializes and returns a KFP client."""
     request_id_str = "KFP_CLIENT_INIT_NO_CTX" 
     if has_request_context() and hasattr(g, 'request_id'):
         request_id_str = g.request_id
@@ -117,55 +117,64 @@ def get_kfp_client():
         current_app_logger.error(f"RID-{request_id_str}: Invalid KFP_ENDPOINT format. Must start with http:// or https://. Got: {KFP_ENDPOINT}")
         return None
 
-    current_app_logger.info(f"RID-{request_id_str}: Attempting to initialize KFP Client (SDK v2 style) for endpoint: {KFP_ENDPOINT}")
+    current_app_logger.info(f"RID-{request_id_str}: Attempting to initialize KFP Client for endpoint: {KFP_ENDPOINT}")
     
-    token_to_use = None
-    if KFP_MANUAL_BEARER_TOKEN:
-        token_to_use = KFP_MANUAL_BEARER_TOKEN
-        current_app_logger.info(f"RID-{request_id_str}: Using manually provided KFP_BEARER_TOKEN.")
-    elif os.path.exists(KFP_SA_TOKEN_PATH):
-        try:
-            with open(KFP_SA_TOKEN_PATH, 'r') as f:
-                token_to_use = f.read().strip()
-            current_app_logger.debug(f"RID-{request_id_str}: Successfully read SA token from {KFP_SA_TOKEN_PATH}")
-        except Exception as token_err:
-            current_app_logger.warning(f"RID-{request_id_str}: Could not read SA token from {KFP_SA_TOKEN_PATH}: {token_err}")
-            token_to_use = None 
-    else:
-        current_app_logger.info(f"RID-{request_id_str}: SA token path {KFP_SA_TOKEN_PATH} not found and KFP_BEARER_TOKEN not set. KFP client will attempt unauthenticated or rely on ambient credentials if any.")
+    # 1. Configure SSL settings globally for kfp_server_api.ApiClient
+    # This default configuration will be used by KFPClient() if no specific config is passed,
+    # or it should influence the SSL context even if existing_token is used.
+    default_kfp_config = KFPConfiguration.get_default_copy()
+    default_kfp_config.host = KFP_ENDPOINT # Ensure host is set on the config
 
-    try:
-        default_kfp_config = KFPConfiguration.get_default_copy()
-        default_kfp_config.host = KFP_ENDPOINT 
-
-        if KFP_ENDPOINT.startswith('https://'):
-            if KFP_VERIFY_SSL:
-                service_ca_path = os.environ.get("REQUESTS_CA_BUNDLE", "/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt")
-                if os.path.exists(service_ca_path):
-                    current_app_logger.info(f"RID-{request_id_str}: KFP SSL verification ENABLED. Using CA bundle: {service_ca_path}")
-                    default_kfp_config.ssl_ca_cert = service_ca_path
-                    default_kfp_config.verify_ssl = True
-                else:
-                    current_app_logger.warning(f"RID-{request_id_str}: KFP SSL verification ENABLED, but CA bundle not found at {service_ca_path}. SSL errors may occur if the KFP API cert is not publicly trusted.")
-                    default_kfp_config.verify_ssl = True 
-            else: 
-                current_app_logger.warning(f"RID-{request_id_str}: KFP_VERIFY_SSL is false. Disabling SSL certificate verification for KFP client. NOT FOR PRODUCTION.")
-                default_kfp_config.verify_ssl = False
+    if KFP_ENDPOINT.startswith('https://'):
+        if KFP_VERIFY_SSL:
+            if os.path.exists(REQUESTS_CA_BUNDLE):
+                current_app_logger.info(f"RID-{request_id_str}: KFP SSL verification ENABLED. Using CA bundle: {REQUESTS_CA_BUNDLE}")
+                default_kfp_config.ssl_ca_cert = REQUESTS_CA_BUNDLE
+                default_kfp_config.verify_ssl = True
+            else:
+                current_app_logger.warning(f"RID-{request_id_str}: KFP SSL verification ENABLED, but CA bundle not found at {REQUESTS_CA_BUNDLE}. SSL errors may occur if the KFP API cert is not publicly trusted. Will rely on system default CAs.")
+                default_kfp_config.verify_ssl = True 
+        else: 
+            current_app_logger.warning(f"RID-{request_id_str}: KFP_VERIFY_SSL is false. Disabling SSL certificate verification for KFP client. NOT FOR PRODUCTION.")
+            default_kfp_config.verify_ssl = False
+            if KFP_ENDPOINT.startswith('https://'): # Only disable warnings for HTTPS with verify_ssl=False
                 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-        
-        if token_to_use:
-            default_kfp_config.api_key['authorization'] = token_to_use
-            default_kfp_config.api_key_prefix['authorization'] = 'Bearer'
-            current_app_logger.info(f"RID-{request_id_str}: KFP client default config prepared with token for Bearer auth.")
+    else: # HTTP endpoint
+        default_kfp_config.verify_ssl = False # No SSL to verify for HTTP
+
+    # Apply the SSL configuration globally before KFPClient instantiation
+    KFPConfiguration.set_default(default_kfp_config)
+
+    client = None
+    try:
+        if KFP_MANUAL_BEARER_TOKEN:
+            current_app_logger.info(f"RID-{request_id_str}: Initializing KFPClient with existing_token (using KFP_BEARER_TOKEN).")
+            # KFPClient should pick up global SSL settings from KFPConfiguration.get_default()
+            client = KFPClient(host=KFP_ENDPOINT, existing_token=KFP_MANUAL_BEARER_TOKEN)
+        elif os.path.exists(KFP_SA_TOKEN_PATH):
+            try:
+                with open(KFP_SA_TOKEN_PATH, 'r') as f:
+                    sa_token = f.read().strip()
+                current_app_logger.debug(f"RID-{request_id_str}: Successfully read SA token from {KFP_SA_TOKEN_PATH}.")
+                # For SA token, we need to ensure it's on the global config KFPClient will use.
+                # We've already set the global default, now we ensure the token is on it.
+                # This is slightly redundant if KFPClient re-reads global config, but ensures clarity.
+                active_config = KFPConfiguration.get_default()
+                active_config.api_key['authorization'] = sa_token
+                active_config.api_key_prefix['authorization'] = 'Bearer'
+                KFPConfiguration.set_default(active_config) # Re-apply if modified
+                current_app_logger.info(f"RID-{request_id_str}: Initializing KFPClient using default configuration (with SA token from file).")
+                client = KFPClient(host=KFP_ENDPOINT)
+            except Exception as token_err:
+                current_app_logger.error(f"RID-{request_id_str}: Could not read SA token from {KFP_SA_TOKEN_PATH}: {token_err}. Initializing KFPClient without explicit token.", exc_info=True)
+                client = KFPClient(host=KFP_ENDPOINT) # Will use global SSL config, no explicit token
         else:
-            current_app_logger.warning(f"RID-{request_id_str}: No token available (neither KFP_BEARER_TOKEN nor SA token from file). KFP calls might fail if authentication is required.")
-
-        KFPConfiguration.set_default(default_kfp_config)
+            current_app_logger.warning(f"RID-{request_id_str}: KFP_BEARER_TOKEN not set and SA token path {KFP_SA_TOKEN_PATH} not found. Initializing KFPClient without explicit token.")
+            client = KFPClient(host=KFP_ENDPOINT) # Will use global SSL config, no explicit token
         
-        client = KFPClient(host=KFP_ENDPOINT) 
-        
-        current_app_logger.info(f"RID-{request_id_str}: KFP Client (SDK v2 style) object created for host: {KFP_ENDPOINT}.")
+        current_app_logger.info(f"RID-{request_id_str}: KFP Client object created. Host: {client.get_config().host if client.get_config() else 'N/A'}")
 
+        # Optional: Verification call to ensure the client can communicate with the KFP API
         try:
             current_app_logger.info(f"RID-{request_id_str}: Verifying KFP client connection by listing experiments...")
             response = client.list_experiments(page_size=1) 
@@ -186,7 +195,6 @@ def get_kfp_client():
 
 @app.route('/healthz', methods=['GET'])
 def healthz():
-    """Health check endpoint."""
     request_id = getattr(g, 'request_id', 'HEALTHZ_NO_G_ROUTE') 
     app.logger.debug(f"RID-{request_id}: Health check request received at /healthz")
     return jsonify(status="healthy", message="kfp-s3-trigger is running"), 200
@@ -194,9 +202,8 @@ def healthz():
 
 @app.route('/', methods=['POST'])
 def handle_s3_event():
-    """Handles incoming S3 events, parses them, and triggers a KFP pipeline."""
     request_id = getattr(g, 'request_id', "S3_EVENT_NO_G_ROUTE") 
-    app.logger.info(f"RID-{request_id}: ==== POST / request received by KFP-S3-TRIGGER user-container ==== - {__file__}") # Added __file__ for context
+    app.logger.info(f"RID-{request_id}: ==== POST / request received by KFP-S3-TRIGGER user-container ==== - {__file__}")
     
     app.logger.info(f"RID-{request_id}: Request Content-Type: {request.content_type}")
     
@@ -231,7 +238,7 @@ def handle_s3_event():
                 app.logger.debug(f"RID-{request_id}: Raw request body sample (first 500 chars for non-JSON): {raw_body_sample_err}")
                 return jsonify({"error": "Request body not decodable/parsable as JSON", "request_id": request_id}), 400
         else:
-            app.logger.error(f"RID-{request_id}: Request body is empty or Content-Type not supported for direct parsing.")
+            app.logger.error(f"RID-{request_id}: Request body is empty or unsupported Content-Type for direct parsing.")
             return jsonify({"error": "Empty request body or unsupported Content-Type for direct parsing", "request_id": request_id}), 400
 
         if not minio_event_data or not isinstance(minio_event_data, dict):
