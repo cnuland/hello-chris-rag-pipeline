@@ -198,7 +198,7 @@ def handle_s3_event():
         pipeline_id = None
         for p in pipelines.pipelines:
             if p.display_name == "simple":
-                pipeline_id = p.id
+                pipeline_id = p.pipeline_id
                 break
 
         if not pipeline_id:
