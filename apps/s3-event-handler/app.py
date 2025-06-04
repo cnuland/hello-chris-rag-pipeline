@@ -150,7 +150,7 @@ def get_kfp_client():
         if KFP_MANUAL_BEARER_TOKEN:
             current_app_logger.info(f"RID-{request_id_str}: Initializing KFPClient with existing_token (using KFP_BEARER_TOKEN).")
             # KFPClient should pick up global SSL settings from KFPConfiguration.get_default()
-            client = KFPClient(host=KFP_ENDPOINT, existing_token=KFP_MANUAL_BEARER_TOKEN, ssl_ca_cert=ssl_ca_cert)
+            client = KFPClient(host=KFP_ENDPOINT, existing_token=KFP_MANUAL_BEARER_TOKEN, ssl_ca_cert=REQUESTS_CA_BUNDLE)
         elif os.path.exists(KFP_SA_TOKEN_PATH):
             try:
                 with open(KFP_SA_TOKEN_PATH, 'r') as f:
