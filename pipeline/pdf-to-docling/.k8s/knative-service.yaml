@@ -44,7 +44,7 @@ spec:
             - name: KFP_ENDPOINT
               # Internal HTTP URL for KFP ds-pipeline service
               # Using the OpenShift AI/KFP standard namespace - adjust if your installation uses a different namespace
-              value: "https://ds-pipeline-dspa.rag-pipeline-workshop.svc.cluster.local:8443"
+              value: "https://ds-pipeline-dspa-rag-pipeline-workshop.apps.cluster-s62sj.s62sj.sandbox700.opentlc.com"
             - name: KFP_PIPELINE_NAME
               value: "simple-pdf-processing-pipeline" # Must match the name of the pipeline uploaded to KFP
             - name: KFP_EXPERIMENT_NAME
