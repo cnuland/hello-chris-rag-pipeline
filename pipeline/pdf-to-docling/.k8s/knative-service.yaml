@@ -54,10 +54,6 @@ spec:
             # Add an environment variable to enable more verbose logging of requests
             - name: VERBOSE_REQUEST_LOGGING
               value: "true"
-            - name: REQUESTS_CA_BUNDLE
-              value: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
-            - name: KFP_VERIFY_SSL
-              value: "false"
           resources:
             requests:
               memory: "512Mi"
