@@ -13,7 +13,7 @@ spec:
     metadata:
       annotations:
         # --- Essential Annotations for this Setup ---
-        kubectl.kubernetes.io/restartedAt: "les do this9" # Forces a new revision
+        kubectl.kubernetes.io/restartedAt: "les do this12 " # Forces a new revision
         autoscaling.knative.dev/minScale: "1" # Keeps at least one pod running for faster response & easier debugging
         queue.serving.knative.dev/userPort: "8080" # Tells queue-proxy your app's actual listening port
         # Protocol configuration for Istio
@@ -48,7 +48,7 @@ spec:
             - name: KFP_PIPELINE_NAME
               value: "simple-pdf-processing-pipeline" # Must match the name of the pipeline uploaded to KFP
             - name: KFP_EXPERIMENT_NAME
-              value: "S3 Triggered PDF Runs"
+              value: "S3 Triggered PDF Run"
             - name: LOG_LEVEL
               value: "DEBUG"
             # Add an environment variable to enable more verbose logging of requests
