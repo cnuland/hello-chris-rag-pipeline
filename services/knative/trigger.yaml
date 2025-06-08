@@ -3,6 +3,8 @@ kind: Trigger
 metadata:
   name: minio-pdf-event-trigger # Or your trigger name
   namespace: rag-pipeline-workshop
+  annotations:
+    argocd.argoproj.io/sync-wave: "3" # Wave 2: Deploy after core Eventing is ready
 spec:
   broker: kafka-broker # Your broker name
   filter:
