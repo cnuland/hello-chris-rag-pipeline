@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: milvus-standalone
+  labels:
+    app.kubernetes.io/name: milvus
+    app.kubernetes.io/instance: milvus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: milvus
+      app.kubernetes.io/instance: milvus
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: milvus
+        app.kubernetes.io/instance: milvus
+    spec:
+      # SecurityContext for OpenShift compatibility, allows running as a non-root user.
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 0
+        fsGroup: 0
+      containers:
+      - name: milvus
+        # Using a recent, stable standalone version of Milvus.
+        image: milvusdb/milvus:v2.3.9-standalone
+        # Command to start Milvus with the custom config file.
+        command: ["/milvus/bin/milvus", "run", "standalone"]
+        ports:
+        - name: milvus-grpc
+          containerPort: 19530 # Port for gRPC connections (used by SDKs)
+        - name: milvus-http
+          containerPort: 9091  # Port for RESTful API
+        env:
+          # Point Milvus to the mounted configuration file.
+          - name: MILVUS_CONFIG_FILE
+            value: /milvus/configs/milvus.yaml
+        resources:
+          # Minimal resource requests for a small workshop environment.
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+          limits:
+            cpu: "2"
+            memory: "4Gi"
+        volumeMounts:
+        # Mount the PVC for data persistence.
+        - name: milvus-data
+          mountPath: /var/lib/milvus
+        # Mount the ConfigMap as the configuration file.
+        - name: milvus-config-volume
+          mountPath: /milvus/configs/milvus.yaml
+          subPath: milvus.yaml
+      volumes:
+      # Define the volume from the PVC.
+      - name: milvus-data
+        persistentVolumeClaim:
+          claimName: milvus-pvc
+      # Define the volume from the ConfigMap.
+      - name: milvus-config-volume
+        configMap:
+          name: milvus-config

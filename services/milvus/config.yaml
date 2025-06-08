@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: milvus-config
+  labels:
+    app.kubernetes.io/name: milvus
+    app.kubernetes.io/instance: milvus
+data:
+  milvus.yaml: |
+    # Milvus Standalone Configuration
+    # For a full list of parameters, see:
+    # https://milvus.io/docs/system_configuration.md
+
+    rootCoord:
+      # Address for the root coordinator service.
+      # In standalone mode, this is localhost as all components are in one pod.
+      address: localhost:53100
+
+    proxy:
+      # Port for the Milvus proxy to listen on.
+      port: 19530
+
+    queryCoord:
+      # Address for the query coordinator service.
+      address: localhost:19531
+
+    etcd:
+      # In-pod etcd is used by the standalone image.
+      endpoints:
+        - localhost:2379
+      rootPath: by-dev # The root path for Milvus metadata in etcd.
+
+    minio:
+      # In-pod MinIO is used by the standalone image.
+      address: localhost:9000
+      rootPath: milvus-bucket # Bucket name for Milvus data.
+      # accessKeyID and secretAccessKey are defaulted within the standalone container
+      
+    # Paths for data persistence within the pod, pointing to the mounted PVC.
+    localStorage:
+      path: /var/lib/milvus/

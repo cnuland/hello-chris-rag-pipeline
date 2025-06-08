@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: milvus-service
+  labels:
+    app.kubernetes.io/name: milvus
+    app.kubernetes.io/instance: milvus
+spec:
+  type: ClusterIP # Only exposes the service inside the cluster.
+  ports:
+  - name: grpc
+    port: 19530
+    targetPort: milvus-grpc
+    protocol: TCP
+  - name: http
+    port: 9091
+    targetPort: milvus-http
+    protocol: TCP
+  selector:
+    app.kubernetes.io/name: milvus
+    app.kubernetes.io/instance: milvus
