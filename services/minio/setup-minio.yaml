@@ -1,14 +1,17 @@
 # Kubernetes Job to automatically configure MinIO buckets and event notifications.
-# This Job is designed to be run via an ArgoCD PostSync hook.
+# This Job is designed to be run via an ArgoCD Sync hook to ensure dependencies are met.
 apiVersion: batch/v1
 kind: Job
 metadata:
   # This name should be unique for the sync job.
   name: minio-setup
-  namespace: minio
+  # This job will be created in the same namespace as the other MinIO resources.
+  # The namespace will be applied by Kustomize/ArgoCD.
   annotations:
-    # ArgoCD Hook: This Job will run after a successful sync of all other resources in its wave.
-    argocd.argoproj.io/hook: PostSync
+    # ArgoCD Hook: This Job will run during the sync phase in its specified wave.
+    argocd.argoproj.io/hook: Sync
+    # ArgoCD Sync Wave: Assigns the Job to a later wave, ensuring dependent resources are created first.
+    argocd.argoproj.io/sync-wave: "10"
     # ArgoCD Hook Policy: The Job and its Pods will be deleted after successful completion.
     argocd.argoproj.io/hook-delete-policy: HookSucceeded
 spec:
@@ -16,8 +19,7 @@ spec:
   backoffLimit: 2
   template:
     spec:
-      # Use a dedicated service account if specific RBAC permissions are needed.
-      # For this scope, the default service account is usually sufficient.
+      # This Service Account must exist before this Job's wave is executed.
       serviceAccountName: minio-manage
       restartPolicy: Never
       containers:
@@ -29,12 +31,15 @@ spec:
           - "/bin/sh"
           - "-c"
           - |
+            set -e
             echo "--- Starting MinIO Setup Job ---"
             
-            # 1. Wait for the MinIO service to be available.
-            # This is a simple readiness check that waits for the service DNS to resolve and be reachable.
+            # Use a writable directory for mc config to avoid permission errors on OpenShift
+            MC_CONFIG_DIR="/tmp/.mc"
+            
+            # 1. Wait for the MinIO service to be available and set alias.
             echo "Waiting for MinIO service at ${MINIO_SERVICE_HOST}:${MINIO_SERVICE_PORT}..."
-            until mc alias set temp_minio http://${MINIO_SERVICE_HOST}:${MINIO_SERVICE_PORT} ${MINIO_ACCESS_KEY} ${MINIO_SECRET_KEY}; do
+            until mc --config-dir ${MC_CONFIG_DIR} alias set temp_minio http://${MINIO_SERVICE_HOST}:${MINIO_SERVICE_PORT} ${MINIO_ACCESS_KEY} ${MINIO_SECRET_KEY}; do
               echo "MinIO service not ready yet, retrying in 10 seconds..."
               sleep 10
             done
@@ -42,33 +47,32 @@ spec:
             
             # 2. Create the target bucket for PDF uploads if it doesn't exist.
             echo "Checking/Creating S3 bucket '${TARGET_BUCKET_NAME}'..."
-            mc mb temp_minio/${TARGET_BUCKET_NAME} --ignore-existing
+            mc --config-dir ${MC_CONFIG_DIR} mb temp_minio/${TARGET_BUCKET_NAME} --ignore-existing
             echo "Bucket '${TARGET_BUCKET_NAME}' is present."
             
             # 3. Create the 'pipelines' bucket for KFP artifacts if it doesn't exist.
             echo "Checking/Creating S3 bucket 'pipelines'..."
-            mc mb temp_minio/pipelines --ignore-existing
+            mc --config-dir ${MC_CONFIG_DIR} mb temp_minio/pipelines --ignore-existing
             echo "Bucket 'pipelines' is present."
 
             # 4. Construct the ARN for the server-configured Kafka target and add the event rule.
-            # Note: The original script used a webhook ARN. The error logs and Knative setup indicate
-            # you are using a Kafka target. This ARN format is for Kafka.
+            # This ARN format is for Kafka targets configured via MinIO server environment variables.
             TARGET_ARN="arn:minio:kafka::${KAFKA_TARGET_ID_IN_MINIO}:minio-bucket-notifications"
             echo "Adding/Updating event notification for Kafka target..."
             echo "Target ARN: ${TARGET_ARN}"
-            mc event add temp_minio/${TARGET_BUCKET_NAME} "${TARGET_ARN}" --event "put" --suffix ".pdf" --ignore-existing
+            mc --config-dir ${MC_CONFIG_DIR} event add temp_minio/${TARGET_BUCKET_NAME} "${TARGET_ARN}" --event "put" --suffix ".pdf" --ignore-existing
 
             echo "Event notification rule for Kafka target added/updated."
             
             # 5. Verify and list the configured events.
             echo "Verifying event rules for bucket '${TARGET_BUCKET_NAME}':"
-            mc event list temp_minio/${TARGET_BUCKET_NAME}
+            mc --config-dir ${MC_CONFIG_DIR} event list temp_minio/${TARGET_BUCKET_NAME}
             
             echo "--- MinIO Setup Job Completed Successfully ---"
         env:
           # The internal service host for the MinIO deployment.
           - name: MINIO_SERVICE_HOST
-            value: "minio.minio.svc.cluster.local" # Adjust if your service or namespace names are different
+            value: "minio-service.minio.svc.cluster.local" # Adjust if your service or namespace names are different
           # The internal service port.
           - name: MINIO_SERVICE_PORT
             value: "9000"
