@@ -82,10 +82,10 @@ spec:
           - name: MINIO_ACCESS_KEY
             valueFrom:
               secretKeyRef:
-                name: minio-credentials
-                key: accesskey
+                name: minio-root-user
+                key: MINIO_ROOT_USER
           - name: MINIO_SECRET_KEY
             valueFrom:
               secretKeyRef:
-                name: minio-credentials
-                key: secretkey
+                name: minio-root-user
+                key: MINIO_ROOT_PASSWORD
