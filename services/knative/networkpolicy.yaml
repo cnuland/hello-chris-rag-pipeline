@@ -3,6 +3,8 @@ apiVersion: networking.k8s.io/v1
 metadata:
   name: allow-api-to-eventing-webhook
   namespace: knative-eventing
+  annotations:
+    argocd.argoproj.io/sync-wave: "1" # Wave 2: Deploy after core Eventing is ready
 spec:
   podSelector:
     matchLabels:
@@ -21,6 +23,8 @@ kind: NetworkPolicy
 metadata:
   name: allow-dispatcher-to-kfp-s3-trigger-all-ports # Name indicates it's for debugging
   namespace: rag-pipeline-workshop
+  annotations:
+    argocd.argoproj.io/sync-wave: "1" # Wave 2: Deploy after core Eventing is ready
 spec:
   podSelector:
     matchLabels:

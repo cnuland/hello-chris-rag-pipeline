@@ -3,6 +3,8 @@ kind: KnativeServing
 metadata:
   name: knative-serving
   namespace: knative-serving
+  annotations:
+    argocd.argoproj.io/sync-wave: "1" # Wave 1: Deploy core Knative Serving component
 spec:
   ingress:
     kourier:
