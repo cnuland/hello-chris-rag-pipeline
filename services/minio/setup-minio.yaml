@@ -4,7 +4,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   # This name should be unique for the sync job.
-  name: minio-setup-job
+  name: minio-setup
   namespace: minio
   annotations:
     # ArgoCD Hook: This Job will run after a successful sync of all other resources in its wave.
@@ -18,7 +18,7 @@ spec:
     spec:
       # Use a dedicated service account if specific RBAC permissions are needed.
       # For this scope, the default service account is usually sufficient.
-      serviceAccountName: minio-sa
+      serviceAccountName: minio-manage
       restartPolicy: Never
       containers:
       - name: minio-setup-container
