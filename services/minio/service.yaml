@@ -4,6 +4,8 @@ kind: Service
 metadata:
   name: minio
   namespace: minio
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
   labels:
     app: minio
     app.kubernetes.io/instance: minio

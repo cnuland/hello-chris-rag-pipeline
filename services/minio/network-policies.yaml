@@ -3,6 +3,8 @@ kind: NetworkPolicy
 metadata:
   name: allow-minio-egress
   namespace: minio
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
   labels:
     app.kubernetes.io/instance: minio
 spec:

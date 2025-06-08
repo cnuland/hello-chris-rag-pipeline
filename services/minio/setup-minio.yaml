@@ -5,8 +5,7 @@ kind: Job
 metadata:
   # This name should be unique for the sync job.
   name: minio-setup-job
-  # This job will be created in the same namespace as the other MinIO resources (e.g., 'minio').
-  # The namespace will be applied by Kustomize/ArgoCD.
+  namespace: minio
   annotations:
     # ArgoCD Hook: This Job will run after a successful sync of all other resources in its wave.
     argocd.argoproj.io/hook: PostSync

@@ -4,6 +4,8 @@ kind: PersistentVolumeClaim
 metadata:
   name: minio
   namespace: minio
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
   labels:
     app: minio
 spec:

@@ -6,4 +6,5 @@ metadata:
   labels:
     app: minio
   annotations:
+    argocd.argoproj.io/sync-wave: "1"
     openshift.io/display-name: "MinIO Object Storage"

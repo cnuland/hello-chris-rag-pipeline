@@ -4,6 +4,8 @@ kind: Route
 metadata:
   name: minio-console
   namespace: minio
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
   labels:
     app: minio
   annotations:
