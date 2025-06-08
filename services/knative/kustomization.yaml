@@ -7,3 +7,4 @@ resources:
 - knativeserving.yaml
 - knativeeventing.yaml
 - knative-kafka.yaml
+- wait-for-installation.yaml
