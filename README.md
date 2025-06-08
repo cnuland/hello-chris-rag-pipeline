@@ -253,6 +253,11 @@ curl http://<mock-api-route-for-your-api-project>/api/v1/incidents?limit=2 | jq
 * **KFP Integration:** Check `s3-event-handler` logs for errors connecting to the KFP endpoint. Ensure the `KFP_ENDPOINT` (internal service URL) and `KFP_PIPELINE_NAME` are correct, and that the `kfp-trigger-sa` ServiceAccount has the necessary RBAC permissions in the KFP namespace.
 
 you can manually trigger the pipeline as followed
+
+Deploy debug pod first in minio namespace
+`oc run debug-pod -n minio --image=curlimages/curl -- sh -c 'sleep infinity'`
+
+Run a curl command from the debug pod that will then create an event in the minio-event-bridge service.
 ```
 oc exec -n minio debug-pod -- curl -v -X POST http://minio-event-bridge.rag-pipeline-workshop.svc.cluster.local:8080/webhook -H "Content-Type: application/json" -d '{
   "EventName": "s3:ObjectCreated:Put",
