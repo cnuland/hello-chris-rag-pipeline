@@ -1,0 +1,92 @@
+# Kubernetes Job to automatically configure MinIO buckets and event notifications.
+# This Job is designed to be run via an ArgoCD PostSync hook.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  # This name should be unique for the sync job.
+  name: minio-setup-job
+  # This job will be created in the same namespace as the other MinIO resources (e.g., 'minio').
+  # The namespace will be applied by Kustomize/ArgoCD.
+  annotations:
+    # ArgoCD Hook: This Job will run after a successful sync of all other resources in its wave.
+    argocd.argoproj.io/hook: PostSync
+    # ArgoCD Hook Policy: The Job and its Pods will be deleted after successful completion.
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+spec:
+  # Controls how many times the Job will retry if a Pod fails.
+  backoffLimit: 2
+  template:
+    spec:
+      # Use a dedicated service account if specific RBAC permissions are needed.
+      # For this scope, the default service account is usually sufficient.
+      serviceAccountName: minio-sa
+      restartPolicy: Never
+      containers:
+      - name: minio-setup-container
+        # Use the official MinIO Client (mc) image.
+        image: minio/mc:latest
+        # The command to execute. It's a shell script that performs all necessary setup steps.
+        command:
+          - "/bin/sh"
+          - "-c"
+          - |
+            echo "--- Starting MinIO Setup Job ---"
+            
+            # 1. Wait for the MinIO service to be available.
+            # This is a simple readiness check that waits for the service DNS to resolve and be reachable.
+            echo "Waiting for MinIO service at ${MINIO_SERVICE_HOST}:${MINIO_SERVICE_PORT}..."
+            until mc alias set temp_minio http://${MINIO_SERVICE_HOST}:${MINIO_SERVICE_PORT} ${MINIO_ACCESS_KEY} ${MINIO_SECRET_KEY}; do
+              echo "MinIO service not ready yet, retrying in 10 seconds..."
+              sleep 10
+            done
+            echo "MinIO service is ready. Alias 'temp_minio' configured."
+            
+            # 2. Create the target bucket for PDF uploads if it doesn't exist.
+            echo "Checking/Creating S3 bucket '${TARGET_BUCKET_NAME}'..."
+            mc mb temp_minio/${TARGET_BUCKET_NAME} --ignore-existing
+            echo "Bucket '${TARGET_BUCKET_NAME}' is present."
+            
+            # 3. Create the 'pipelines' bucket for KFP artifacts if it doesn't exist.
+            echo "Checking/Creating S3 bucket 'pipelines'..."
+            mc mb temp_minio/pipelines --ignore-existing
+            echo "Bucket 'pipelines' is present."
+
+            # 4. Construct the ARN for the server-configured Kafka target and add the event rule.
+            # Note: The original script used a webhook ARN. The error logs and Knative setup indicate
+            # you are using a Kafka target. This ARN format is for Kafka.
+            TARGET_ARN="arn:minio:kafka::${KAFKA_TARGET_ID_IN_MINIO}:minio-bucket-notifications"
+            echo "Adding/Updating event notification for Kafka target..."
+            echo "Target ARN: ${TARGET_ARN}"
+            mc event add temp_minio/${TARGET_BUCKET_NAME} "${TARGET_ARN}" --event "put" --suffix ".pdf" --ignore-existing
+
+            echo "Event notification rule for Kafka target added/updated."
+            
+            # 5. Verify and list the configured events.
+            echo "Verifying event rules for bucket '${TARGET_BUCKET_NAME}':"
+            mc event list temp_minio/${TARGET_BUCKET_NAME}
+            
+            echo "--- MinIO Setup Job Completed Successfully ---"
+        env:
+          # The internal service host for the MinIO deployment.
+          - name: MINIO_SERVICE_HOST
+            value: "minio.minio.svc.cluster.local" # Adjust if your service or namespace names are different
+          # The internal service port.
+          - name: MINIO_SERVICE_PORT
+            value: "9000"
+          # The name of the bucket where PDFs will be uploaded.
+          - name: TARGET_BUCKET_NAME
+            value: "pdf-inbox"
+          # This ID must match the suffix used for MINIO_NOTIFY_KAFKA_* env vars in minio/deployment.yaml
+          - name: KAFKA_TARGET_ID_IN_MINIO
+            value: "RAG"
+          # Securely pull credentials from the Kubernetes Secret.
+          - name: MINIO_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: minio-credentials
+                key: accesskey
+          - name: MINIO_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: minio-credentials
+                key: secretkey
