@@ -2,17 +2,21 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: knative-broker
-  namespace: openshift-gitops # Or your ArgoCD apps namespace
+  namespace: openshift-gitops # Your ArgoCD apps namespace
+  annotations:
+    # ArgoCD Sync Wave: Deploy this in an earlier wave.
+    # The sync will pause until this application is fully Synced and Healthy.
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   project: default
   source:
-    repoURL: https://github.com/cnuland/hello-chris-rag-pipeline.git
+    repoURL: https://github.com/cnuland/hello-chris-rag-pipeline.git # CHANGEME to your repo URL
     path: services/knative
-    targetRevision: HEAD # CHANGEME
+    targetRevision: HEAD # CHANGEME to your target branch/tag
     kustomize: {}
   destination:
     server: https://kubernetes.default.svc
-    namespace: rag-pipeline-workshop # CHANGEME
+    namespace: rag-pipeline-workshop # The namespace where Knative components will be created
   syncPolicy:
     automated:
       prune: true

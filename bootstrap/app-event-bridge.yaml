@@ -3,6 +3,10 @@ kind: Application
 metadata:
   name: minio-event-bridge
   namespace: openshift-gitops # Or your ArgoCD apps namespace
+  annotations:
+    # ArgoCD Sync Wave: Deploy this in an earlier wave.
+    # The sync will pause until this application is fully Synced and Healthy.
+    argocd.argoproj.io/sync-wave: "4"
 spec:
   project: default
   source:
