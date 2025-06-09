@@ -78,7 +78,7 @@ spec:
       initContainers:
         # This init container waits for the etcd service to be available before starting Milvus.
         - name: wait-for-etcd
-          image: quay.io/rh-data-services/milvus-openshift:v2.3.10
+          image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
           imagePullPolicy: IfNotPresent
           command:
             - /bin/bash
@@ -94,7 +94,7 @@ spec:
       containers:
         - name: standalone
           # Using the Red Hat certified image. Ensure this is imported into your namespace registry.
-          image: "image-registry.openshift-image-registry.svc:5000/rag-pipeline-workshop/milvus-openshift:v2.3.10"
+          image:  quay.io/rh-data-services/milvus-openshift:v2.3.10
           imagePullPolicy: IfNotPresent
           args: ["milvus", "run", "standalone"]
           ports:
