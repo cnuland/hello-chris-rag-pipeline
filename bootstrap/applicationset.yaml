@@ -1,0 +1,74 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: rag-workshop-appset
+  namespace: openshift-gitops # The namespace where ArgoCD is running
+spec:
+  generators:
+  - list:
+      elements:
+        # WAVE 1: Foundational Services (Storage & Messaging)
+        - name: 'minio'
+          namespace: 'minio'
+          path: 'services/minio'
+          wave: '1'
+        - name: 'kafka'
+          namespace: 'kafka'
+          path: 'services/kafka'
+          wave: '1'
+        
+        # WAVE 2: Knative Eventing Infrastructure (depends on Kafka)
+        - name: 'knative-broker'
+          namespace: 'rag-pipeline-workshop'
+          path: 'services/knative'
+          wave: '2'
+
+        # WAVE 3: Core Application Services
+        - name: 'mock-api'
+          namespace: 'rag-pipeline-workshop'
+          path: 'apps/api/.k8s' # Assuming kustomize files are in .openshift dir
+          wave: '3'
+        - name: 'milvus'
+          namespace: 'rag-pipeline-workshop'
+          path: 'services/milvus'
+          wave: '3'
+
+        # WAVE 4: Bridge Service (depends on Knative Broker)
+        - name: 'minio-event-bridge'
+          namespace: 'rag-pipeline-workshop'
+          path: 'apps/minio-event-bridge/.k8s' # Assuming kustomize files are in .openshift dir
+          wave: '4'
+
+        # WAVE 5: Final Event Handler (depends on Trigger which depends on Broker)
+        - name: 's3-event-handler'
+          namespace: 'rag-pipeline-workshop'
+          path: 'apps/s3-event-handler/.k8s'
+          wave: '5'
+  
+  template:
+    metadata:
+      # The name of the generated Application resource, e.g., "minio", "kafka".
+      name: '{{name}}'
+      namespace: openshift-gitops
+      annotations:
+        # This hook tells the root app that this generated app is part of its sync plan.
+        argocd.argoproj.io/hook: Sync
+        # The wave determines the deployment order.
+        argocd.argoproj.io/sync-wave: '{{wave}}'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/cnuland/hello-chris-rag-pipeline.git # CHANGEME to your repo URL
+        targetRevision: HEAD # CHANGEME to your target branch/tag
+        path: '{{path}}'
+        kustomize: {}
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{namespace}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true # Recommended for operator-managed resources
