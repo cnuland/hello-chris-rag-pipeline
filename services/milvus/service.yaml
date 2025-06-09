@@ -3,7 +3,6 @@ kind: Service
 metadata:
   name: milvus-service
   annotations:
-    argocd.argoproj.io/sync-wave: "1"
   labels:
     app.kubernetes.io/name: milvus
     app.kubernetes.io/instance: milvus
@@ -21,3 +20,28 @@ spec:
   selector:
     app.kubernetes.io/name: milvus
     app.kubernetes.io/instance: milvus
+
+---
+
+# 2. Headless Service for the etcd StatefulSet
+# Provides a stable network identity for the etcd pod(s).
+apiVersion: v1
+kind: Service
+metadata:
+  name: vectordb-etcd-headless
+  labels:
+    app.kubernetes.io/name: etcd
+    app.kubernetes.io/instance: vectordb
+  annotations:
+spec:
+  ports:
+  - name: client
+    port: 2379
+    protocol: TCP
+  - name: peer
+    port: 2380
+    protocol: TCP
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: etcd
+    app.kubernetes.io/instance: vectordb

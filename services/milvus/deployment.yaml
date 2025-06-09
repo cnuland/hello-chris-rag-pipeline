@@ -1,61 +1,75 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: milvus-standalone
-  annotations:
-    argocd.argoproj.io/sync-wave: "2"
+  name: vectordb-milvus-standalone
   labels:
     app.kubernetes.io/name: milvus
-    app.kubernetes.io/instance: milvus
+    app.kubernetes.io/instance: vectordb
+    component: "standalone"
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app.kubernetes.io/name: milvus
-      app.kubernetes.io/instance: milvus
+      app.kubernetes.io/instance: vectordb
+      component: "standalone"
   template:
     metadata:
       labels:
         app.kubernetes.io/name: milvus
-        app.kubernetes.io/instance: milvus
+        app.kubernetes.io/instance: vectordb
+        component: "standalone"
     spec:
+      serviceAccountName: default
+      initContainers:
+        # This init container waits for the etcd service to be available before starting Milvus.
+        - name: wait-for-etcd
+          image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "-c", "echo 'Waiting for etcd service...'; until nc -z -w 2 vectordb-etcd-headless 2379; do echo -n '.'; sleep 2; done; echo 'Etcd is up.'"]
       containers:
-      - name: milvus
-        # Using a recent, stable standalone version of Milvus.
-        image: "quay.io/rh-data-services/milvus-openshift:v2.3.10"
-        # Command to start Milvus with the custom config file.
-        command: ["/milvus/bin/milvus", "run", "standalone"]
-        ports:
-        - name: milvus-grpc
-          containerPort: 19530 # Port for gRPC connections (used by SDKs)
-        - name: milvus-http
-          containerPort: 9091  # Port for RESTful API
-        env:
-          # Point Milvus to the mounted configuration file.
-          - name: MILVUS_CONFIG_FILE
-            value: /milvus/configs/milvus.yaml
-        resources:
-          # Minimal resource requests for a small workshop environment.
-          requests:
-            cpu: "500m"
-            memory: "1Gi"
-          limits:
-            cpu: "2"
-            memory: "4Gi"
-        volumeMounts:
-        # Mount the PVC for data persistence.
-        - name: milvus-data
-          mountPath: /var/lib/milvus
-        # Mount the ConfigMap as the configuration file.
-        - name: milvus-config-volume
-          mountPath: /milvus/configs/milvus.yaml
-          subPath: milvus.yaml
+        - name: standalone
+          image: "quay.io/rh-data-services/milvus-openshift:v2.3.10"
+          imagePullPolicy: IfNotPresent
+          # The command now just runs standalone; config is sourced from the mounted ConfigMap.
+          args: ["milvus", "run", "standalone"]
+          ports:
+            - name: milvus
+              containerPort: 19530
+              protocol: TCP
+            - name: metrics
+              containerPort: 9091
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+            initialDelaySeconds: 120
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
+          volumeMounts:
+            - name: milvus-config
+              mountPath: /milvus/configs/user.yaml
+              subPath: user.yaml
+              readOnly: true
+            - name: milvus-data-disk
+              mountPath: "/var/lib/milvus"
       volumes:
-      # Define the volume from the PVC.
-      - name: milvus-data
-        persistentVolumeClaim:
-          claimName: milvus-pvc
-      # Define the volume from the ConfigMap.
-      - name: milvus-config-volume
-        configMap:
-          name: milvus-config
+        - name: milvus-config
+          configMap:
+            name: vectordb-milvus
+        - name: milvus-data-disk
+          persistentVolumeClaim:
+            claimName: vectordb-milvus
+---
