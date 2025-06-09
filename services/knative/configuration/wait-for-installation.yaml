@@ -1,7 +1,5 @@
 # This manifest creates the necessary RBAC resources and the Job to wait for CRDs.
 # It should be included in your services/knative/kustomization.yaml
-
----
 # 1. A dedicated Service Account for the wait job.
 # The namespace will be injected by ArgoCD based on the Application's destination.
 apiVersion: v1
@@ -10,7 +8,7 @@ metadata:
   name: knative-wait-sa
   annotations:
     # ArgoCD Sync Wave: This must be created before the Job and RoleBinding.
-    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook: PreSync
 
 ---
 # 2. A ClusterRole granting permissions to check for API resources.
@@ -20,7 +18,7 @@ kind: ClusterRole
 metadata:
   name: knative-api-resource-viewer
   annotations:
-    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook: PreSync
 
 rules:
 - apiGroups: ["apiextensions.k8s.io"]
@@ -39,7 +37,7 @@ metadata:
   name: knative-api-resource-viewer-binding
   annotations:
     # Runs after the SA and Role are created.
-    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook: PreSync
 subjects:
 - kind: ServiceAccount
   name: knative-wait-sa
@@ -87,10 +85,6 @@ spec:
             echo "Waiting for Trigger API resource to be available..."; sleep 15;
           done
           echo "SUCCESS: Trigger API resource is available."
-          
-          until oc api-resources --api-group=sources.knative.dev | grep -q "kafkasources"; do
-            echo "Waiting for KafkaSource API resource to be available..."; sleep 15;
-          done
-          echo "SUCCESS: KafkaSource API resource is available."
+      
           
           echo "All required Knative API resources are present. Sync can continue."
