@@ -1,5 +1,5 @@
 # Kubernetes Job to automatically configure MinIO buckets and event notifications.
-# This Job is designed to be run via an ArgoCD Sync hook to ensure dependencies are met.
+# This Job is designed to be run via an ArgoCD Sync hook.
 apiVersion: batch/v1
 kind: Job
 metadata:
