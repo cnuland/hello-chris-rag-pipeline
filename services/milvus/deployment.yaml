@@ -22,7 +22,7 @@ spec:
       containers:
       - name: milvus
         # Using a recent, stable standalone version of Milvus.
-        image: milvusdb/milvus:v2.3.9-standalone
+        image: "quay.io/rh-data-services/milvus-openshift:v2.3.10"
         # Command to start Milvus with the custom config file.
         command: ["/milvus/bin/milvus", "run", "standalone"]
         ports:
