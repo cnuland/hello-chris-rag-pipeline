@@ -20,13 +20,13 @@ spec:
         # WAVE 2: Knative Eventing Infrastructure (depends on Kafka)
         - name: 'knative-configuration'
           namespace: 'rag-pipeline-workshop'
-          path: 'services/knative/configutation'
+          path: 'services/knative/configuration'
           wave: '2'
 
         # WAVE 2: Knative Eventing Infrastructure (depends on Kafka)
         - name: 'knative-operators'
           namespace: 'rag-pipeline-workshop'
-          path: 'services/operators'
+          path: 'services/knative/operators'
           wave: '2'
         # WAVE 3: Core Application Services
         - name: 'mock-api'
