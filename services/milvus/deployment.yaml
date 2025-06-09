@@ -97,6 +97,9 @@ spec:
           image: "quay.io/rh-data-services/milvus-openshift:v2.3.10"
           imagePullPolicy: IfNotPresent
           args: ["milvus", "run", "standalone"]
+          env:
+            - name: MILVUS_ETCD_ENDPOINTS
+              value: "vectordb-etcd-headless:2379"
           ports:
             - name: milvus
               containerPort: 19530
