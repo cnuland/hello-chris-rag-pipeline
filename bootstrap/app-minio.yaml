@@ -28,5 +28,6 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+      - RespectIgnoreDifferences=true
        # Allows ArgoCD to create the destination namespace if it doesn't exist
                              # (though MinIO's kustomize already creates it)

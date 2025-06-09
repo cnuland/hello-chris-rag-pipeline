@@ -25,5 +25,6 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+      - RespectIgnoreDifferences=true
       # Typically, the 'argocd' namespace already exists.
                               # Set to true if this root app should try to create the 'argocd' namespace.
