@@ -26,6 +26,7 @@ metadata:
   namespace: rag-pipeline-workshop
   annotations:
     argocd.argoproj.io/sync-wave: "1" # Wave 2: Deploy after core Eventing is ready
+    argocd.argoproj.io/hook: Sync
 spec:
   podSelector:
     matchLabels:
