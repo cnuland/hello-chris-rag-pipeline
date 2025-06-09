@@ -58,7 +58,6 @@ metadata:
   generateName: wait-for-knative-crds-
   annotations:
     argocd.argoproj.io/hook: PreSync
-    argocd.argoproj.io/hook-delete-policy: HookSucceeded
 spec:
   backoffLimit: 3
   template:
