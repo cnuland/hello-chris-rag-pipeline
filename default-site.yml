@@ -1,0 +1,21 @@
+site:
+  title: "Parasol Insurance AI Workshop"
+  url: https://github.com/cnuland/hello-chris-rag-pipeline
+  start_page: modules::index.adoc
+
+ui:
+  bundle:
+    url: ./content/docs-ui/ui-bundle.zip
+  supplemental_files: ./content/supplemental-ui
+
+content:
+  edit_url: 'https://github.com/cnuland/hello-chris-rag-pipeline/edit/main/{path}'
+  sources:
+    - url: ./
+      start_path: content
+
+output:
+  dir: ./content/www
+
+runtime:
+  cache_dir: ./content/.cache/antora
