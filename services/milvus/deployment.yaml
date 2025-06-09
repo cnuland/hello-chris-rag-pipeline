@@ -19,11 +19,6 @@ spec:
         app.kubernetes.io/name: milvus
         app.kubernetes.io/instance: milvus
     spec:
-      # SecurityContext for OpenShift compatibility, allows running as a non-root user.
-      securityContext:
-        runAsUser: 1001
-        runAsGroup: 0
-        fsGroup: 0
       containers:
       - name: milvus
         # Using a recent, stable standalone version of Milvus.
