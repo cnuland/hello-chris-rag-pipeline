@@ -1,0 +1,18 @@
+name: modules
+title: Navigation
+version: ~
+nav:
+  - modules/ROOT/nav.adoc
+
+asciidoc:
+  attributes:
+    release-version: dev
+    page-pagination: true
+    lab_name: "Building Intelligent Applications with Python and RAG: From Raw Data to Real-Time Insights"
+    minio-endpoint: http://minio.ic-shared-minio.svc.cluster.local:9000/
+    git-clone-repo-url: https://github.com/cnuland/hello-chris-rag-pipeline.git
+    git-clone-repo-branch: main
+    
+  extensions:
+    - ./content/lib/tab-block.js
+    - ./content/lib/remote-include-processor.js

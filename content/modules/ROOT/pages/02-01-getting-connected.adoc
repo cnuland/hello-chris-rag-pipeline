@@ -1,0 +1,52 @@
+= Getting connected
+include::_attributes.adoc[]
+
+For the purposes of this training session, we have provisioned a single {ocp} cluster, with {rhoai} deployed on it.
+
+Each person attending this lab will have a unique user account in which to do their work.
+
+== Environment information
+
+__Note: if you are using the lab-deployed instructions, the values below will render properly. If not, like when using the rendered instructions from the Github repo, placeholder values will appear.__
+
+* Your account id: `{user}`
+* Your password: `{password}`
+
+In a new window or tab, open the following URL and log in:
+
+* The {rhoai} Dashboard URL for our shared environment:
+** https://rhods-dashboard-redhat-ods-applications.{openshift_cluster_ingress_domain}/[https://rhods-dashboard-redhat-ods-applications.{openshift_cluster_ingress_domain}/,window=_blank]
+* Click on the `Login with OpenShift` button:
++
+[.bordershadow]
+image::02/02-01-login3.png[]
+* Enter your credentials (as detailed above)
+* The result should look like:
++
+[.bordershadow]
+image::02/02-01-login1.png[]
+
+* Because the password is so simple (`{password}`), your browser might display a scary message such as:
++
+[.bordershadow]
+image::02/02-01-login-scary.png[]
+* It is safe here to ignore this message when it pops up.
+
+* After you authenticate, the result should look like:
++
+[.bordershadow]
+image::02/02-01-rhoai-front-page.png[]
+
+If you got this far and saw all that, congratulations, you properly connected to the {rhoai} Dashboard Application!
+
+We are now ready to start the {ic}.
+
+== Getting Support
+
+* If you attend in person, in the room:
+** Some very kind colleagues of ours will be walking around in the room, to help and/or answer questions.
+** If you run into a particular issue, call out to one of them and quietly explain what the issue is.
+
+* If you attend remotely:
+** The organizer will indicate the best way to ask questions, usually through the video conferencing tool.
+** Depending on the setup, a Slack channel (or similar) may also be available. Please check with the organizer.

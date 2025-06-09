@@ -3,10 +3,11 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  # This name should be unique for the sync job.
-  name: minio-setup
-  # This job will be created in the same namespace as the other MinIO resources.
+  # Using generateName ensures a unique Job is created on each sync, avoiding immutability errors.
+  # The hyphen at the end is important for Kubernetes to append a random suffix.
+  generateName: minio-setup-
   # The namespace will be applied by Kustomize/ArgoCD.
+  # namespace: minio # This is set by the ArgoCD Application destination
   annotations:
     # ArgoCD Hook: This Job will run during the sync phase in its specified wave.
     argocd.argoproj.io/hook: Sync
