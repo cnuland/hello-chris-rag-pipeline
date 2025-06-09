@@ -38,7 +38,8 @@ spec:
                 echo -n "."
                 sleep 2
               done
-              echo "Etcd service is available. Proceeding with Milvus startup."      containers:
+              echo "Etcd service is available. Proceeding with Milvus startup."      
+      containers:
         - name: standalone
           image: "quay.io/rh-data-services/milvus-openshift:v2.3.10"
           imagePullPolicy: IfNotPresent
