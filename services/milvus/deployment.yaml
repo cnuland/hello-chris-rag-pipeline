@@ -28,8 +28,17 @@ spec:
         - name: wait-for-etcd
           image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
           imagePullPolicy: IfNotPresent
-          command: ["/bin/sh", "-c", "echo 'Waiting for etcd service...'; until nc -z -w 2 vectordb-etcd-headless 2379; do echo -n '.'; sleep 2; done; echo 'Etcd is up.'"]
-      containers:
+          command:
+            - /bin/bash
+            - -c
+            - |
+              set -e
+              echo "Waiting for etcd service at vectordb-etcd-headless:2379..."
+              until (exec 3<>/dev/tcp/vectordb-etcd-headless/2379) 2>/dev/null; do
+                echo -n "."
+                sleep 2
+              done
+              echo "Etcd service is available. Proceeding with Milvus startup."      containers:
         - name: standalone
           image: "quay.io/rh-data-services/milvus-openshift:v2.3.10"
           imagePullPolicy: IfNotPresent
