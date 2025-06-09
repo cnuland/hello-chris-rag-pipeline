@@ -1,25 +1,72 @@
+# This manifest creates the necessary RBAC resources and the Job to wait for CRDs.
+# It should be included in your services/knative/kustomization.yaml
+
+---
+# 1. A dedicated Service Account for the wait job.
+# The namespace will be injected by ArgoCD based on the Application's destination.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: knative-wait-sa
+  annotations:
+    # ArgoCD Sync Wave: This must be created before the Job and RoleBinding.
+    argocd.argoproj.io/hook: Sync
+
+---
+# 2. A ClusterRole granting permissions to check for API resources.
+# This is cluster-scoped and does not have a namespace.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: knative-api-resource-viewer
+  annotations:
+    argocd.argoproj.io/hook: Sync
+
+rules:
+- apiGroups: ["apiextensions.k8s.io"]
+  resources: ["customresourcedefinitions"]
+  verbs: ["get"]
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["get", "list"] # Required for `oc api-resources`
+
+---
+# 3. A ClusterRoleBinding to grant the ClusterRole to our ServiceAccount.
+# This is also cluster-scoped.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: knative-api-resource-viewer-binding
+  annotations:
+    # Runs after the SA and Role are created.
+    argocd.argoproj.io/hook: Sync
+subjects:
+- kind: ServiceAccount
+  name: knative-wait-sa
+  # IMPORTANT: This namespace MUST match the destination namespace in your
+  # ArgoCD Application manifest for Knative (bootstrap/app-knative-broker.yaml).
+  namespace: rag-pipeline-workshop
+roleRef:
+  kind: ClusterRole
+  name: knative-api-resource-viewer
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# 4. The updated Job, now using the dedicated ServiceAccount.
+# The namespace will be injected by ArgoCD.
 apiVersion: batch/v1
 kind: Job
 metadata:
-  # This is a hook, so it should be created in the ArgoCD application's destination namespace
-  # (e.g., 'knative-eventing' or 'rag-pipeline-workshop' depending on where you sync your base knative setup)
-  # For this setup, 'knative-eventing' is appropriate.
-  name: wait-for-knative-crds
-  namespace: knative-eventing 
+  generateName: wait-for-knative-crds-
   annotations:
-    # This tells ArgoCD to run this Job during the sync phase.
-    # The wave will not be considered "Succeeded" until this Job completes successfully.
     argocd.argoproj.io/hook: PreSync
-    # We delete the hook after it runs so it doesn't clutter the cluster.
     argocd.argoproj.io/hook-delete-policy: HookSucceeded
-    # Assign this hook to the same wave as the KnativeEventing CR.
 spec:
+  backoffLimit: 3
   template:
     spec:
-      # Use a service account that can get CRDs. The 'default' one in knative-eventing
-      # may not have this permission. You might need to create a dedicated SA and RoleBinding.
-      # For simplicity, we assume an SA with permissions exists or you will create one.
-      serviceAccountName: default # CHANGE if you need a specific SA with permissions
+      serviceAccountName: knative-wait-sa # Using the new SA with correct permissions
+      restartPolicy: OnFailure
       containers:
       - name: crd-checker
         image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
@@ -27,19 +74,23 @@ spec:
         - /bin/bash
         - -c
         - |
-          echo "Waiting for Knative CRDs to be installed by the operator..."
-          # Wait for Broker CRD
-          until oc get crd brokers.eventing.knative.dev &> /dev/null; do
-            echo "Waiting for Broker CRD (brokers.eventing.knative.dev)..."; sleep 10;
-          done
-          echo "Broker CRD found."
+          set -e
+          echo "--- Waiting for Knative API Resources to become available ---"
 
-          # Wait for Trigger CRD
-          until oc get crd triggers.eventing.knative.dev &> /dev/null; do
-            echo "Waiting for Trigger CRD (triggers.eventing.knative.dev)..."; sleep 10;
+          # This is a more robust check. It waits for the API server to be serving the resource.
+          until oc api-resources --api-group=eventing.knative.dev | grep -q "brokers"; do
+            echo "Waiting for Broker API resource to be available..."; sleep 15;
           done
-          echo "Trigger CRD found."
+          echo "SUCCESS: Broker API resource is available."
 
-          echo "All required Knative CRDs are present. Sync can continue."
-      restartPolicy: Never
-  backoffLimit: 2
+          until oc api-resources --api-group=eventing.knative.dev | grep -q "triggers"; do
+            echo "Waiting for Trigger API resource to be available..."; sleep 15;
+          done
+          echo "SUCCESS: Trigger API resource is available."
+          
+          until oc api-resources --api-group=sources.knative.dev | grep -q "kafkasources"; do
+            echo "Waiting for KafkaSource API resource to be available..."; sleep 15;
+          done
+          echo "SUCCESS: KafkaSource API resource is available."
+          
+          echo "All required Knative API resources are present. Sync can continue."
