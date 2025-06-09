@@ -55,14 +55,13 @@ spec:
             mc --config-dir ${MC_CONFIG_DIR} mb temp_minio/pipelines --ignore-existing
             echo "Bucket 'pipelines' is present."
 
-            # 4. Construct the ARN for the server-configured Kafka target and add the event rule.
-            # This ARN format is for Kafka targets configured via MinIO server environment variables.
-            TARGET_ARN="arn:minio:kafka::${KAFKA_TARGET_ID_IN_MINIO}:minio-bucket-notifications"
-            echo "Adding/Updating event notification for Kafka target..."
+            # 4. Construct the ARN for the server-configured Webhook target and add the event rule.
+            TARGET_ARN="arn:minio:sqs::${WEBHOOK_TARGET_ID_IN_MINIO}:webhook"
+            echo "Adding/Updating event notification for Webhook target..."
             echo "Target ARN: ${TARGET_ARN}"
             mc --config-dir ${MC_CONFIG_DIR} event add temp_minio/${TARGET_BUCKET_NAME} "${TARGET_ARN}" --event "put" --suffix ".pdf" --ignore-existing
 
-            echo "Event notification rule for Kafka target added/updated."
+            echo "Event notification rule for Webhook target added/updated."
             
             # 5. Verify and list the configured events.
             echo "Verifying event rules for bucket '${TARGET_BUCKET_NAME}':"
@@ -72,15 +71,15 @@ spec:
         env:
           # The internal service host for the MinIO deployment.
           - name: MINIO_SERVICE_HOST
-            value: "minio.minio.svc.cluster.local" # Adjust if your service or namespace names are different
+            value: "minio.minio.svc.cluster.local"
           # The internal service port.
           - name: MINIO_SERVICE_PORT
             value: "9000"
           # The name of the bucket where PDFs will be uploaded.
           - name: TARGET_BUCKET_NAME
             value: "pdf-inbox"
-          # This ID must match the suffix used for MINIO_NOTIFY_KAFKA_* env vars in minio/deployment.yaml
-          - name: KAFKA_TARGET_ID_IN_MINIO
+          # This ID must match the suffix used for MINIO_NOTIFY_WEBHOOK_* env vars in minio/deployment.yaml
+          - name: WEBHOOK_TARGET_ID_IN_MINIO
             value: "RAG"
           # Securely pull credentials from the Kubernetes Secret.
           - name: MINIO_ACCESS_KEY

@@ -41,12 +41,6 @@ spec:
           done
           echo "Trigger CRD found."
 
-          # Wait for KafkaSource CRD
-          until oc get crd kafkasources.sources.knative.dev &> /dev/null; do
-            echo "Waiting for KafkaSource CRD (kafkasources.sources.knative.dev)..."; sleep 10;
-          done
-          echo "KafkaSource CRD found."
-
           echo "All required Knative CRDs are present. Sync can continue."
       restartPolicy: Never
   backoffLimit: 2
