@@ -7,10 +7,12 @@ metadata:
     app.kubernetes.io/instance: vectordb
 data:
   user.yaml: |
-    # This configuration points Milvus to the external etcd StatefulSet.
+    # THIS IS THE CRITICAL FIX:
+    # This configuration points Milvus to the external etcd StatefulSet's service endpoint,
+    # not localhost. This resolves the "connection refused" error.
     etcd:
       endpoints:
-        - vectordb-etcd-headless:2379 # Points to the etcd service within the same namespace
+        - vectordb-etcd-headless:2379 
     
     # The following components run inside the standalone pod and communicate via localhost.
     minio:
