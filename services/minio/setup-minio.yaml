@@ -72,7 +72,7 @@ spec:
         env:
           # The internal service host for the MinIO deployment.
           - name: MINIO_SERVICE_HOST
-            value: "http://minio.minio.svc.cluster.local" # Adjust if your service or namespace names are different
+            value: "minio.minio.svc.cluster.local" # Adjust if your service or namespace names are different
           # The internal service port.
           - name: MINIO_SERVICE_PORT
             value: "9000"
