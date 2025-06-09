@@ -4,7 +4,7 @@ metadata:
   name: knative-kafka
   namespace: knative-eventing
   annotations:
-    argocd.argoproj.io/sync-wave: "2" # Wave 2: Deploy after core Eventing is ready
+    argocd.argoproj.io/sync-wave: "5" # Wave 2: Deploy after core Eventing is ready
     argocd.argoproj.io/hook: Sync
 spec:
   broker:
