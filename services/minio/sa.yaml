@@ -1,26 +1,36 @@
+# This file contains the corrected ServiceAccount and RoleBinding for MinIO.
+
 ---
+# The ServiceAccount for MinIO management tasks.
+# This is correctly placed in wave "3".
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: minio-manage
-  namespace: minio
+  # The namespace will be applied by Kustomize/ArgoCD
+  # namespace: minio 
   annotations:
     argocd.argoproj.io/sync-wave: "3"
+
 ---
+# The RoleBinding that grants the 'minio-manage' SA admin permissions.
+# The sync-wave annotation has been moved to the correct location under metadata.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: minio-secrets
-  namespace: minio
+  # The namespace will be applied by Kustomize/ArgoCD
+  # namespace: minio
+  annotations:
+    # THIS IS THE CORRECT LOCATION FOR THE ANNOTATION
+    argocd.argoproj.io/sync-wave: "4"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: admin
-  annotations:
-    argocd.argoproj.io/sync-wave: "4"
 subjects:
 - kind: ServiceAccount
   name: minio-manage
+  # The namespace for the subject should match the RoleBinding's namespace.
+  # This will be correctly handled by Kustomize/ArgoCD.
   namespace: minio
-  annotations:
-    argocd.argoproj.io/sync-wave: "4"
