@@ -7,3 +7,5 @@ spec:
   ingress:
     kourier:
       enabled: true
+    istio:
+      enabled: false
