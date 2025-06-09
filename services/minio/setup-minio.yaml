@@ -3,8 +3,9 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  # Using generateName ensures a unique Job is created on each sync, avoiding immutability errors.
-  # The hyphen at the end is important for Kubernetes to append a random suffix.
+  # Using both 'name' and 'generateName' to satisfy Kustomize validation and ArgoCD's need for unique jobs.
+  # The Kubernetes API server will prioritize 'generateName' at runtime.
+  name: minio-setup-placeholder
   generateName: minio-setup-
   # The namespace will be applied by Kustomize/ArgoCD.
   # namespace: minio # This is set by the ArgoCD Application destination
