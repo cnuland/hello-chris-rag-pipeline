@@ -43,7 +43,7 @@ spec:
         # WAVE 5: Final Event Handler (depends on Trigger which depends on Broker)
         - name: 's3-event-handler'
           namespace: 'rag-pipeline-workshop'
-          path: 'apps/s3-event-handler/.k8s'
+          path: 'pipeline/pdf-to-docling/.k8s'
   
   template:
     metadata:
