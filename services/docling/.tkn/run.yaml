@@ -16,7 +16,7 @@ spec:
   - name: deployment-name
     value: "hello-chris-ai"
   - name: git-url
-    value: "https://github.com/cnuland/hello-chris-rag-pipeline.git"
+    value: "https://github.com/cnuland/piepline-docling.git"
   - name: git-revision
     value: "main" # Or your specific branch/commit
   - name: IMAGE
@@ -31,5 +31,5 @@ spec:
   - name: NO_PROXY
     value: "true"
   - name: working-dir
-    value: "services/docling"
+    value: "/"
   # serviceAccountName: pipeline # Optional: if your pipeline needs specific permissions

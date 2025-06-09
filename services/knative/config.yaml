@@ -7,6 +7,7 @@ metadata:
     app.kubernetes.io/instance: knative-broker
   annotations:
     argocd.argoproj.io/sync-wave: "3" # Wave 2: Deploy after core Eventing is ready
+    argocd.argoproj.io/hook: Sync
 data:
   # Knative Kafka broker configuration
   bootstrap.servers: "kafka-cluster-kafka-bootstrap.kafka.svc.cluster.local:9092"
@@ -21,6 +22,7 @@ metadata:
     eventing.knative.dev/broker.class: Kafka
     lastUpdated: yes
     argocd.argoproj.io/sync-wave: "3" # Wave 2: Deploy after core Eventing is ready
+    argocd.argoproj.io/hook: Sync
   labels:
     app.kubernetes.io/instance: knative-broker
   name: kafka-broker
