@@ -9,11 +9,10 @@ metadata:
   annotations:
     # This tells ArgoCD to run this Job during the sync phase.
     # The wave will not be considered "Succeeded" until this Job completes successfully.
-    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook: PreSync
     # We delete the hook after it runs so it doesn't clutter the cluster.
     argocd.argoproj.io/hook-delete-policy: HookSucceeded
     # Assign this hook to the same wave as the KnativeEventing CR.
-    argocd.argoproj.io/sync-wave: "1"
 spec:
   template:
     spec:
