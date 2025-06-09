@@ -1,0 +1,30 @@
+To solve the knowledge gap problem at {company-name}, our team has proposed building a modern, AI-powered solution based on a **Retrieval-Augmented Generation (RAG)** architecture.
+
+== The Core Idea
+:slide:
+
+Instead of relying on an LLM's general, pre-trained knowledge, a RAG system augments the model by providing it with specific, relevant information retrieved from our own private data sources.
+
+The flow is simple but powerful:
+1.  **Ingest Knowledge:** First, we process our internal documents (like ServiceNow tickets and technical PDFs) and store them as numerical representations (vector embeddings) in a specialized **vector database**.
+2.  **User Query:** When a support engineer asks a question (e.g., "how to fix VPN connection drops"), we first convert their question into a vector.
+3.  **Retrieve Context:** We use the question vector to perform a similarity search in our vector database, retrieving the most relevant chunks of text from our past tickets and documents.
+4.  **Augment and Generate:** We then pass the user's original question *and* the retrieved context to the LLM. The LLM uses this context to generate a concise, accurate, and trustworthy answer based on our company's actual historical data.
+
+[.bordershadow]
+image::01/rag-architecture-overview.png[High-level overview of the Retrieval-Augmented Generation (RAG) architecture.]
+
+== The Benefits
+
+This approach offers significant advantages over traditional knowledge management systems and generic LLMs:
+* **Reduced Resolution Time:** Support engineers get instant, accurate answers, drastically reducing the time spent searching for solutions.
+* **Increased Consistency:** All engineers, regardless of experience level, receive solutions based on the same high-quality, curated knowledge base.
+* **Lower Training Costs:** New hires can become productive faster by querying the RAG system instead of relying solely on senior staff.
+* **Data Security & Privacy:** By using a local vector database (Milvus) and running models within our own OpenShift AI environment, sensitive company data never leaves our secure, private cloud. This avoids the risks associated with sending proprietary information to public, third-party AI services.
+
+== Why This Technology Stack?
+
+We have carefully chosen a set of powerful, cloud-native technologies to build this solution on Red Hat OpenShift:
+* **OpenShift AI & Data Science Pipelines:** OpenShift AI provides a comprehensive, pre-integrated platform for the entire AI/ML lifecycle. We will use **Kubeflow Pipelines** to build repeatable, scalable, and automated data ingestion workflows that process our ServiceNow tickets and PDFs.
+* **Milvus Vector Database on OpenShift:** Milvus is a leading open-source vector database designed for high-performance similarity searches at scale. Running it on OpenShift gives us the robust, scalable, and secure foundation needed for an enterprise-grade RAG system.
+* **Knative Eventing for Real-Time Processing:** For document ingestion, we will use Knative to create an event-driven workflow. When a new PDF is uploaded, a serverless function is automatically triggered to start the processing pipeline, ensuring our knowledge base is always up-to-date.

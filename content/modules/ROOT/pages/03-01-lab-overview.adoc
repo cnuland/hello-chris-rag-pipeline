@@ -1,0 +1,67 @@
+= 3.1 Lab Overview & Setup
+include::_attributes.adoc[]
+
+Now it's your turn to get hands-on. In this lab, you will deploy the mock ServiceNow API and the Kubeflow Pipeline that ingests its data into our Milvus vector database.
+
+To ensure you can get started quickly, we have pre-created a Data Science Project for you and deployed some of the necessary components. This section will guide you through connecting to the environment and exploring your project.
+
+== Getting Connected
+
+For this workshop, we have provisioned a shared {ocp} cluster with {rhoai} deployed on it. Each attendee has a unique user account.
+
+=== Environment Information
+
+[IMPORTANT]
+====
+If you are viewing these instructions in the deployed lab environment, the values below will be correctly rendered for you. If viewing from a static source like GitHub, placeholder values will appear.
+====
+
+* Your account ID: `{user}`
+* Your password: `{password}`
+
+In a new browser window or tab, open the following URL to access the {rhoai} Dashboard:
+
+* **{rhoai} Dashboard URL:** https://rhods-dashboard-redhat-ods-applications.{openshift_cluster_ingress_domain}/[https://rhods-dashboard-redhat-ods-applications.{openshift_cluster_ingress_domain}/,window=_blank]
+
+=== Login Procedure
+
+1.  Click the **Login with OpenShift** button.
++
+[.bordershadow]
+image::03/login-with-openshift.png[The main login screen for Red Hat OpenShift AI.]
+
+2.  Enter your user credentials (`{user}` and `{password}`) provided above.
++
+Because the password is so simple (`{password}`), your browser might display a warning. It is safe to ignore this message for the lab.
+
+3.  After you authenticate, you will land on the OpenShift AI dashboard.
++
+[.bordershadow]
+image::03/rhoai-dashboard-main.png[The main dashboard of Red Hat OpenShift AI after logging in.]
+
+Congratulations, you are now connected! We are ready to begin the lab exercises.
+
+== Reviewing Your Pre-Created Project
+
+To give you a feel for what a "day 2" operations experience would be like, we have pre-created a Project for you and started to populate it with various artifacts.
+
+1.  In the {rhoai} Dashboard, navigate to **Data Science Projects** using the menu on the left.
++
+[.bordershadow]
+image::03/ds-projects-nav.png[Navigating to the Data Science Projects section.]
+
+2.  Click on the project name that matches your user ID: **{user}**.
++
+[.bordershadow]
+image::03/open-project.png[Opening your dedicated user project.]
+
+3.  Inside your project, you will find several components have already been configured for you:
+    * **Workbenches:** A Jupyter workbench has been created for you. You will use this later to query the RAG system.
+    * **Pipelines:** A pipeline server is configured and ready to run the data ingestion pipeline.
+    * **Data Connections:** A data connection to the project's dedicated Milvus vector database has been pre-configured.
+    * **Deployed Models:** You can view the project's topology by clicking the **Topology** icon in the OpenShift console navigation (left sidebar). Here you can see the running pods for your Milvus instance.
++
+[.bordershadow]
+image::03/project-topology-view.png[OpenShift Topology view showing the deployed Milvus instance within your project.]
+
+Now that you are familiar with your environment, let's proceed to deploy the mock API.

@@ -1,0 +1,45 @@
+= 3.3 Verifying the Mock API
+include::_attributes.adoc[]
+
+Now that ArgoCD has successfully deployed the mock API application, let's perform a quick test to ensure it's running and reachable from within the cluster. We will use the built-in OpenShift command line terminal, which provides a convenient way to interact with our project without leaving the web console.
+
+== Accessing the OpenShift Terminal
+
+1.  In the OpenShift web console, make sure you are in the **Developer** perspective and have your project (`rag-pipeline-workshop`) selected.
+
+2.  In the top-right corner of the page, click on the command line terminal icon to open a new terminal session directly in your browser.
++
+[.bordershadow]
+image::03/openshift-web-terminal.png[Opening the OpenShift command line terminal from the UI.]
+
+3.  A new browser tab will open with a terminal session already logged into your OpenShift account and pointing to your project.
+
+== Testing the API Service
+
+We will now send a request to the API's `/api/v1/health` endpoint. This is a simple way to confirm the application is up and running. The API is exposed internally via a Kubernetes Service named `mock-api` on port `8080`.
+
+1.  In the OpenShift terminal you just opened, copy and paste the following `curl` command and press Enter:
++
+[.console-input]
+[source,bash]
+----
+curl http://mock-api:8080/api/v1/health
+----
++
+This command sends an HTTP GET request directly to the internal service endpoint of our mock API.
+
+2.  You should see the following JSON output, indicating that the API is healthy:
++
+[source,json]
+----
+{"status":"UP"}
+----
+
+[.bordershadow]
+image::03/api-health-check-success.png[Successful output of the curl command in the OpenShift terminal.]
+
+If you see this output, it confirms that:
+* The `mock-api` Deployment is running correctly.
+* The internal `Service` is properly routing traffic to the application pod.
+
+Now that our data source is ready, we can proceed with deploying the data ingestion pipeline.

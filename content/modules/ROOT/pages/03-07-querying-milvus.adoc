@@ -1,0 +1,145 @@
+= 3.7 Querying the RAG System
+include::_attributes.adoc[]
+
+Now that your pipeline has successfully fetched the ServiceNow data, generated embeddings, and populated the Milvus vector database, you are ready to test the system.
+
+In this final exercise, you will act as an IT support engineer and ask a question in natural language. The system will use the knowledge from the ServiceNow tickets stored in Milvus to provide a helpful, context-aware answer.
+
+== What is Retrieval-Augmented Generation (RAG)?
+
+An LLM is a very capable tool, but its knowledge is limited to the public data it was trained on. It doesn't know about {company-name}'s internal IT procedures, past incident resolutions, or specific server names.
+
+**Retrieval-Augmented Generation (RAG)** solves this problem. Instead of retraining the model, we provide it with relevant, up-to-date information *at the time we ask a question*.
+
+Here's how it works:
+1. When you ask a question, we first search our **Milvus vector database** for past incident tickets that are semantically similar to your question.
+2. We "retrieve" the most relevant resolutions from those tickets.
+3. We then "augment" our prompt to the LLM by including this retrieved context along with your original question.
+4. The LLM uses this specific context to generate a precise, helpful answer based on our company's own data.
+
+This technique is powerful because you can continuously update the knowledge base (by running your data ingestion pipeline) without ever having to modify or retrain the LLM itself.
+
+== Querying Milvus from a Notebook
+
+1.  Navigate back to the OpenShift AI dashboard and launch your pre-created **Jupyter Workbench**.
+
+2.  Once JupyterLab has started, use the file browser on the left to navigate to the lab materials folder:
++
+[.console-input]
+[source,text]
+----
+parasol-insurance/lab-materials/03-api-to-rag/
+----
+
+3.  Open the notebook named `03-07-query-rag-system.ipynb`.
+
+4.  Follow the instructions in the notebook by executing the cells one by one. The notebook will guide you through the following steps.
+
+=== Notebook Step 1: Imports and Connecting to Milvus
+
+The first cells import the necessary libraries and set up the connection to the Milvus vector database that your pipeline just populated. It uses LangChain to simplify the process.
+
+```python
+# In your notebook...
+
+from langchain.chains import RetrievalQA
+from langchain_community.llms import VLLMOpenAI
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.vectorstores import Milvus
+
+# 1. Define which embedding model to use (must match the one used in the pipeline)
+embedding_model = HuggingFaceEmbeddings(
+    model_name="all-MiniLM-L6-v2",
+    model_kwargs={'device': 'cpu'}
+)
+
+# 2. Connect to the existing Milvus collection
+vector_db = Milvus(
+    embedding_function=embedding_model,
+    connection_args={"host": "milvus-service", "port": "19530"},
+    collection_name="servicenow_incidents"
+)
+
+# 3. Create a retriever to search for relevant documents
+retriever = vector_db.as_retriever(search_kwargs={"k": 3}) # Retrieve top 3 results
+
+print("Successfully connected to Milvus and created a retriever.")
+```
+
+=== Notebook Step 2: Defining the LLM and Prompt
+
+Next, the notebook defines the prompt template and configures the connection to the LLM that is being served within OpenShift AI. The template instructs the model on how to behave and where to place the retrieved context.
+
+```python
+# In your notebook...
+
+from langchain.prompts import PromptTemplate
+
+# LLM Inference Server URL
+# This points to a model served within the cluster, so no data leaves OpenShift.
+inference_server_url = "[http://llm-model-server.llm-serving.svc.cluster.local:8080](http://llm-model-server.llm-serving.svc.cluster.local:8080)"
+
+# LLM definition using a client that speaks the OpenAI API format
+llm = VLLMOpenAI(
+    openai_api_key="EMPTY",
+    openai_api_base=f"{inference_server_url}/v1",
+    model_name="llm-model", # The name of the deployed model
+    temperature=0.1,
+    max_tokens=512,
+)
+
+# Define the prompt template for our RAG chain
+template = """
+You are a helpful and professional IT support assistant for Parasol Company.
+Use the following context from past incident resolutions to answer the question.
+If you don't know the answer from the context, say that you don't know.
+
+Context:
+{context}
+
+Question:
+{question}
+
+Helpful Answer:
+"""
+
+prompt = PromptTemplate(template=template, input_variables=["context", "question"])
+```
+
+=== Notebook Step 3: Running the RAG Query
+
+Finally, you will define your question and execute the RAG chain. The chain will automatically handle the retrieval and augmentation steps before generating an answer.
+
+```python
+# In your notebook...
+
+# Create the RAG chain
+rag_chain = RetrievalQA.from_chain_type(
+    llm=llm,
+    chain_type="stuff",
+    retriever=retriever,
+    chain_type_kwargs={"prompt": prompt},
+    return_source_documents=True
+)
+
+# --- ASK YOUR QUESTION HERE ---
+question = "The email server is down, how do I fix it?"
+
+# Invoke the chain to get an answer
+result = rag_chain.invoke(question)
+
+# Print the results
+print("--- Answer from LLM ---")
+print(result["result"])
+print("\n--- Sources Retrieved from Milvus ---")
+for doc in result["source_documents"]:
+    print(f"  - Incident: {doc.metadata.get('incident_pk', 'N/A')}")
+    print(f"    Description: {doc.metadata.get('short_description', 'N/A')}")
+    print("-" * 20)
+```
+The output will show a concise answer generated by the LLM, informed directly by the resolution notes from the most relevant incident ticket in your database.
+
+[.bordershadow]
+image::03/rag-query-output.png[Example output from the Jupyter Notebook showing the LLM's answer and the source incident retrieved from Milvus.]
+
+Congratulations! You have successfully built and tested an end-to-end RAG system on OpenShift AI.

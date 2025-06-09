@@ -1,0 +1,25 @@
+= 5.1 End of Workshop
+include::_attributes.adoc[]
+
+== Congratulations!
+:slide:
+
+You have successfully completed the **Enterprise RAG System Workshop**!
+
+In this lab, you have taken on the role of an engineer at {company-name} and have built a significant prototype to solve a real-world business problem.
+
+You have successfully:
+* Deployed a mock ServiceNow REST API using ArgoCD.
+* Imported and configured a Data Science Pipeline in OpenShift AI.
+* Executed the pipeline to automatically ingest and process data, populating a Milvus vector database.
+* Queried the resulting RAG system from a Jupyter Notebook to retrieve context-aware answers from your private data.
+* Explored how an event-driven architecture using Knative and Kafka can automate data ingestion in real-time.
+
+[.bordershadow]
+image::05/workshop-complete.png[A final congratulations image.]
+
+== Thank You
+
+We hope this workshop has provided valuable hands-on experience and insight into how Red Hat OpenShift AI can be used to build powerful, scalable, and secure AI-driven solutions. The combination of data science pipelines, serverless eventing, and enterprise-grade infrastructure provides a robust platform for tackling your organization's most complex challenges.
+
+Thank you for your time and participation!

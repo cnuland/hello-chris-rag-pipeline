@@ -1,0 +1,74 @@
+= 3.2 Deploying the Mock ServiceNow API
+include::_attributes.adoc[]
+
+The first step in our hands-on lab is to deploy the mock ServiceNow API. This API simulates a real ITSM system by providing endpoints that list closed incident tickets containing valuable problem-resolution data. Our Kubeflow Pipeline will connect to this API to fetch the data for ingestion into Milvus.
+
+We will use OpenShift GitOps (ArgoCD) to deploy the application into your project namespace.
+
+== Deploy the Mock API via ArgoCD
+
+1.  Access the **ArgoCD Console** from the OpenShift web console. You can find the link in the application launcher menu in the top-right corner.
++
+[.bordershadow]
+image::03/open-argocd-from-launcher.png[Opening the ArgoCD console from the OpenShift application launcher.]
+
+2.  Click **Log in via OpenShift** to authenticate using your workshop credentials (`{user}` / `{password}`).
+
+3.  Once logged in, you will be on the ArgoCD "Applications" page. Click the **+ Create Application** button.
++
+[.bordershadow]
+image::03/argocd-create-application.png[Creating a new application in the ArgoCD UI.]
+
+4.  On the "Create Application" form, click the **Edit as YAML** button in the top-right corner.
++
+[.bordershadow]
+image::03/argocd-edit-as-yaml.png[Switching to the YAML editor for the new application.]
+
+5.  Replace the default content in the YAML editor with the following manifest.
++
+[IMPORTANT]
+====
+You **must** replace the placeholder `YOUR_GIT_REPO_URL` with the URL of the Git repository you are using for this workshop. You may also need to change `targetRevision` if you are not working on the `main` branch.
+====
+
+    ```yaml
+    apiVersion: argoproj.io/v1alpha1
+    kind: Application
+    metadata:
+      # This name creates the ArgoCD application tile.
+      name: mock-api
+      # This is the namespace where ArgoCD itself runs.
+      namespace: openshift-gitops
+    spec:
+      project: default
+      source:
+        repoURL: YOUR_GIT_REPO_URL # <-- REPLACE THIS with your Git repository URL
+        # This path points to the kustomize directory for the mock API application.
+        path: apps/api/.openshift
+        targetRevision: main # <-- REPLACE THIS with your branch name if not 'main'
+        kustomize: {}
+      destination:
+        server: [https://kubernetes.default.svc](https://kubernetes.default.svc)
+        # This is the namespace where the API will be deployed.
+        namespace: rag-pipeline-workshop # This should match your project namespace
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+    ```
+
+6.  After pasting the YAML, click the **Save** button.
+
+7.  You will be returned to the form view. Now, click the **Create** button at the top of the page.
++
+[.bordershadow]
+image::03/argocd-create-button.png[Finalizing the application creation.]
+
+8.  ArgoCD will begin deploying the application. You can click on the `mock-api` tile to see the details of the sync process. After a minute or two, all the components should be deployed, and the application will report as **Healthy** and **Synced**.
++
+[.bordershadow]
+image::03/argocd-mock-api-synced.png[The mock-api application showing a healthy and synced status in ArgoCD.]
+
+Once the application is healthy, you can proceed to the next step to verify that it's running correctly.

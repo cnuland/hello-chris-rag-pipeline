@@ -1,0 +1,47 @@
+= 3.6 Monitoring the Pipeline Run
+include::_attributes.adoc[]
+
+After starting the pipeline run in the previous step, you were automatically taken to the run's real-time graph view. This interface is where you can monitor the progress of each component in your pipeline.
+
+== The Run Graph View
+
+The graph provides a live visualization of your pipeline's execution. Each box represents a component (a "task") in your pipeline.
+
+* **Blue (Running):** A component with a blue spinning icon is currently executing.
+* **Green (Succeeded):** A component with a green checkmark has completed successfully.
+* **Red (Failed):** If a component encounters an error, it will turn red with an exclamation mark.
+
+Initially, you will see the `fetch-data-from-api` component in a running state.
+
+[.bordershadow]
+image::03/run-graph-in-progress.png[The real-time graph view showing a pipeline run in progress.]
+
+== Inspecting Component Logs
+
+You can dive into each component to see its logs and details. This is essential for debugging and understanding what the pipeline is doing.
+
+1.  **Click on the `fetch-data-from-api` component** in the graph. A side panel will open.
+
+2.  Select the **Logs** tab. Here you can see the standard output from the component's container. You should see log lines indicating that it is connecting to the mock API and fetching the incident data.
++
+[.bordershadow]
+image::03/fetch-api-component-logs.png[Logs from the 'fetch-data-from-api' component showing a successful data fetch.]
+
+3.  After the first component succeeds, the graph will update, and the `ingest-incidents-to-milvus` component will begin running.
+
+4.  Click on the `ingest-incidents-to-milvus` component and view its **Logs** tab. You will see output indicating that it is:
+    * Connecting to the Milvus database.
+    * Loading the sentence-transformer model to generate embeddings.
+    * Inserting the incident data and their vector embeddings into the Milvus collection.
+
+[.bordershadow]
+image::03/ingest-milvus-component-logs.png[Logs from the 'ingest-incidents-to-milvus' component showing successful data ingestion.]
+
+== Verifying Successful Completion
+
+The entire pipeline run should take a few minutes to complete. Once finished, both components in the graph will have green checkmarks, and the overall status of the run will be **Succeeded**.
+
+[.bordershadow]
+image::03/run-graph-succeeded.png[The graph view showing that all pipeline components have completed successfully.]
+
+Now that the data has been successfully processed and loaded into our vector database, we are ready to test the RAG system by querying it from a notebook.

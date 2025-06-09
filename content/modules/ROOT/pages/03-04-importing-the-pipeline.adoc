@@ -1,0 +1,61 @@
+= 3.4 Importing the Data Science Pipeline
+include::_attributes.adoc[]
+
+Now that the mock API is running, we need to import the pipeline that will consume its data. A Kubeflow Pipeline can be defined in Python using the KFP SDK and then compiled into a static YAML file. This YAML file contains the complete, portable definition of the pipeline and its components.
+
+For this lab, the pipeline has already been compiled for you. Your task is to import this definition into the OpenShift AI Pipelines server.
+
+== Pipeline Import Procedure
+
+1.  Navigate back to your **Data Science Project** in the OpenShift AI dashboard.
+
+2.  Select the **Pipelines** section from the left-hand menu.
++
+[.bordershadow]
+image::03/pipelines-section.png[Navigating to the Pipelines section of the Data Science Project.]
+
+3.  Click the **Import pipeline** button.
++
+[.bordershadow]
+image::03/import-pipeline-button.png[The 'Import pipeline' button in the Pipelines UI.]
+
+4.  In the "Import pipeline" dialog, ensure the **Upload a file** option is selected.
++
+[.bordershadow]
+image::03/import-pipeline-dialog.png[The 'Upload a file' option in the import dialog.]
+
+5.  Give your pipeline a name. For consistency, please use the name below:
++
+[.console-input]
+[source,text]
+----
+ServiceNow Ticket Ingestion
+----
+
+6.  (Optional) You can add a description, such as:
++
+[.console-input]
+[source,text]
+----
+A pipeline to fetch closed ServiceNow incidents and ingest them into a Milvus vector database.
+----
+
+7.  Click the "Upload" box and use the file browser to navigate to the pre-compiled pipeline definition file in your cloned repository. The path is:
++
+[.console-input]
+[source,text]
+----
+parasol-insurance/pipeline/api-to-rag/api-pipeline.yaml
+----
+
+8.  After selecting the file, your dialog should look like this. Click the **Import pipeline** button to finish.
++
+[.bordershadow]
+image::03/import-pipeline-form-filled.png[The completed pipeline import form.]
+
+9.  After a moment, you will be taken to the pipeline's details page. This page shows you the static graph of the pipeline's components and their dependencies.
++
+[.bordershadow]
+image::03/pipeline-details-view.png[The pipeline details view showing the graph of the imported 'ServiceNow Ticket Ingestion' pipeline.]
+
+With the pipeline successfully imported, we are now ready to create a run and process the data.
