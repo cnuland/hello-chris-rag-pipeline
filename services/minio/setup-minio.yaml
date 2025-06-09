@@ -5,7 +5,7 @@ kind: Job
 metadata:
   # Using generateName ensures a unique Job is created on each sync, avoiding immutability errors.
   # The hyphen at the end is important for Kubernetes to append a random suffix.
-  generateName: minio-setup
+  generateName: minio-setup-
   # The namespace will be applied by Kustomize/ArgoCD.
   # namespace: minio # This is set by the ArgoCD Application destination
   annotations:
