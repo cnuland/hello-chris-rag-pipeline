@@ -6,15 +6,16 @@ metadata:
     app.kubernetes.io/name: milvus
     app.kubernetes.io/instance: vectordb
 data:
-  # user.yaml is kept minimal, allowing most settings to come from the default.
   user.yaml: |
+    # This configuration points Milvus to the external etcd StatefulSet.
     etcd:
       endpoints:
-        - vectordb-etcd:2379 # Points to the etcd service within the same namespace
+        - vectordb-etcd-headless:2379 # Points to the etcd service within the same namespace
+    
+    # The following components run inside the standalone pod and communicate via localhost.
     minio:
       address: localhost:9000
     common:
-      # Use internal component names for standalone mode with separate etcd
       rootCoord:
         address: localhost:53100
       dataCoord:
@@ -23,7 +24,5 @@ data:
         address: localhost:19531
       indexCoord:
         address: localhost:31000
-  # default.yaml can be left empty as the container image contains the defaults.
-  # The run-helm.sh script will merge user.yaml over the internal defaults.
   default.yaml: |
-    {}
+    {} # The container image includes default configurations.

@@ -21,6 +21,7 @@ spec:
       serviceAccountName: default
       containers:
         - name: etcd
+          # Using the etcd image specified in your example
           image: docker.io/milvusdb/etcd:3.5.5-r4
           imagePullPolicy: "IfNotPresent"
           env:
@@ -30,10 +31,6 @@ spec:
               value: "revision"
             - name: ETCD_AUTO_COMPACTION_RETENTION
               value: "1000"
-            - name: ETCD_QUOTA_BACKEND_BYTES
-              value: "4294967296"
-            - name: ETCD_SNAPSHOT_COUNT
-              value: "10000"
           ports:
             - name: client
               containerPort: 2379
@@ -93,12 +90,12 @@ spec:
                 echo -n "."
                 sleep 2
               done
-              echo "Etcd service is available. Proceeding with Milvus startup."      
+              echo "Etcd service is available. Proceeding with Milvus startup."
       containers:
         - name: standalone
-          image: "quay.io/rh-data-services/milvus-openshift:v2.3.10"
+          # Using the Red Hat certified image. Ensure this is imported into your namespace registry.
+          image: "image-registry.openshift-image-registry.svc:5000/rag-pipeline-workshop/milvus-openshift:v2.3.10"
           imagePullPolicy: IfNotPresent
-          # The command now just runs standalone; config is sourced from the mounted ConfigMap.
           args: ["milvus", "run", "standalone"]
           ports:
             - name: milvus
@@ -137,4 +134,3 @@ spec:
         - name: milvus-data-disk
           persistentVolumeClaim:
             claimName: vectordb-milvus
----
