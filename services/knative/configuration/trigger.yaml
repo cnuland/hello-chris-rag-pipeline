@@ -1,0 +1,21 @@
+apiVersion: eventing.knative.dev/v1
+kind: Trigger
+metadata:
+  name: minio-pdf-event-trigger # Or your trigger name
+  namespace: rag-pipeline-workshop
+  annotations:
+    argocd.argoproj.io/sync-wave: "4" # Wave 2: Deploy after core Eventing is ready
+    argocd.argoproj.io/hook: Sync
+spec:
+  broker: kafka-broker # Your broker name
+  filter:
+    attributes:
+      source: "urn:minio:s3:::webhook" # Match what minio-event-bridge sends
+      type: "s3:ObjectCreated:Put"    # Match what minio-event-bridge sends
+  subscriber:
+    ref:
+      apiVersion: serving.knative.dev/v1
+      kind: Service
+      name: kfp-s3-trigger # Name of your Knative Service
+      namespace: rag-pipeline-workshop
+  #  uri: http://kfp-s3-trigger-0000-private.rag-pipeline-workshop.svc.cluster.local:8012

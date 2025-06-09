@@ -1,0 +1,14 @@
+apiVersion: operator.knative.dev/v1beta1
+kind: KnativeEventing
+metadata:
+  name: knative-eventing
+  namespace: knative-eventing
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/sync-wave: "1" # Wave 1: Deploy core Knative Serving component
+spec:
+  config:
+    config-kafka-broker-data-plane:
+      default.topic.partitions: "10"
+      default.topic.replication.factor: "3"
+

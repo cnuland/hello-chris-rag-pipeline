@@ -1,0 +1,12 @@
+apiVersion: operator.knative.dev/v1beta1
+kind: KnativeServing
+metadata:
+  name: knative-serving
+  namespace: knative-serving
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/sync-wave: "1" # Wave 1: Deploy core Knative Serving component
+spec:
+  ingress:
+    kourier:
+      enabled: true

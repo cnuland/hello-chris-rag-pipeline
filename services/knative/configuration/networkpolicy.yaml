@@ -1,0 +1,43 @@
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: allow-api-to-eventing-webhook
+  namespace: knative-eventing
+  annotations:
+    argocd.argoproj.io/sync-wave: "1" # Wave 2: Deploy after core Eventing is ready
+    argocd.argoproj.io/hook: Sync
+spec:
+  podSelector:
+    matchLabels:
+      role: eventing-webhook # Or app=eventing-webhook, verify your pod labels
+  ingress:
+  - ports:
+    - protocol: TCP
+      port: 8443 # Target port of the webhook pods
+    # You might need to add a 'from' clause if your cluster has a restrictive default
+    # This example allows from any source, which might be too broad for production.
+    # To restrict to API server, you'd need to identify its namespace/pod selectors.
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dispatcher-to-kfp-s3-trigger-all-ports # Name indicates it's for debugging
+  namespace: rag-pipeline-workshop
+  annotations:
+    argocd.argoproj.io/sync-wave: "1" # Wave 2: Deploy after core Eventing is ready
+spec:
+  podSelector:
+    matchLabels:
+      serving.knative.dev/service: kfp-s3-trigger # Selects your kfp-s3-trigger pods
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          # This label usually exists on all namespaces
+          kubernetes.io/metadata.name: knative-eventing 
+      # By omitting the 'ports' field here, this rule allows traffic on ALL ports
+      # from the selected namespaces to the selected pods.
+      # If you want to be explicit that it's for TCP (which HTTP is):
+    ports:
+    - protocol: TCP # This allows all TCP ports. Remove protocol to allow all TCP and UDP.
