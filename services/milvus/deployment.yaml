@@ -94,7 +94,7 @@ spec:
       containers:
         - name: standalone
           # Using the Red Hat certified image. Ensure this is imported into your namespace registry.
-          image:  quay.io/rh-data-services/milvus-openshift:v2.3.10
+          image: "image-registry.openshift-image-registry.svc:5000/rag-pipeline-workshop/milvus-openshift:v2.3.10"
           imagePullPolicy: IfNotPresent
           args: ["milvus", "run", "standalone"]
           ports:
