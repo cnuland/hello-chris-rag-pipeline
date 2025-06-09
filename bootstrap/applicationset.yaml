@@ -15,40 +15,35 @@ spec:
         - name: 'kafka'
           namespace: 'kafka'
           path: 'services/kafka'
-          wave: '1'
         
         # WAVE 2: Knative Eventing Infrastructure (depends on Kafka)
         - name: 'knative-configuration'
           namespace: 'rag-pipeline-workshop'
           path: 'services/knative/configuration'
-          wave: '2'
 
         # WAVE 2: Knative Eventing Infrastructure (depends on Kafka)
         - name: 'knative-operators'
           namespace: 'rag-pipeline-workshop'
           path: 'services/knative/operators'
-          wave: '2'
+          
         # WAVE 3: Core Application Services
         - name: 'mock-api'
           namespace: 'rag-pipeline-workshop'
           path: 'apps/api/.k8s' # Assuming kustomize files are in .openshift dir
-          wave: '3'
+
         - name: 'milvus'
           namespace: 'rag-pipeline-workshop'
           path: 'services/milvus'
-          wave: '3'
 
         # WAVE 4: Bridge Service (depends on Knative Broker)
         - name: 'minio-event-bridge'
           namespace: 'rag-pipeline-workshop'
           path: 'apps/minio-event-bridge/.k8s' # Assuming kustomize files are in .openshift dir
-          wave: '4'
 
         # WAVE 5: Final Event Handler (depends on Trigger which depends on Broker)
         - name: 's3-event-handler'
           namespace: 'rag-pipeline-workshop'
           path: 'apps/s3-event-handler/.k8s'
-          wave: '5'
   
   template:
     metadata:
@@ -59,7 +54,6 @@ spec:
         # This hook tells the root app that this generated app is part of its sync plan.
         argocd.argoproj.io/hook: Sync
         # The wave determines the deployment order.
-        argocd.argoproj.io/sync-wave: '{{wave}}'
     spec:
       project: default
       source:
