@@ -21,7 +21,6 @@ spec:
       serviceAccountName: default
       containers:
         - name: etcd
-          # Using the etcd image specified in your example
           image: docker.io/milvusdb/etcd:3.5.5-r4
           imagePullPolicy: "IfNotPresent"
           env:
@@ -76,7 +75,6 @@ spec:
     spec:
       serviceAccountName: default
       initContainers:
-        # This init container waits for the etcd service to be available before starting Milvus.
         - name: wait-for-etcd
           image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
           imagePullPolicy: IfNotPresent
@@ -93,11 +91,13 @@ spec:
               echo "Etcd service is available. Proceeding with Milvus startup."
       containers:
         - name: standalone
-          # Using the Red Hat certified image. Ensure this is imported into your namespace registry.
-          image: "quay.io/rh-data-services/milvus-openshift:v2.3.10"
+          image: "image-registry.openshift-image-registry.svc:5000/rag-pipeline-workshop/milvus-openshift:v2.3.10"
           imagePullPolicy: IfNotPresent
           args: ["milvus", "run", "standalone"]
           env:
+            # THIS IS THE CRITICAL FIX:
+            # This environment variable directly overrides the etcd.endpoints configuration,
+            # ensuring Milvus connects to the correct service, bypassing any file parsing issues.
             - name: MILVUS_ETCD_ENDPOINTS
               value: "vectordb-etcd-headless:2379"
           ports:
@@ -137,3 +137,4 @@ spec:
         - name: milvus-data-disk
           persistentVolumeClaim:
             claimName: vectordb-milvus
+---

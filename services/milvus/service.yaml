@@ -36,8 +36,10 @@ spec:
   ports:
   - name: client
     port: 2379
+    protocol: TCP
   - name: peer
     port: 2380
+    protocol: TCP
   clusterIP: None # This makes it a headless service
   selector:
     app.kubernetes.io/name: etcd
