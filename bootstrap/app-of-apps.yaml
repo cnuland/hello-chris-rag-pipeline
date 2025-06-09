@@ -23,5 +23,7 @@ spec:
       prune: true    # Allows ArgoCD to delete child Applications if they are removed from Git
       selfHeal: true # Allows ArgoCD to correct deviations from the Git state
     syncOptions:
-      - CreateNamespace=true # Typically, the 'argocd' namespace already exists.
+      - CreateNamespace=true
+      - ServerSideApply=true
+      # Typically, the 'argocd' namespace already exists.
                               # Set to true if this root app should try to create the 'argocd' namespace.

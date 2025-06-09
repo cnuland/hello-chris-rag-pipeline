@@ -7,6 +7,7 @@ metadata:
     # ArgoCD Sync Wave: Deploy this in an earlier wave.
     # The sync will pause until this application is fully Synced and Healthy.
     argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/hook: Sync
 spec:
   project: default
   source:
@@ -25,5 +26,7 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-      - CreateNamespace=true # Allows ArgoCD to create the destination namespace if it doesn't exist
+      - CreateNamespace=true
+      - ServerSideApply=true
+       # Allows ArgoCD to create the destination namespace if it doesn't exist
                              # (though MinIO's kustomize already creates it)

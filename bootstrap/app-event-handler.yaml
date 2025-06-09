@@ -7,6 +7,7 @@ metadata:
     # ArgoCD Sync Wave: Deploy this in an earlier wave.
     # The sync will pause until this application is fully Synced and Healthy.
     argocd.argoproj.io/sync-wave: "3"
+    argocd.argoproj.io/hook: Sync
 spec:
   project: default
   source:
@@ -23,6 +24,7 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
   # ignoreDifferences:
   # - group: serving.knative.dev
   #   kind: Service

@@ -23,6 +23,7 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
   # Ignore differences for image tags if Tekton updates them,
   # or ensure Tekton updates Git to reflect the new tag which ArgoCD then picks up.
   # ignoreDifferences:
