@@ -91,7 +91,7 @@ spec:
               echo "Etcd service is available. Proceeding with Milvus startup."
       containers:
         - name: standalone
-          image: "image-registry.openshift-image-registry.svc:5000/rag-pipeline-workshop/milvus-openshift:v2.3.10"
+          image: "quay.io/rh-data-services/milvus-openshift:v2.3.10"
           imagePullPolicy: IfNotPresent
           args: ["milvus", "run", "standalone"]
           env:
