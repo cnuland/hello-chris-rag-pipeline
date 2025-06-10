@@ -85,6 +85,17 @@ spec:
         - name: standalone
           image: "quay.io/rh-data-services/milvus-openshift:v2.3.10"
           imagePullPolicy: IfNotPresent
+          env:
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: milvus-minio-secret
+                  key: MINIO_ACCESS_KEY
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: milvus-minio-secret
+                  key: MINIO_SECRET_KEY
           # CORRECTED: Use the run-helm.sh script to start Milvus.
           args: ["/milvus/tools/run-helm.sh", "milvus", "run", "standalone"]
           ports:
