@@ -7,12 +7,11 @@ metadata:
     app.kubernetes.io/instance: vectordb
 data:
   user.yaml: |
-    # This configuration is the intended setup, but we will override etcd.endpoints
-    # via an environment variable to ensure it's applied correctly.
+    # This configuration tells Milvus to use the external etcd StatefulSet.
     etcd:
       endpoints:
-        - vectordb-etcd-headless:2379 
-    
+        - vectordb-etcd-headless:2379
+    # Internal components still use localhost as they are in the same pod.
     minio:
       address: localhost:9000
     common:
@@ -25,4 +24,4 @@ data:
       indexCoord:
         address: localhost:31000
   default.yaml: |
-    {} # The container image includes default configurations.
+    {}

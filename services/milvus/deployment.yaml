@@ -26,10 +26,6 @@ spec:
           env:
             - name: ALLOW_NONE_AUTHENTICATION
               value: "yes"
-            - name: ETCD_AUTO_COMPACTION_MODE
-              value: "revision"
-            - name: ETCD_AUTO_COMPACTION_RETENTION
-              value: "1000"
           ports:
             - name: client
               containerPort: 2379
@@ -48,7 +44,6 @@ spec:
             storage: "8Gi"
 
 --- 
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -75,31 +70,23 @@ spec:
     spec:
       serviceAccountName: default
       initContainers:
-        - name: wait-for-etcd
-          image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
-          imagePullPolicy: IfNotPresent
+        # This init container copies helper scripts into a shared volume.
+        - name: config
           command:
-            - /bin/bash
-            - -c
-            - |
-              set -e
-              echo "Waiting for etcd service at vectordb-etcd-headless:2379..."
-              until (exec 3<>/dev/tcp/vectordb-etcd-headless/2379) 2>/dev/null; do
-                echo -n "."
-                sleep 2
-              done
-              echo "Etcd service is available. Proceeding with Milvus startup."
+            - /cp
+            - /run-helm.sh,/merge
+            - /milvus/tools/run-helm.sh,/milvus/tools/merge
+          image: "milvusdb/milvus-config-tool:v0.1.2"
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - mountPath: /milvus/tools
+              name: tools
       containers:
         - name: standalone
           image: "quay.io/rh-data-services/milvus-openshift:v2.3.10"
           imagePullPolicy: IfNotPresent
-          args: ["milvus", "run", "standalone"]
-          env:
-            # THIS IS THE CRITICAL FIX:
-            # This environment variable directly overrides the etcd.endpoints configuration,
-            # ensuring Milvus connects to the correct service, bypassing any file parsing issues.
-            - name: MILVUS_ETCD_ENDPOINTS
-              value: "vectordb-etcd-headless:2379"
+          # CORRECTED: Use the run-helm.sh script to start Milvus.
+          args: ["/milvus/tools/run-helm.sh", "milvus", "run", "standalone"]
           ports:
             - name: milvus
               containerPort: 19530
@@ -113,17 +100,15 @@ spec:
               port: metrics
             initialDelaySeconds: 120
             periodSeconds: 30
-            timeoutSeconds: 5
-            failureThreshold: 5
           readinessProbe:
             httpGet:
               path: /healthz
               port: metrics
             initialDelaySeconds: 120
             periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 5
           volumeMounts:
+            - mountPath: /milvus/tools
+              name: tools
             - name: milvus-config
               mountPath: /milvus/configs/user.yaml
               subPath: user.yaml
@@ -131,10 +116,11 @@ spec:
             - name: milvus-data-disk
               mountPath: "/var/lib/milvus"
       volumes:
+        - name: tools
+          emptyDir: {}
         - name: milvus-config
           configMap:
             name: vectordb-milvus
         - name: milvus-data-disk
           persistentVolumeClaim:
             claimName: vectordb-milvus
----
