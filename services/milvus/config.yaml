@@ -13,7 +13,7 @@ data:
         - vectordb-etcd-headless:2379
     # Internal components still use localhost as they are in the same pod.
     minio:
-      address: localhost:9000
+      address: minio.minio.svc.cluster.local:9000
     common:
       rootCoord:
         address: localhost:53100
