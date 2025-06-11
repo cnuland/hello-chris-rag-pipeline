@@ -48,6 +48,10 @@ spec:
         - name: 'shared-llm'
           namespace: 'shared-llm'
           path: 'services/shared-llm'
+
+        - name: 'bootstrap'
+          namespace: 'bootstrap'
+          path: 'bootstrap/generate-projects'
   
   template:
     metadata:
