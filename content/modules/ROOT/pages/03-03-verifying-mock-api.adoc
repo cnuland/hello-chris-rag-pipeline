@@ -5,7 +5,7 @@ Now that ArgoCD has successfully deployed the mock API application, let's perfor
 
 == Accessing the OpenShift Web Terminal
 
-1.  In the OpenShift web console, make sure you are in the **Developer** perspective and have your project (`rag-pipeline-workshop`) selected.
+1.  In the OpenShift web console, make sure you are in the **Developer** perspective and have your project (`{user}`) selected.
 
 2.  If you have closed it, open the command line terminal by clicking the terminal icon in the top-right corner of the page.
 +
@@ -38,7 +38,7 @@ You should see the following JSON output, indicating that the API is up and runn
 [.console-input]
 [source,bash]
 ----
-curl 'http://mock-servicenow-api-svc.{user}.svc.cluster.local:8080/api/v1/incidents?state=closed&limit=2' | jq
+curl 'http://mock-servicenow-api-svc.{user}.svc.cluster.local.local:8080/api/v1/incidents?state=closed&limit=2' | jq
 ----
 
 3.  The output should be a well-formatted JSON object containing a `result` array with two incident records, similar to the example below.

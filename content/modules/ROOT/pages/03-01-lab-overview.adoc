@@ -60,8 +60,12 @@ image::03/open-project.png[Opening your dedicated user project.]
     * **Pipelines:** A pipeline server is configured and ready to run the data ingestion pipeline.
     * **Data Connections:** A data connection to the project's dedicated Milvus vector database has been pre-configured.
     * **Deployed Models:** You can view the project's topology by clicking the **Topology** icon in the OpenShift console navigation (left sidebar). Here you can see the running pods for your Milvus instance.
+
+4.
+Open the OpenShift Console in a seperate tab by accesing the quick link within the dashboard.
 +
 [.bordershadow]
 image::03/project-topology-view.png[OpenShift Topology view showing the deployed Milvus instance within your project.]
+
 
 Now that you are familiar with your environment, let's proceed to deploy the mock API.

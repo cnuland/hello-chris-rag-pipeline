@@ -7,45 +7,50 @@ Our data pipeline will populate this database with vectors generated from the Se
 
 == Deploy Milvus via ArgoCD
 
-1.  If you have closed it, navigate back to the **ArgoCD Console** from the OpenShift application launcher.
+Now that ArgoCD has successfully deployed the mock API application, let's perform a few tests to ensure it's running and serving data correctly. We will use the built-in OpenShift command line terminal, which provides a convenient way to interact with our project without leaving the web console.
 
-2.  From the "Applications" page, click the **+ Create Application** button.
+== Accessing the OpenShift Web Terminal
 
-3.  Once again, click the **Edit as YAML** button in the top-right corner to open the YAML editor.
+1.  In the OpenShift web console, make sure you are in the **Developer** perspective and have your project (`{user}`) selected.
+
+2.  If you have closed it, open the command line terminal by clicking the terminal icon in the top-right corner of the page.
++
+[.bordershadow]
+image::03/openshift-web-terminal.png[Opening the OpenShift command line terminal from the UI.]
+
+3.  A new browser tab will open with a terminal session already logged into your OpenShift account and pointing to your project.
 
 ====
 
-    <!--
-    This is the ArgoCD Application manifest for deploying Milvus.
-    -->
-    ```yaml
-    apiVersion: argoproj.io/v1alpha1
-    kind: Application
-    metadata:
-      # This name creates the ArgoCD application tile.
-      name: milvus
-      # This is the namespace where ArgoCD itself runs.
-      namespace: openshift-gitops
-    spec:
-      project: default
-      source:
-        repoURL: YOUR_GIT_REPO_URL # <-- REPLACE THIS with your Git repository URL
-        # This path points to the kustomize directory for the Milvus service.
-        path: services/milvus
-        targetRevision: main # <-- REPLACE THIS with your branch name if not 'main'
-        kustomize: {}
-      destination:
-        server: [https://kubernetes.default.svc](https://kubernetes.default.svc)
-        # This is the namespace where Milvus will be deployed.
-        namespace: rag-pipeline-workshop # This should match your project namespace
-      syncPolicy:
-        automated:
-          prune: true
-          selfHeal: true
-        syncOptions:
-          - CreateNamespace=true
-          - ServerSideApply=true
-    ```
+oc apply -f - <<EOF
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  # This name creates the ArgoCD application tile.
+  # We are using the {user} variable to ensure it's unique for each workshop attendee.
+  name: '{user}-milvus'
+  # This is the namespace where ArgoCD itself runs.
+  namespace: openshift-gitops
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/cnuland/hello-chris-rag-pipeline.git
+    # This path points to the kustomize directory for the Milvus service.
+    path: services/milvus
+    targetRevision: main # 
+    kustomize: {}
+  destination:
+    server: https://kubernetes.default.svc
+    # This is the workshop namespace where Milvus will be deployed.
+    namespace: '{user}'
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+EOF
 
 5.  After pasting the YAML, click **Save**, and then on the next screen, click **Create**.
 
