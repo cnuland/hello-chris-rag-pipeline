@@ -15,6 +15,9 @@ spec:
         - name: 'kafka'
           namespace: 'kafka'
           path: 'services/kafka'
+        - name: 'presync'
+          namespace: 'redhat-ods-operator'
+          path: 'bootstrap/presync'
         
         # WAVE 2: Knative Eventing Infrastructure (depends on Kafka)
         - name: 'knative-configuration'
