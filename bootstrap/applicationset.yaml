@@ -44,6 +44,10 @@ spec:
         - name: 's3-event-handler'
           namespace: 'rag-pipeline-workshop'
           path: 'pipeline/pdf-to-docling/.k8s'
+
+        - name: 'shared-llm'
+          namespace: 'shared-llm'
+          path: 'services/shared-llm'
   
   template:
     metadata:
@@ -69,6 +73,7 @@ spec:
           prune: true
           selfHeal: true
         syncOptions:
+          - CreateNamespace=true
           - RespectIgnoreDifferences=true
           - Retry=true
         retry:
