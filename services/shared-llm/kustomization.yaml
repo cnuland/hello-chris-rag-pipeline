@@ -7,9 +7,6 @@ commonLabels:
 
 resources:
   # presync
-  - presync-rhoai-ready.yaml
-  - presync-inferenceservice.yaml
-  - rbac-presync-monitoring.yaml
   # wave 0
   - namespace.yaml
   - accelerator-profile.yaml
