@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mock-servicenow-api
-  namespace: rag-pipeline-workshop
   labels:
     app: mock-servicenow-api
     app.kubernetes.io/component: backend

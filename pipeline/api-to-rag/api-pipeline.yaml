@@ -1,4 +1,4 @@
-mport kfp
+import kfp
 from kfp import dsl
 from kfp.dsl import InputPath, OutputPath
 
