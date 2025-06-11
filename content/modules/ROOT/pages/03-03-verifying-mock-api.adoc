@@ -1,45 +1,98 @@
 = 3.3 Verifying the Mock API
 include::_attributes.adoc[]
 
-Now that ArgoCD has successfully deployed the mock API application, let's perform a quick test to ensure it's running and reachable from within the cluster. We will use the built-in OpenShift command line terminal, which provides a convenient way to interact with our project without leaving the web console.
+Now that ArgoCD has successfully deployed the mock API application, let's perform a few tests to ensure it's running and serving data correctly. We will use the built-in OpenShift command line terminal, which provides a convenient way to interact with our project without leaving the web console.
 
-== Accessing the OpenShift Terminal
+== Accessing the OpenShift Web Terminal
 
 1.  In the OpenShift web console, make sure you are in the **Developer** perspective and have your project (`rag-pipeline-workshop`) selected.
 
-2.  In the top-right corner of the page, click on the command line terminal icon to open a new terminal session directly in your browser.
+2.  If you have closed it, open the command line terminal by clicking the terminal icon in the top-right corner of the page.
 +
 [.bordershadow]
 image::03/openshift-web-terminal.png[Opening the OpenShift command line terminal from the UI.]
 
 3.  A new browser tab will open with a terminal session already logged into your OpenShift account and pointing to your project.
 
-== Testing the API Service
+== Testing the API Endpoints
 
-We will now send a request to the API's `/api/v1/health` endpoint. This is a simple way to confirm the application is up and running. The API is exposed internally via a Kubernetes Service named `mock-api` on port `8080`.
+We will now send requests to two of the API's endpoints: `/api/v1/health` for a simple status check, and `/api/v1/incidents` to retrieve sample data. The API is exposed internally via a Kubernetes Service named `mock-api` on port `8080`.
 
-1.  In the OpenShift terminal you just opened, copy and paste the following `curl` command and press Enter:
+1.  **Perform a Health Check:** In the OpenShift terminal, run the following command to check the health endpoint.
 +
 [.console-input]
 [source,bash]
 ----
-curl http://mock-api:8080/api/v1/health
+curl http://mock-servicenow-api-svc.{user}.svc.cluster.local.local:8080/api/v1/health
 ----
 +
-This command sends an HTTP GET request directly to the internal service endpoint of our mock API.
-
-2.  You should see the following JSON output, indicating that the API is healthy:
+You should see the following JSON output, indicating that the API is up and running:
 +
 [source,json]
 ----
 {"status":"UP"}
 ----
 
+2.  **Fetch Incident Data:** Now, let's query the main data endpoint to see the mock ticket data. This is the same endpoint our pipeline will use. We'll ask for two "closed" incidents and pipe the output to the `jq` utility to format it nicely.
++
+[.console-input]
+[source,bash]
+----
+curl 'http://mock-servicenow-api-svc.{user}.svc.cluster.local:8080/api/v1/incidents?state=closed&limit=2' | jq
+----
+
+3.  The output should be a well-formatted JSON object containing a `result` array with two incident records, similar to the example below.
++
 [.bordershadow]
-image::03/api-health-check-success.png[Successful output of the curl command in the OpenShift terminal.]
+image::03/api-incidents-check-success.png[Successful output of the curl command showing formatted JSON incident data.]
++
+[source,json]
+----
+{
+  "result": [
+    {
+      "assignment_group": "Network Support",
+      "caller_id": "abel.tuter@example.com",
+      "category": "Hardware",
+      "closed_at": "...",
+      "cmdb_ci": "email-server-01",
+      "description": "Users reported being unable to send or receive emails...",
+      "number": "INC001001",
+      "opened_at": "...",
+      "priority": "1 - Critical",
+      "resolution_code": "Solved (Workaround)",
+      "resolution_notes": "The primary email server's main network interface card (NIC) failed...",
+      "resolved_by": "network.admin",
+      "short_description": "Email server unresponsive",
+      "state": "Closed",
+      "subcategory": "Server",
+      "updated_by": "system.auto_close",
+      "updated_on": "..."
+    },
+    {
+      "assignment_group": "Hardware Support",
+      "caller_id": "george.bailey@example.com",
+      "category": "Hardware",
+      "closed_at": "...",
+      "cmdb_ci": "PRN-FIN-01",
+      "description": "The finance department printer, PRN-FIN-01, has been experiencing frequent paper jams today...",
+      "number": "INC001005",
+      "opened_at": "...",
+      "priority": "3 - Moderate",
+      "resolution_code": "Solved (Hardware Replacement)",
+      "resolution_notes": "Technician dispatched to inspect PRN-FIN-01...",
+      "resolved_by": "tech.support",
+      "short_description": "Printer 'PRN-FIN-01' jamming frequently",
+      "state": "Closed",
+      "subcategory": "Printer",
+      "updated_by": "tech.support",
+      "updated_on": "..."
+    }
+  ],
+  "total_records": 5,
+  "limit": 2,
+  "offset": 0
+}
+----
 
-If you see this output, it confirms that:
-* The `mock-api` Deployment is running correctly.
-* The internal `Service` is properly routing traffic to the application pod.
-
-Now that our data source is ready, we can proceed with deploying the data ingestion pipeline.
+If you see this output, it confirms that the mock API is fully functional. We are now ready to deploy the Milvus database.

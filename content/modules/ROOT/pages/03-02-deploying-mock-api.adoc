@@ -24,39 +24,34 @@ image::03/argocd-create-application.png[Creating a new application in the ArgoCD
 [.bordershadow]
 image::03/argocd-edit-as-yaml.png[Switching to the YAML editor for the new application.]
 
-5.  Replace the default content in the YAML editor with the following manifest.
-+
-[IMPORTANT]
-====
-You **must** replace the placeholder `YOUR_GIT_REPO_URL` with the URL of the Git repository you are using for this workshop. You may also need to change `targetRevision` if you are not working on the `main` branch.
 ====
 
     ```yaml
-    apiVersion: argoproj.io/v1alpha1
-    kind: Application
-    metadata:
-      # This name creates the ArgoCD application tile.
-      name: mock-api
-      # This is the namespace where ArgoCD itself runs.
-      namespace: openshift-gitops
-    spec:
-      project: default
-      source:
-        repoURL: YOUR_GIT_REPO_URL # <-- REPLACE THIS with your Git repository URL
-        # This path points to the kustomize directory for the mock API application.
-        path: apps/api/.openshift
-        targetRevision: main # <-- REPLACE THIS with your branch name if not 'main'
-        kustomize: {}
-      destination:
-        server: [https://kubernetes.default.svc](https://kubernetes.default.svc)
-        # This is the namespace where the API will be deployed.
-        namespace: rag-pipeline-workshop # This should match your project namespace
-      syncPolicy:
-        automated:
-          prune: true
-          selfHeal: true
-        syncOptions:
-          - CreateNamespace=true
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  # This name creates the ArgoCD application tile.
+  name: {user}-mock-api
+  # This is the namespace where ArgoCD itself runs.
+  namespace: openshift-gitops
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/cnuland/hello-chris-rag-pipeline.git 
+    # This path points to the kustomize directory for the mock API application.
+    path: apps/api/.k8s
+    targetRevision: main 
+    kustomize: {}
+  destination:
+    server: https://kubernetes.default.svc
+    # This is the namespace where the API will be deployed.
+    namespace: {user} # This should match your project namespace
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
     ```
 
 6.  After pasting the YAML, click the **Save** button.

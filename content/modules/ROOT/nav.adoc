@@ -10,10 +10,11 @@
 ** xref:03-01-lab-overview.adoc[3.1 Lab Overview & Setup]
 ** xref:03-02-deploying-mock-api.adoc[3.2 Deploying the Mock ServiceNow API]
 ** xref:03-03-verifying-mock-api.adoc[3.3 Verifying the Mock API]
-** xref:03-04-importing-the-pipeline.adoc[3.4 Importing the Data Science Pipeline]
-** xref:03-05-creating-a-pipeline-run.adoc[3.5 Creating and Configuring a Pipeline Run]
-** xref:03-06-monitoring-the-run.adoc[3.6 Monitoring the Pipeline Run]
-** xref:03-07-querying-milvus.adoc[3.7 Querying the RAG System]
+** xref:03-04-deploying-milvus[3.4 Deploying the RAG Vector Database (Milvus)]
+** xref:03-05-importing-the-pipeline.adoc[3.4 Importing the Data Science Pipeline]
+** xref:03-06-creating-a-pipeline-run.adoc[3.5 Creating and Configuring a Pipeline Run]
+** xref:03-07-monitoring-the-run.adoc[3.6 Monitoring the Pipeline Run]
+** xref:03-08-querying-milvus.adoc[3.7 Querying the RAG System]
 
 * 4. What's Next?
 ** xref:04-whats-next-instructlab.adoc[4.1 Advanced RAG with InstructLab]

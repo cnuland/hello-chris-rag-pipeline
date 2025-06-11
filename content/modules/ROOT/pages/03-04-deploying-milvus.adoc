@@ -1,0 +1,88 @@
+= 3.4 Deploying the Milvus Vector Database
+include::_attributes.adoc[]
+
+The second major component of our RAG system is the vector database. For this workshop, we are using **Milvus**, a powerful open-source database specifically designed for storing and searching vector embeddings at scale.
+
+Our data pipeline will populate this database with vectors generated from the ServiceNow incident tickets. Just like the mock API, we will use ArgoCD to deploy Milvus into your project namespace.
+
+== Deploy Milvus via ArgoCD
+
+1.  If you have closed it, navigate back to the **ArgoCD Console** from the OpenShift application launcher.
+
+2.  From the "Applications" page, click the **+ Create Application** button.
+
+3.  Once again, click the **Edit as YAML** button in the top-right corner to open the YAML editor.
+
+====
+
+    <!--
+    This is the ArgoCD Application manifest for deploying Milvus.
+    -->
+    ```yaml
+    apiVersion: argoproj.io/v1alpha1
+    kind: Application
+    metadata:
+      # This name creates the ArgoCD application tile.
+      name: milvus
+      # This is the namespace where ArgoCD itself runs.
+      namespace: openshift-gitops
+    spec:
+      project: default
+      source:
+        repoURL: YOUR_GIT_REPO_URL # <-- REPLACE THIS with your Git repository URL
+        # This path points to the kustomize directory for the Milvus service.
+        path: services/milvus
+        targetRevision: main # <-- REPLACE THIS with your branch name if not 'main'
+        kustomize: {}
+      destination:
+        server: [https://kubernetes.default.svc](https://kubernetes.default.svc)
+        # This is the namespace where Milvus will be deployed.
+        namespace: rag-pipeline-workshop # This should match your project namespace
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+    ```
+
+5.  After pasting the YAML, click **Save**, and then on the next screen, click **Create**.
+
+6.  ArgoCD will now deploy Milvus and its dependency, `etcd`. This deployment is more complex than the mock API and may take a few minutes. Click on the `milvus` application tile to watch the resources sync.
++
+[.bordershadow]
+image::03/argocd-milvus-synced.png[The Milvus application showing a healthy and synced status in ArgoCD.]
+
+== Verifying the Milvus Deployment
+
+Once ArgoCD reports that the `milvus` application is Healthy and Synced, we need to verify that the pods are running correctly in our project.
+
+1.  Navigate back to the OpenShift **Developer** perspective.
+
+2.  In the **Topology** view for your `rag-pipeline-workshop` project, you should now see the new Milvus and etcd components.
+
+3.  Verify that both the `vectordb-etcd` and `vectordb-milvus-standalone` pods are running and have a blue circle, indicating they are healthy. You may need to wait a few moments for all the readiness and liveness probes to pass.
++
+[.bordershadow]
+image::03/milvus-pods-running.png[The OpenShift Topology view showing the running and healthy pods for etcd and Milvus.]
+
+Alternatively, you can use the OpenShift Terminal you opened earlier to list the pods:
++
+[.console-input]
+[source,bash]
+----
+oc get pods
+----
++
+You should see output similar to the following, with both pods in the `Running` state and `READY` column showing all containers are up (e.g., `1/1`).
++
+[source,text]
+----
+NAME                                     READY   STATUS      RESTARTS   AGE
+mock-api-deployment-5f6f8b9d6c-xxxxx      1/1     Running     0          10m
+vectordb-etcd-0                            1/1     Running     0          5m
+vectordb-milvus-standalone-8566db697-v5rpf   1/1     Running     0          4m
+----
+
+With Milvus running, we now have our data source (the API) and our data destination (the vector database) ready. The next step is to import the pipeline that connects them.
