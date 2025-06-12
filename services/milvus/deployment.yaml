@@ -86,7 +86,7 @@ spec:
           image: "quay.io/rh-data-services/milvus-openshift:v2.3.10"
           imagePullPolicy: IfNotPresent
           env:
-            - name: MINIO_ACCESS_KEY
+            - name: MINIO_ACCESS_KEY 
               valueFrom:
                 secretKeyRef:
                   name: milvus-minio-secret
