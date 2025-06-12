@@ -1,0 +1,219 @@
+# PIPELINE DEFINITION
+# Name: api-to-milvus-rag-ingestion-pipeline
+# Description: Fetches incident data from an API and ingests it into a Milvus vector DB.
+# Inputs:
+#    api_endpoint: str [Default: 'http://mock-servicenow-api-svc.user3.svc.cluster.local:8080/api/v1/incidents?state=closed']
+#    collection_name: str [Default: 'servicenow_incidents']
+#    milvus_host: str [Default: 'vectordb-milvus']
+#    milvus_port: str [Default: '19530']
+components:
+  comp-fetch-incidents-from-api:
+    executorLabel: exec-fetch-incidents-from-api
+    inputDefinitions:
+      parameters:
+        api_endpoint:
+          parameterType: STRING
+    outputDefinitions:
+      artifacts:
+        incidents_data:
+          artifactType:
+            schemaTitle: system.Artifact
+            schemaVersion: 0.0.1
+  comp-ingest-incidents-to-milvus:
+    executorLabel: exec-ingest-incidents-to-milvus
+    inputDefinitions:
+      artifacts:
+        incidents_data:
+          artifactType:
+            schemaTitle: system.Artifact
+            schemaVersion: 0.0.1
+      parameters:
+        collection_name:
+          defaultValue: servicenow_incidents
+          isOptional: true
+          parameterType: STRING
+        milvus_host:
+          parameterType: STRING
+        milvus_port:
+          parameterType: STRING
+deploymentSpec:
+  executors:
+    exec-fetch-incidents-from-api:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - fetch_incidents_from_api
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.13.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef fetch_incidents_from_api(\n    api_endpoint: str,\n    incidents_data:\
+          \ Output[Artifact],\n):\n    \"\"\"Fetches closed-incident data from a mock\
+          \ ServiceNow API and writes to artifact.\"\"\"\n    import requests\n\n\
+          \    logging.basicConfig(level=logging.INFO)\n    logging.info(\"Starting\
+          \ fetch_incidents_from_api...\")\n    logging.info(f\"API endpoint: {api_endpoint}\"\
+          )\n\n    params = {'state': 'closed', 'limit': 200}\n    try:\n        response\
+          \ = requests.get(api_endpoint, params=params)\n        logging.info(f\"\
+          API status: {response.status_code}\")\n        response.raise_for_status()\n\
+          \        data = response.json()\n    except Exception as e:\n        logging.error(f\"\
+          Failed to fetch data from API: {e}\", exc_info=True)\n        data = {}\n\
+          \n    # Fallback if no data\n    if not data.get(\"result\"):\n        logging.warning(\"\
+          API returned no incidents. Using fallback dummy data.\")\n        data =\
+          \ {\n            \"result\": [\n                {\n                    \"\
+          number\": \"INC00001\",\n                    \"short_description\": \"System\
+          \ rebooted unexpectedly\",\n                    \"resolution_notes\": \"\
+          Issue resolved by updating kernel.\"\n                }\n            ]\n\
+          \        }\n\n    try:\n        logging.info(f\"Writing data to: {incidents_data.path}\"\
+          )\n        with open(incidents_data.path, \"w\") as f:\n            json.dump(data,\
+          \ f, indent=2)\n        logging.info(\"Incident data written successfully.\"\
+          )\n        logging.info(f\"Output dir listing: {os.listdir(os.path.dirname(incidents_data.path))}\"\
+          )\n    except Exception as e:\n        logging.error(f\"Failed to write\
+          \ artifact: {e}\", exc_info=True)\n        raise\n\n"
+        image: quay.io/cnuland/hello-chris-rag-json-pipeline:latest
+    exec-ingest-incidents-to-milvus:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - ingest_incidents_to_milvus
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.13.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef ingest_incidents_to_milvus(\n    incidents_data: Input[Artifact],\n\
+          \    milvus_host: str,\n    milvus_port: str,\n    collection_name: str\
+          \ = \"servicenow_incidents\",\n):\n    \"\"\"Parses incident data, generates\
+          \ embeddings, and ingests into Milvus.\"\"\"\n    import json\n    import\
+          \ logging\n    from pymilvus import connections, utility, FieldSchema, CollectionSchema,\
+          \ DataType, Collection\n    from sentence_transformers import SentenceTransformer\n\
+          \n    logging.basicConfig(level=logging.INFO)\n    logging.info(\"Starting\
+          \ Milvus ingestion component...\")\n\n    try:\n        connections.connect(\"\
+          default\", host=milvus_host, port=milvus_port)\n        logging.info(f\"\
+          Connected to Milvus at {milvus_host}:{milvus_port}\")\n    except Exception\
+          \ as e:\n        logging.error(f\"Connection to Milvus failed: {e}\", exc_info=True)\n\
+          \        raise\n\n    embedding_dim = 384\n    fields = [\n        FieldSchema(name=\"\
+          incident_pk\", dtype=DataType.VARCHAR, is_primary=True, auto_id=False, max_length=20),\n\
+          \        FieldSchema(name=\"short_description\", dtype=DataType.VARCHAR,\
+          \ max_length=512),\n        FieldSchema(name=\"resolution_notes\", dtype=DataType.VARCHAR,\
+          \ max_length=4096),\n        FieldSchema(name=\"embedding\", dtype=DataType.FLOAT_VECTOR,\
+          \ dim=embedding_dim)\n    ]\n    schema = CollectionSchema(fields, \"ServiceNow\
+          \ Incidents Collection for RAG\")\n\n    if utility.has_collection(collection_name):\n\
+          \        logging.warning(f\"Collection {collection_name} exists. Dropping...\"\
+          )\n        utility.drop_collection(collection_name)\n    collection = Collection(collection_name,\
+          \ schema)\n\n    try:\n        logging.info(f\"Reading data from {incidents_data.path}\"\
+          )\n        with open(incidents_data.path, \"r\") as f:\n            data\
+          \ = json.load(f)\n    except Exception as e:\n        logging.error(f\"\
+          Failed to load artifact: {e}\", exc_info=True)\n        raise\n\n    incidents\
+          \ = data.get(\"result\", [])\n    if not incidents:\n        logging.warning(\"\
+          No incidents to process.\")\n        return\n\n    model = SentenceTransformer(\"\
+          all-MiniLM-L6-v2\", device=\"cpu\")\n    records = [\n        (\n      \
+          \      inc[\"number\"],\n            inc.get(\"short_description\", \"\"\
+          ),\n            inc[\"resolution_notes\"],\n            model.encode(f\"\
+          Title: {inc.get('short_description', '')}\\nResolution: {inc['resolution_notes']}\"\
+          )\n        )\n        for inc in incidents if inc.get(\"resolution_notes\"\
+          )\n    ]\n\n    if not records:\n        logging.warning(\"No valid incidents\
+          \ with resolution notes found.\")\n        return\n\n    incident_pks, short_descriptions,\
+          \ resolution_notes_list, embeddings = zip(*records)\n    entities = [list(incident_pks),\
+          \ list(short_descriptions), list(resolution_notes_list), list(embeddings)]\n\
+          \n    try:\n        insert_result = collection.insert(entities)\n      \
+          \  collection.flush()\n        logging.info(f\"Inserted {len(incident_pks)}\
+          \ records.\")\n    except Exception as e:\n        logging.error(f\"Failed\
+          \ to insert into Milvus: {e}\", exc_info=True)\n        raise\n\n    index_params\
+          \ = {\"metric_type\": \"L2\", \"index_type\": \"IVF_FLAT\", \"params\":\
+          \ {\"nlist\": 128}}\n    collection.create_index(\"embedding\", index_params)\n\
+          \    collection.load()\n    logging.info(\"Index created and collection\
+          \ loaded.\")\n\n"
+        image: quay.io/cnuland/hello-chris-rag-json-pipeline:latest
+pipelineInfo:
+  description: Fetches incident data from an API and ingests it into a Milvus vector
+    DB.
+  name: api-to-milvus-rag-ingestion-pipeline
+root:
+  dag:
+    tasks:
+      fetch-incidents-from-api:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-fetch-incidents-from-api
+        inputs:
+          parameters:
+            api_endpoint:
+              componentInputParameter: api_endpoint
+        taskInfo:
+          name: Fetch ServiceNow Incidents
+      ingest-incidents-to-milvus:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-ingest-incidents-to-milvus
+        dependentTasks:
+        - fetch-incidents-from-api
+        inputs:
+          artifacts:
+            incidents_data:
+              taskOutputArtifact:
+                outputArtifactKey: incidents_data
+                producerTask: fetch-incidents-from-api
+          parameters:
+            collection_name:
+              componentInputParameter: collection_name
+            milvus_host:
+              componentInputParameter: milvus_host
+            milvus_port:
+              componentInputParameter: milvus_port
+        taskInfo:
+          name: Ingest Incidents to Milvus
+  inputDefinitions:
+    parameters:
+      api_endpoint:
+        defaultValue: http://mock-servicenow-api-svc.user3.svc.cluster.local:8080/api/v1/incidents?state=closed
+        isOptional: true
+        parameterType: STRING
+      collection_name:
+        defaultValue: servicenow_incidents
+        isOptional: true
+        parameterType: STRING
+      milvus_host:
+        defaultValue: vectordb-milvus
+        isOptional: true
+        parameterType: STRING
+      milvus_port:
+        defaultValue: '19530'
+        isOptional: true
+        parameterType: STRING
+schemaVersion: 2.1.0
+sdkVersion: kfp-2.13.0
