@@ -37,7 +37,7 @@ spec:
     repoURL: https://github.com/cnuland/hello-chris-rag-pipeline.git
     # This path points to the kustomize directory for the Milvus service.
     path: services/milvus
-    targetRevision: main # 
+    targetRevision: main 
     kustomize: {}
   destination:
     server: https://kubernetes.default.svc
@@ -65,7 +65,7 @@ Once ArgoCD reports that the `milvus` application is Healthy and Synced, we need
 
 1.  Navigate back to the OpenShift **Developer** perspective.
 
-2.  In the **Topology** view for your `rag-pipeline-workshop` project, you should now see the new Milvus and etcd components.
+2.  In the **Topology** view for your {user} project, you should now see the new Milvus and etcd components.
 
 3.  Verify that both the `vectordb-etcd` and `vectordb-milvus-standalone` pods are running and have a blue circle, indicating they are healthy. You may need to wait a few moments for all the readiness and liveness probes to pass.
 +
