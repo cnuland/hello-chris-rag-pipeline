@@ -21,18 +21,17 @@ This technique is powerful because you can continuously update the knowledge bas
 
 == Querying Milvus from a Notebook
 
-1.  Navigate back to the OpenShift AI dashboard and launch your pre-created **Jupyter Workbench**.
+1.  Navigate back to the OpenShift AI dashboard and launch your pre-created **Jupyter Workbench** (named "My Workbench" or similar).
 
-2.  Once JupyterLab has started, use the file browser on the left to navigate to the lab materials folder:
+2.  Once JupyterLab has started, use the file browser on the left to navigate to the lab materials folder. The path is:
 +
 [.console-input]
 [source,text]
 ----
-hello-chris-rag-pipeline/lab-content/3.8/
-
+parasol-insurance/lab-materials/03-api-to-rag/
 ----
 
-3.  Open the notebook named `03-08-retrieval-augmented-generation.ipynb`.
+3.  Open the notebook named `03-07-query-rag-system.ipynb`.
 
 4.  Follow the instructions in the notebook by executing the cells one by one. The notebook will guide you through the following steps.
 
@@ -42,7 +41,6 @@ The first cells import the necessary libraries and set up the connection to the 
 
 ```python
 # In your notebook...
-
 from langchain.chains import RetrievalQA
 from langchain_community.llms import VLLMOpenAI
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -54,11 +52,13 @@ embedding_model = HuggingFaceEmbeddings(
     model_kwargs={'device': 'cpu'}
 )
 
-# 2. Connect to the existing Milvus collection
+# 2. Connect to the existing Milvus collection, specifying the vector and text fields.
 vector_db = Milvus(
     embedding_function=embedding_model,
-    connection_args={"host": "milvus-service", "port": "19530"},
-    collection_name="servicenow_incidents"
+    connection_args={"host": "vectordb-milvus", "port": "19530"},
+    collection_name="servicenow_incidents",
+    vector_field="embedding",
+    text_field="resolution_notes"
 )
 
 # 3. Create a retriever to search for relevant documents
@@ -73,12 +73,11 @@ Next, the notebook defines the prompt template and configures the connection to 
 
 ```python
 # In your notebook...
-
 from langchain.prompts import PromptTemplate
 
 # LLM Inference Server URL
-# This points to a model served within the cluster, so no data leaves OpenShift.
-inference_server_url = "[http://llm-model-server.llm-serving.svc.cluster.local:8080](http://llm-model-server.llm-serving.svc.cluster.local:8080)"
+# This points to a model served within the cluster.
+inference_server_url = "[http://llm-model-server.rag-pipeline-workshop.svc.cluster.local:8080](http://llm-model-server.rag-pipeline-workshop.svc.cluster.local:8080)"
 
 # LLM definition using a client that speaks the OpenAI API format
 llm = VLLMOpenAI(
@@ -93,7 +92,7 @@ llm = VLLMOpenAI(
 template = """
 You are a helpful and professional IT support assistant for Parasol Company.
 Use the following context from past incident resolutions to answer the question.
-If you don't know the answer from the context, say that you don't know.
+If the context does not contain the answer, say that you don't have enough information.
 
 Context:
 {context}
@@ -124,15 +123,15 @@ rag_chain = RetrievalQA.from_chain_type(
 )
 
 # --- ASK YOUR QUESTION HERE ---
-question = "The email server is down, how do I fix it?"
+question = "Give me information on INC001004"
 
 # Invoke the chain to get an answer
-result = rag_chain.invoke(question)
+result = rag_chain.invoke({"query": question})
 
 # Print the results
-print("--- Answer from LLM ---")
+print("--- Answer from LLM ---\n")
 print(result["result"])
-print("\n--- Sources Retrieved from Milvus ---")
+print("\n--- Sources Retrieved from Milvus ---\n")
 for doc in result["source_documents"]:
     print(f"  - Incident: {doc.metadata.get('incident_pk', 'N/A')}")
     print(f"    Description: {doc.metadata.get('short_description', 'N/A')}")

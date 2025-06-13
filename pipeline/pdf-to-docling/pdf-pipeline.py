@@ -57,6 +57,7 @@ def process_pdf_with_docling(
     import logging
     import json
     import os
+    import binascii
     from docling.document_converter import DocumentConverter
 
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -74,9 +75,36 @@ def process_pdf_with_docling(
         conv_res = conv_results[0]
         logging.info(f"Docling successfully parsed document. Status: {conv_res.status}")
         doc_dict = conv_res.document.save_as_dict()
+
+        logging.info(f"Top-level keys: {list(doc_dict.keys())}")
+        logging.info(f"Data types of keys: {[type(v).__name__ for v in doc_dict.values()]}")
+
+        try:
+            cleaned_dict = json.loads(json.dumps(doc_dict, ensure_ascii=False))
+        except Exception as json_sanitize_err:
+            logging.error(f"Error sanitizing JSON: {json_sanitize_err}", exc_info=True)
+            raise
+
         os.makedirs(os.path.dirname(output_json_path), exist_ok=True)
-        with open(output_json_path, 'w') as f:
-            json.dump(doc_dict, f, indent=2)
+        with open(output_json_path, 'w', encoding='utf-8') as f:
+            json.dump(cleaned_dict, f, ensure_ascii=False, indent=2)
+
+        try:
+            with open(output_json_path, 'rb') as f:
+                raw_bytes = f.read()
+                raw_bytes.decode('utf-8')
+                logging.info(f"Output file size: {len(raw_bytes)} bytes")
+                logging.info(f"Output file preview (hex): {binascii.hexlify(raw_bytes[:256]).decode()}...")
+        except Exception as encoding_err:
+            logging.error(f"Output file failed UTF-8 validation: {encoding_err}", exc_info=True)
+            raise
+
+        try:
+            json_preview = json.dumps(cleaned_dict, ensure_ascii=False)[:1000]
+            logging.info(f"Docling JSON preview (first 1K chars): {json_preview}")
+        except Exception as preview_err:
+            logging.warning(f"Failed to preview JSON: {preview_err}", exc_info=True)
+
         logging.info("Successfully saved docling output as JSON artifact.")
     else:
         raise RuntimeError(f"Docling conversion failed for {pdf_input_path.name}")
