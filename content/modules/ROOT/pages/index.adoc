@@ -23,25 +23,19 @@ This is a tentative timetable for the materials that will be presented.
 |=========================================================
 | Name |Duration |Type |Description
 
-|The Parasol Company Scenario |10 | Presentation
-a|- We describe the business problem: knowledge is trapped in unstructured ServiceNow tickets.
-- We propose a solution using a RAG architecture to power an intelligent assistant.
-- We discuss the benefits of using OpenShift AI, Knative, and Milvus for this solution.
+|The Parasol Company Scenario |15 | Presentation
+a|- We discuss the benefits of using OpenShift AI, Data Science Pipelines, and Milvus for this solution.
 
-|Demo: Event-Driven PDF Pipeline |10 | Demo
+|Demo: Event-Driven PDF Pipeline |20 | Demo
 a|- The instructor will demonstrate a real-time data ingestion pipeline.
 - An upload of a PDF to an S3 bucket will automatically trigger a Kubeflow Pipeline via Knative Eventing and Kafka.
 - This showcases the event-driven capabilities of the platform.
 
-|Lab: Building the API-to-RAG Pipeline |60 | Hands-On
+|Lab: Building the API-to-RAG Pipeline |45 | Hands-On
 a|- **Lab Setup:** Attendees log in and explore their pre-created OpenShift AI project.
 - **Deploy & Verify Mock API:** Attendees deploy a mock ServiceNow API using ArgoCD and test its endpoint.
 - **Run KFP Pipeline:** Attendees import and run a Kubeflow Pipeline that fetches data from the API, generates embeddings, and populates the Milvus vector database.
 - **Query the RAG System:** Attendees use a Jupyter Notebook to ask questions against the system and see the contextually relevant answers retrieved from Milvus.
-
-|What's Next? |10 | Presentation
-a|- Discuss how to improve the system's performance and intelligence using advanced techniques.
-- Introduce InstructLab and the Retrieval-Augmented Fine-Tuning (RAFT) method as the next logical step to enhance the LLM's capabilities.
 
 |=========================================================
 

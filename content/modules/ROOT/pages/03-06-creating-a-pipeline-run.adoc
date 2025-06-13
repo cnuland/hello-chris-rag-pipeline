@@ -10,7 +10,7 @@ With the pipeline imported, you are now ready to create a "run". A pipeline run 
 [.bordershadow]
 image::03/create-run-button.png[The 'Create run' button on the pipeline details page.]
 
-2.  This will open the "Create run" page. You can give the run a name and description, but the most important part is the **Pipeline parameters** section at the bottom.
+2.  This will open the "Create run" page. You will need give the run a name (`simple` in the example below) and description (`Simple API to RAG pipeline`), but the most important part is the **Pipeline parameters** section at the bottom.
 
 3.  You must fill in the following parameters to tell the pipeline how to connect to the other services running in your project. Copy the values below exactly.
 
@@ -19,7 +19,7 @@ image::03/create-run-button.png[The 'Create run' button on the pipeline details 
     [.console-input]
     [source,text]
     ----
-    http://mock-api:8080/api/v1/incidents
+    http://mock-servicenow-api-svc.{user}.svc.cluster.local:8080/api/v1/incidents?state=closed
     ----
 
     * `milvus_host`: The internal service name for the Milvus database.
@@ -27,7 +27,7 @@ image::03/create-run-button.png[The 'Create run' button on the pipeline details 
     [.console-input]
     [source,text]
     ----
-    milvus-service
+    vectordb-milvus.{user}.svc.cluster.local    
     ----
 
     * `milvus_port`: The gRPC port for the Milvus database.
@@ -51,6 +51,6 @@ image::03/create-run-button.png[The 'Create run' button on the pipeline details 
 [.bordershadow]
 image::03/create-run-form-filled.png[The completed pipeline run configuration form with all parameters filled in.]
 
-5.  Click the **Start** button to launch the pipeline run.
+5.  Click the **Create Run** button to launch the pipeline run.
 
 You will be automatically redirected to a real-time graph view of your running pipeline. Let's explore how to monitor it in the next section.

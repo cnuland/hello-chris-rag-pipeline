@@ -7,13 +7,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install all necessary Python libraries for both pipeline components
-# This creates a single, reusable image for the entire pipeline.
+# Install Python libraries
 RUN pip install --no-cache-dir \
-    requests==2.28.1 \
-    pymilvus==2.3.1 \
+    torch==1.13.1 --extra-index-url https://download.pytorch.org/whl/cpu \
+    transformers==4.30.2 \
+    huggingface_hub==0.15.1 \
     sentence-transformers==2.2.2 \
-    torch==1.13.1 --extra-index-url https://download.pytorch.org/whl/cpu
+    pymilvus==2.3.1 \
+    requests==2.28.1 \
+    marshmallow==3.19.0 \
+    environs==9.5.0 \
+    "numpy<2.0.0"
 
 # Set a working directory
 WORKDIR /app

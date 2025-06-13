@@ -18,7 +18,4 @@ We will build a system that can:
 
 By the end of this lab, you will have hands-on experience deploying the infrastructure and AI pipelines necessary to create a modern, scalable, and secure Enterprise RAG solution on OpenShift.
 
-[.bordershadow]
-image::01/workshop-overview-diagram.png[Architecture diagram of the full workshop solution.]
-
 Let's begin by examining the specific business problem we need to solve.

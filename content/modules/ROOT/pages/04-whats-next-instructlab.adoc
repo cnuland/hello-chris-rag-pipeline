@@ -6,38 +6,60 @@ Congratulations! You have successfully built an end-to-end, event-driven RAG sys
 However, our journey doesn't end here. The current RAG system is powerful, but it has limitations. While it can provide contextually relevant information, the LLM's core behavior, tone, and ability to follow complex instructions remain unchanged.
 
 == The Next Step: From RAG to RAFT
-:slide:
 
 The next evolution of our system is to move from Retrieval-Augmented Generation (RAG) to **Retrieval-Augmented Fine-Tuning (RAFT)**. This is a powerful technique for creating truly domain-specific, instruction-following models.
 
-* **RAG:** Provides external knowledge to a generic model at the time of the query. It's like giving a smart person an open book during an exam.
-* **RAFT:** Uses your curated, high-quality knowledge to *actually teach the model*, fundamentally improving its understanding of your specific domain, terminology, and desired behaviors. It's like having the smart person study the book before the exam.
+=== RAG vs. RAFT: A Closer Look
 
-This is the core principle behind **InstructLab**, a new open-source project for enhancing LLMs with new skills and knowledge in a community-driven way.
+To understand the benefits, let's compare the two approaches:
+
+* **Retrieval-Augmented Generation (RAG):**
+** *What it is:* Provides external knowledge to a generic model at the time of the query.
+** *How it works:* The system retrieves relevant documents from a database and provides them as context alongside the user's prompt.
+** *Analogy:* Giving a smart person an open book during an exam. They can find the answer, but their fundamental knowledge doesn't change.
+** *Strengths:* Excellent for rapidly changing information and providing answers based on specific, verifiable documents.
+** *Weakness:* Does not improve the model's core reasoning, style, or understanding of a specialized domain.
+
+* **Retrieval-Augmented Fine-Tuning (RAFT):**
+** *What it is:* Uses your curated, high-quality knowledge to *actually teach the model*, fundamentally improving its understanding.
+** *How it works:* Your domain-specific data is used to generate a large set of training examples, which are then used to fine-tune the base LLM.
+** *Analogy:* Having the smart person study the book *before* the exam. They internalize the knowledge and can answer questions more naturally and accurately.
+** *Strengths:* Improves the model's core reasoning, its ability to adopt a specific persona (e.g., a helpful IT agent), and its accuracy within your domain.
+** *Weakness:* The "baked-in" knowledge is only as current as the last fine-tuning run.
+
+The most powerful systems often use a **hybrid approach**: a model that has been fine-tuned using RAFT is used in a RAG system to access the absolute latest information at query time.
 
 [.bordershadow]
 image::04/rag-vs-raft-diagram.png[Diagram comparing the RAG and RAFT processes.]
 
+== What is InstructLab?
+
+This RAFT methodology is the core principle behind **InstructLab**, a new open-source project initiated by IBM and Red Hat to make contributing to and enhancing LLMs more accessible.
+
+* **Project Goal:** To enable anyone to contribute skills and knowledge to an LLM in a similar way that people contribute to traditional open-source software projects.
+* **How it Works:** InstructLab provides the tools and a community-driven process to curate high-quality data, generate large-scale synthetic training sets, and efficiently fine-tune powerful open-source models like Granite and Llama.
+* **Learn More:** You can explore the project at its official website: https://instructlab.ai/[https://instructlab.ai,window=_blank]
+
 == The InstructLab & RAFT Process
 
-The RAFT process, as implemented by InstructLab, involves three key stages:
+The process for enhancing a model with InstructLab follows three key stages:
 
 1.  **Curate Knowledge & Skills:**
-    We start by creating a small, high-quality dataset based on our own domain knowledge. For {company-name}, this would involve:
+    We start by creating a high-quality dataset based on our own domain knowledge. For {company-name}, this would involve:
     * **Knowledge:** Selecting the best, most useful incident resolutions from our ServiceNow data.
     * **Skills:** Writing a handful of example question-and-answer pairs that demonstrate the *exact* tone, format, and reasoning we want our IT support assistant to have.
 
 2.  **Generate Synthetic Data:**
-    InstructLab takes this small, curated dataset and uses a teacher model to generate a much larger, synthetic dataset of thousands of high-quality instruction-following examples. This synthetically scales our effort.
+    InstructLab takes this curated dataset and uses a teacher model to generate a much larger, synthetic dataset of thousands of high-quality instruction-following examples. This synthetically scales our effort.
 
 3.  **Fine-Tune the Model:**
-    A Large-scale Alignment and Tuning (LAB) technique is used to efficiently fine-tune a base LLM (like a Granite or Llama model) with the new synthetic dataset. This process is far more efficient than traditional fine-tuning methods.
+    A Large-scale Alignment and Tuning (LAB) technique is used to efficiently fine-tune a base LLM with the new synthetic dataset. This process is far more efficient and accessible than traditional fine-tuning methods.
 
 == The Result: A Truly Enterprise-Ready AI Assistant
 
-By fine-tuning a model using the RAFT method, we create a new model that is not only knowledgeable about our specific ServiceNow data but is also better at:
+By fine-tuning a model using InstructLab, we create a new model that is not only knowledgeable about our specific ServiceNow data but is also better at:
 * **Following Instructions:** Adhering to specific formatting and output requirements.
 * **Adopting a Persona:** Consistently behaving like a professional, helpful IT support agent from {company-name}.
 * **Improving Accuracy:** Reducing errors and hallucinations by having the domain knowledge more deeply integrated into its own weights.
 
-By swapping out the generic model in our RAG system with this newly fine-tuned model, we create a significantly more capable, reliable, and valuable AI assistant for our company.
+By swapping out the generic model in our RAG system with this newly fine-tuned model, we create a significantly more capable, reliable, and valuable AI assistant for our company. This represents the next step in the evolution of our solution for Parasol Company.

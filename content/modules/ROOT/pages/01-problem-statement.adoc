@@ -24,7 +24,4 @@ This repository of solved problems is a goldmine of organizational knowledge. Ho
     * **High Training Costs:** It takes a long time to train new support staff on the specific "tribal knowledge" of the company's IT environment.
 * **The Cost:** This inefficiency directly impacts productivity and operational costs. The company estimates that it loses thousands of hours per year due to engineers researching previously solved issues.
 
-[.bordershadow]
-image::01/knowledge-gap-diagram.png[Diagram showing knowledge locked away in siloed data sources.]
-
 Our team has been tasked with building a prototype that unlocks this knowledge and makes it instantly accessible to our support engineers.

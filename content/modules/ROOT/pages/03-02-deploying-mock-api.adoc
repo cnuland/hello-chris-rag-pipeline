@@ -3,20 +3,20 @@ include::_attributes.adoc[]
 
 The first step in our hands-on lab is to deploy the mock ServiceNow API. This API simulates a real ITSM system by providing endpoints that list closed incident tickets containing valuable problem-resolution data. Our Kubeflow Pipeline will connect to this API to fetch the data for ingestion into Milvus.
 
-We will use OpenShift GitOps (ArgoCD) to deploy the application into your project namespace.
+The deployment is managed by a declarative ArgoCD `Application` manifest, which you will apply directly using the OpenShift Web Terminal.
 
-== Accessing the OpenShift Web Terminal
+== Deploy the Mock API Application
 
-Open the command line terminal by clicking the terminal icon in the top-right corner of the page.
+1.  If you have closed it, open the **OpenShift Web Terminal** by clicking the terminal icon in the top-right corner of the web console.
 +
 [.bordershadow]
 image::03/openshift-web-terminal.png[Opening the OpenShift command line terminal from the UI.]
 
-+
-[.bordershadow]
-image::03/openshift-terminal-2.png[Opening the OpenShift command line terminal from the UI.]
+2.  Copy the entire command block below. This command uses a "here document" (`<<EOF`) to pass the multi-line YAML manifest directly to the `oc apply` command.
 
-Run the following command to the terminal
+3.  Paste the command block into the terminal and press Enter.
+
+====
 
 [.console-input]
 [source,bash,subs="attributes+"]
@@ -25,31 +25,53 @@ oc apply -f - <<EOF
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {user}-mock-api
+  # This name creates the ArgoCD application resource.
+  # We are using the {user} variable to ensure it's unique for each workshop attendee.
+  name: '{user}-mock-api'
   # This is the namespace where ArgoCD itself runs.
   namespace: openshift-gitops
 spec:
   project: default
   source:
-    repoURL: https://github.com/cnuland/hello-chris-rag-pipeline.git
+    repoURL: 'https://github.com/cnuland/hello-chris-rag-pipeline.git'
     # This path points to the kustomize directory for the mock API application.
     path: apps/api/.k8s
-    targetRevision: main
+    targetRevision: main 
     kustomize: {}
   destination:
     server: https://kubernetes.default.svc
     # This is the workshop namespace where the API will be deployed.
-    namespace: {user}
+    namespace: '{user}'
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
 EOF
 ----
 
-6.  After applying the yaml, click the **Exit Terminal** button.
+After running the command, you will see the output `application.argoproj.io/{user}-mock-api created`. The GitOps operator will now begin deploying the mock API. This process may take a minute.
 
+== Verifying the Mock API Deployment
 
-Once the application is healthy, you can proceed to the next step to verify that it's running correctly.
+To confirm that the API is running correctly, stay in the OpenShift Terminal and check the status of the pod in your project.
+
+1.  Run the `oc get pods` command. You may need to run it a few times until you see the desired status.
++
+[.console-input]
+[source,bash]
+----
+oc get pods
+----
+
+2.  Wait until you see output similar to the following, where the `mock-api-deployment-...` pod shows a `STATUS` of `Running` and is `READY` (`1/1`).
++
+[source,text]
+----
+NAME                                     READY   STATUS      RESTARTS   AGE
+mock-api-deployment-5f6f8b9d6c-xxxxx      1/1     Running     0          2m
+----
+
+Once the pod is running, you can proceed to the next step of verifying the API endpoints.

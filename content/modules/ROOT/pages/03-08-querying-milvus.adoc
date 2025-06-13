@@ -28,10 +28,11 @@ This technique is powerful because you can continuously update the knowledge bas
 [.console-input]
 [source,text]
 ----
-parasol-insurance/lab-materials/03-api-to-rag/
+hello-chris-rag-pipeline/lab-content/3.8/
+
 ----
 
-3.  Open the notebook named `03-07-query-rag-system.ipynb`.
+3.  Open the notebook named `03-08-retrieval-augmented-generation.ipynb`.
 
 4.  Follow the instructions in the notebook by executing the cells one by one. The notebook will guide you through the following steps.
 

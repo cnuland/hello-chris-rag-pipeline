@@ -1,30 +1,52 @@
 = 3.4 Importing the Data Science Pipeline
 include::_attributes.adoc[]
 
-Now that the mock API is running, we need to import the pipeline that will consume its data. A Kubeflow Pipeline can be defined in Python using the KFP SDK and then compiled into a static YAML file. This YAML file contains the complete, portable definition of the pipeline and its components.
+Now that the mock API and Milvus database are running, we need to import the pipeline that connects them. A Kubeflow Pipeline can be defined in Python and then compiled into a static YAML file. This file contains the complete, portable definition of the pipeline's components and logic.
 
-For this lab, the pipeline has already been compiled for you. Your task is to import this definition into the OpenShift AI Pipelines server.
+For this lab, the pipeline has already been compiled for you and is available within your pre-created workbench. Your task is to download this file and then import it into the OpenShift AI Pipelines server.
 
 == Pipeline Import Procedure
 
-1.  Navigate back to your **Data Science Project** in the OpenShift AI dashboard.
+=== Step 1: Download the Pipeline File from Your Workbench
 
-2.  Select the **Pipelines** section from the left-hand menu.
+First, we need to get the pipeline definition file from your Jupyter environment.
+
+1.  Navigate back to the **Data Science Projects** page in the OpenShift AI dashboard and open your project.
+
+2.  Go to the **Workbenches** tab and launch your workbench (named "My Workbench" or similar) by clicking on its name.
+
+3.  Once JupyterLab opens, use the file browser on the left to navigate to the following path:
++
+[.console-input]
+[source,text]
+----
+hello-chris-rag-pipeline/lab-content/3.5/
+----
+
+4.  Inside this directory, you will find the file `api_to_milvus_pipeline.yaml`. **Right-click** on the file and select **Download** from the context menu. This will save the file to your local computer (likely in your "Downloads" folder).
++
+[.bordershadow]
+image::03/jupyter-download-pipeline-file.png[Downloading the pipeline YAML file from the JupyterLab interface.]
+
+5.  You can now close the JupyterLab browser tab.
+
+=== Step 2: Import the Pipeline into OpenShift AI
+
+Now, let's upload the file you just downloaded.
+
+1.  In the OpenShift AI dashboard, navigate to the **Pipelines** section within your Data Science Project.
 +
 [.bordershadow]
 image::03/pipelines-section.png[Navigating to the Pipelines section of the Data Science Project.]
 
-3.  Click the **Import pipeline** button.
+2.  Click the **Import pipeline** button.
 +
 [.bordershadow]
 image::03/import-pipeline-button.png[The 'Import pipeline' button in the Pipelines UI.]
 
-4.  In the "Import pipeline" dialog, ensure the **Upload a file** option is selected.
-+
-[.bordershadow]
-image::03/import-pipeline-dialog.png[The 'Upload a file' option in the import dialog.]
+3.  In the "Import pipeline" dialog, ensure the **Upload a file** option is selected.
 
-5.  Give your pipeline a name. For consistency, please use the name below:
+4.  Give your pipeline a name. For consistency, please use the name below:
 +
 [.console-input]
 [source,text]
@@ -32,28 +54,16 @@ image::03/import-pipeline-dialog.png[The 'Upload a file' option in the import di
 ServiceNow Ticket Ingestion
 ----
 
-6.  (Optional) You can add a description, such as:
-+
-[.console-input]
-[source,text]
-----
-A pipeline to fetch closed ServiceNow incidents and ingest them into a Milvus vector database.
-----
+5.  (Optional) You can add a description, such as: `A pipeline to fetch closed ServiceNow incidents and ingest them into a Milvus vector database.`
 
-7.  Click the "Upload" box and use the file browser to navigate to the pre-compiled pipeline definition file in your cloned repository. The path is:
-+
-[.console-input]
-[source,text]
-----
-parasol-insurance/pipeline/api-to-rag/api-pipeline.yaml
-----
+6.  Click the **Upload** box and select the `api_to_milvus_pipeline.yaml` file that you just downloaded to your local machine.
 
-8.  After selecting the file, your dialog should look like this. Click the **Import pipeline** button to finish.
+7.  After selecting the file, your dialog should look like this. Click the **Import pipeline** button to finish.
 +
 [.bordershadow]
 image::03/import-pipeline-form-filled.png[The completed pipeline import form.]
 
-9.  After a moment, you will be taken to the pipeline's details page. This page shows you the static graph of the pipeline's components and their dependencies.
+8.  After a moment, you will be taken to the pipeline's details page. This page shows you the static graph of the pipeline's components and their dependencies.
 +
 [.bordershadow]
 image::03/pipeline-details-view.png[The pipeline details view showing the graph of the imported 'ServiceNow Ticket Ingestion' pipeline.]

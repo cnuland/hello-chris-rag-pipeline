@@ -11,10 +11,6 @@ For this workshop, we have provisioned a shared {ocp} cluster with {rhoai} deplo
 
 === Environment Information
 
-[IMPORTANT]
-====
-If you are viewing these instructions in the deployed lab environment, the values below will be correctly rendered for you. If viewing from a static source like GitHub, placeholder values will appear.
-====
 
 * Your account ID: `{user}`
 * Your password: `{password}`
@@ -32,7 +28,7 @@ image::03/login-with-openshift.png[The main login screen for Red Hat OpenShift A
 
 2.  Enter your user credentials (`{user}` and `{password}`) provided above.
 +
-Because the password is so simple (`{password}`), your browser might display a warning. It is safe to ignore this message for the lab.
+Your browser might display a warning. It is safe to ignore this message for the lab.
 
 3.  After you authenticate, you will land on the OpenShift AI dashboard.
 +
