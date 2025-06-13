@@ -57,12 +57,12 @@ After running the command, you will see the output `application.argoproj.io/{use
 
 To confirm that Milvus is running correctly, stay in the OpenShift Terminal and check the status of the pods in your project.
 
-1.  Run the `oc get pods` command. You may need to run it a few times until you see the desired status.
+1.  Run the `oc get pods` command. You may need to run it a few times until you see the desired status. It may take a couple minutes for the pod to be fully available.
 +
 [.console-input]
 [source,bash]
 ----
-oc get pods -n {user}
+oc get pods -n {user} -w
 ----
 
 2.  Wait until you see output similar to the following, where both the `vectordb-etcd-0` and `vectordb-milvus-standalone` pods show a `STATUS` of `Running` and are `READY` (`1/1`).

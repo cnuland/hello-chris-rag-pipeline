@@ -123,7 +123,7 @@ def main():
     
     # Create timestamp for filename
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    filename = f"event-test-{timestamp}.pdf"
+    filename = f"example.pdf"
     
     # Create full path for the PDF file
     current_dir = Path.cwd()
