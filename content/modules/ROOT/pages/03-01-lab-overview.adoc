@@ -3,7 +3,7 @@ include::_attributes.adoc[]
 
 Now it's your turn to get hands-on. In this lab, you will deploy the mock ServiceNow API and the Kubeflow Pipeline that ingests its data into our Milvus vector database.
 
-To ensure you can get started quickly, we have pre-created a Data Science Project for you and deployed some of the necessary components. This section will guide you through connecting to the environment and exploring your project.
+To ensure you can get started quickly, we have pre-created a Data Science Project for you and deployed some of the necessary components. This section will guide you through connecting to the environment, exploring your project, and running a simple test against the Large Language Model (LLM) provided for this workshop.
 
 == Getting Connected
 
@@ -11,6 +11,10 @@ For this workshop, we have provisioned a shared {ocp} cluster with {rhoai} deplo
 
 === Environment Information
 
+[IMPORTANT]
+====
+If you are viewing these instructions in the deployed lab environment, the values below will be correctly rendered for you. If viewing from a static source like GitHub, placeholder values will appear.
+====
 
 * Your account ID: `{user}`
 * Your password: `{password}`
@@ -35,11 +39,11 @@ Your browser might display a warning. It is safe to ignore this message for the 
 [.bordershadow]
 image::03/rhoai-dashboard-main.png[The main dashboard of Red Hat OpenShift AI after logging in.]
 
-Congratulations, you are now connected! We are ready to begin the lab exercises.
+Congratulations, you are now connected!
 
 == Reviewing Your Pre-Created Project
 
-To give you a feel for what a "day 2" operations experience would be like, we have pre-created a Project for you and started to populate it with various artifacts.
+A Data Science Project has been pre-created for you. Let's take a quick tour.
 
 1.  In the {rhoai} Dashboard, navigate to **Data Science Projects** using the menu on the left.
 +
@@ -51,17 +55,65 @@ image::03/ds-projects-nav.png[Navigating to the Data Science Projects section.]
 [.bordershadow]
 image::03/open-project.png[Opening your dedicated user project.]
 
-3.  Inside your project, you will find several components have already been configured for you:
-    * **Workbenches:** A Jupyter workbench has been created for you. You will use this later to query the RAG system.
-    * **Pipelines:** A pipeline server is configured and ready to run the data ingestion pipeline.
-    * **Data Connections:** A data connection to the project's dedicated Milvus vector database has been pre-configured.
-    * **Deployed Models:** You can view the project's topology by clicking the **Topology** icon in the OpenShift console navigation (left sidebar). Here you can see the running pods for your Milvus instance.
+3.  Inside your project, you will find several components have already been configured for you, including a Jupyter Workbench, a Pipeline Server, and a running Milvus database.
 
-4.
-Open the OpenShift Console in a seperate tab by accesing the quick link within the dashboard.
+4.  To see the running pods for these services, you need to switch to the main OpenShift Console. In the top right corner of the dashboard, click on the **Quick links** (grid icon) and select **OpenShift Console**. This will open the console in a new browser tab.
++
+[.bordershadow]
+image::03/openshift-console-link.png[Opening the OpenShift Console from the Quick Links menu.]
+
+5.  In the new tab, ensure you are in the **Developer** perspective and that your project, `{user}`, is selected. In the **Topology** view, you can see all the running components.
 +
 [.bordershadow]
 image::03/project-topology-view.png[OpenShift Topology view showing the deployed Milvus instance within your project.]
 
+== Interacting with a Large Language Model
 
-Now that you are familiar with your environment, let's proceed to deploy the mock API.
+Before we build our RAG pipeline, let's connect to the LLM that has been deployed for this workshop and ask it a basic question. This will help you get familiar with interacting with an LLM programmatically from your pre-created Jupyter environment.
+
+1.  Return to the OpenShift AI Dashboard browser tab and navigate to the **Workbenches** tab within your project.
+
+2.  Launch your workbench (named "My Workbench" or similar) by clicking on its name.
++
+[.bordershadow]
+image::03/launch-workbench.png[Launching the Jupyter Workbench from the OpenShift AI dashboard.]
+
+3.  Once JupyterLab opens, use the file browser on the left to navigate to the lab materials folder:
++
+[.console-input]
+[source,text]
+----
+hello-chris-rag-pipeline/lab-content/3.1
+----
+
+4.  Open the notebook named `03-01-nb-llm-example.ipynb`. This notebook contains pre-written Python code to connect to and query the LLM.
+
+5.  **Execute the cells** in the notebook one by one. The key cells perform the following actions:
+    * **Connect to the LLM:** This cell defines the connection to the internal service for the **Granite-3.1-8B-Instruct** model that is running in the cluster.
+    ```python
+    # LLM Inference Server URL
+    inference_server_url = "[http://granite-3-1-8b-instruct-predictor.shared-llm.svc.cluster.local:8080](http://granite-3-1-8b-instruct-predictor.shared-llm.svc.cluster.local:8080)"
+
+    # LLM definition using a client that speaks the OpenAI API format
+    llm = VLLMOpenAI(
+        openai_api_key="EMPTY",
+        openai_api_base=f"{inference_server_url}/v1",
+        model_name="granite-3-1-8b-instruct",
+        # ... other parameters
+    )
+    ```
+    * **Define the Prompt:** This cell creates a prompt template that instructs the LLM how to behave and formats the user's question.
+    ```python
+    template="""<|system|>
+    You are a helpful, respectful and honest assistant.
+    <|user|>
+    ### QUESTION:
+    {input}
+    ### ANSWER:
+    <|assistant|>
+    """
+    prompt = PromptTemplate(input_variables=["input"], template=template)
+    ```
+    * **Ask a Question:** The final cell defines a question and sends it to the LLM. You should see the answer streamed back directly in the notebook output.
+
+You have now successfully queried an LLM programmatically! With this baseline established, let's proceed to deploy the mock API that will serve as the data source for our RAG system.
