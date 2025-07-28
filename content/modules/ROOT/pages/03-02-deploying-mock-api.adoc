@@ -7,7 +7,7 @@ The deployment is managed by a declarative ArgoCD `Application` manifest, which 
 
 == Deploy the Mock API Application
 
-1.  If you have closed it, open the **OpenShift Web Terminal** by clicking the terminal icon in the top-right corner of the web console.
+1.  If you have closed it, open the *OpenShift Web Terminal* by clicking the terminal icon in the top-right corner of the web console.
 +
 [.bordershadow]
 image::03/openshift-web-terminal.png[Opening the OpenShift command line terminal from the UI.]
@@ -15,9 +15,7 @@ image::03/openshift-web-terminal.png[Opening the OpenShift command line terminal
 2.  Copy the entire command block below. This command uses a "here document" (`<<EOF`) to pass the multi-line YAML manifest directly to the `oc apply` command.
 
 3.  Paste the command block into the terminal and press Enter.
-
-====
-
++
 [.console-input]
 [source,bash,subs="attributes+"]
 ----

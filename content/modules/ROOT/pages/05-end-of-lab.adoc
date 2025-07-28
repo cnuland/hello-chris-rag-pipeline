@@ -4,7 +4,7 @@ include::_attributes.adoc[]
 == Congratulations!
 :slide:
 
-You have successfully completed the **Enterprise RAG System Workshop**!
+You have successfully completed the *Enterprise RAG System Workshop*!
 
 In this lab, you have taken on the role of an engineer at {company-name} and have built a significant prototype to solve a real-world business problem.
 

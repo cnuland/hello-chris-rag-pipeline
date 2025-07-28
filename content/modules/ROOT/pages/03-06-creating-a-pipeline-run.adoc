@@ -1,56 +1,56 @@
-= 3.5 Creating and Configuring a Pipeline Run
+= 3.6 Creating and Configuring a Pipeline Run
 include::_attributes.adoc[]
 
 With the pipeline imported, you are now ready to create a "run". A pipeline run is a single execution of the pipeline's workflow. For this pipeline, you need to provide several parameters so it knows how to connect to the mock API and the Milvus database.
 
 == Procedure
 
-1.  From the pipeline's details page (where you landed after the import), click the **Create run** button in the top-right corner.
-+
+1.  From the pipeline's details page (where you landed after the import), click the *Create run* button in the top-right corner.
+
 [.bordershadow]
 image::03/create-run-button.png[The 'Create run' button on the pipeline details page.]
 
-2.  This will open the "Create run" page. You will need give the run a name (`simple` in the example below) and description (`Simple API to RAG pipeline`), but the most important part is the **Pipeline parameters** section at the bottom.
+2.  This will open the "Create run" page. You will need give the run a name (`simple` in the example below) and description (`Simple API to RAG pipeline`), but the most important part is the *Pipeline parameters* section at the bottom.
 
 3.  You must fill in the following parameters to tell the pipeline how to connect to the other services running in your project. Copy the values below exactly.
 
-    * `api_endpoint`: The internal URL of the mock API you deployed.
-    +
-    [.console-input]
-    [source,text]
-    ----
-    http://mock-servicenow-api-svc.{user}.svc.cluster.local:8080/api/v1/incidents?state=closed
-    ----
+* `api_endpoint`: The internal URL of the mock API you deployed.
++
+[.console-input]
+[source,text]
+----
+http://mock-servicenow-api-svc.{user}.svc.cluster.local:8080/api/v1/incidents?state=closed
+----
 
-    * `milvus_host`: The internal service name for the Milvus database.
-    +
-    [.console-input]
-    [source,text]
-    ----
-    vectordb-milvus.{user}.svc.cluster.local    
-    ----
+* `milvus_host`: The internal service name for the Milvus database.
++
+[.console-input]
+[source,text]
+----
+vectordb-milvus.{user}.svc.cluster.local
+----
 
-    * `milvus_port`: The gRPC port for the Milvus database.
-    +
-    [.console-input]
-    [source,text]
-    ----
-    19530
-    ----
-    
-    * `collection_name`: The name of the collection to be created in Milvus.
-    +
-    [.console-input]
-    [source,text]
-    ----
-    servicenow_incidents
-    ----
+* `milvus_port`: The gRPC port for the Milvus database.
++
+[.console-input]
+[source,text]
+----
+19530
+----
+
+* `collection_name`: The name of the collection to be created in Milvus.
++
+[.console-input]
+[source,text]
+----
+servicenow_incidents
+----
 
 4.  After filling in all the parameters, the form should look like this:
-+
+
 [.bordershadow]
 image::03/create-run-form-filled.png[The completed pipeline run configuration form with all parameters filled in.]
 
-5.  Click the **Create Run** button to launch the pipeline run.
+5.  Click the *Create Run* button to launch the pipeline run.
 
 You will be automatically redirected to a real-time graph view of your running pipeline. Let's explore how to monitor it in the next section.

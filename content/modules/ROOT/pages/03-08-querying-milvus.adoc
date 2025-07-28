@@ -9,10 +9,10 @@ In this final exercise, you will act as an IT support engineer and ask a questio
 
 An LLM is a very capable tool, but its knowledge is limited to the public data it was trained on. It doesn't know about {company-name}'s internal IT procedures, past incident resolutions, or specific server names.
 
-**Retrieval-Augmented Generation (RAG)** solves this problem. Instead of retraining the model, we provide it with relevant, up-to-date information *at the time we ask a question*.
+*Retrieval-Augmented Generation (RAG)* solves this problem. Instead of retraining the model, we provide it with relevant, up-to-date information *at the time we ask a question*.
 
 Here's how it works:
-1. When you ask a question, we first search our **Milvus vector database** for past incident tickets that are semantically similar to your question.
+1. When you ask a question, we first search our *Milvus vector database* for past incident tickets that are semantically similar to your question.
 2. We "retrieve" the most relevant resolutions from those tickets.
 3. We then "augment" our prompt to the LLM by including this retrieved context along with your original question.
 4. The LLM uses this specific context to generate a precise, helpful answer based on our company's own data.
@@ -21,7 +21,7 @@ This technique is powerful because you can continuously update the knowledge bas
 
 == Querying Milvus from a Notebook
 
-1.  Navigate back to the OpenShift AI dashboard and launch your pre-created **Jupyter Workbench** (named "My Workbench" or similar).
+1.  Navigate back to the OpenShift AI dashboard and launch your pre-created *Jupyter Workbench* (named "My Workbench" or similar).
 
 2.  Once JupyterLab has started, use the file browser on the left to navigate to the lab materials folder. The path is:
 +

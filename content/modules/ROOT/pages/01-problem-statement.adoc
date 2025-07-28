@@ -6,8 +6,8 @@ To make this {ic-lab} more realistic, we will frame it within a common enterpris
 == The Situation
 :slide:
 
-* We all work for **"{company-name}"**, a large multinational company with a busy IT Help Desk.
-* The company uses **ServiceNow** as its IT Service Management (ITSM) platform.
+* We all work for *"{company-name}"*, a large multinational company with a busy IT Help Desk.
+* The company uses *ServiceNow* as its IT Service Management (ITSM) platform.
 * Over the years, thousands of incident tickets have been resolved. Each closed ticket contains a wealth of information:
 ** The initial problem description.
 ** The troubleshooting steps taken by support engineers.
@@ -17,11 +17,15 @@ To make this {ic-lab} more realistic, we will frame it within a common enterpris
 
 This repository of solved problems is a goldmine of organizational knowledge. However, it is almost completely inaccessible and unusable in its current form.
 
-* **Trapped Knowledge:** All of this valuable information is locked away in unstructured text fields within the ServiceNow database. There is no easy way to search for, correlate, or analyze past solutions.
-* **Inefficient Support:** When a new incident occurs, support engineers spend a significant amount of time manually searching for similar past tickets, often with little success. This leads to:
-    * **Longer Resolution Times:** Engineers frequently have to "reinvent the wheel" to solve problems that have been solved before.
-    * **Inconsistent Fixes:** Different engineers may apply different solutions to the same problem, leading to inconsistent outcomes.
-    * **High Training Costs:** It takes a long time to train new support staff on the specific "tribal knowledge" of the company's IT environment.
-* **The Cost:** This inefficiency directly impacts productivity and operational costs. The company estimates that it loses thousands of hours per year due to engineers researching previously solved issues.
+* *Trapped Knowledge:* All of this valuable information is locked away in unstructured text fields within the ServiceNow database. There is no easy way to search for, correlate, or analyze past solutions that could help resolve current issues.
+
+[.bordershadow]
+image::01/data-trapped.png[Data trapped in various systems.]
+
+* *Inefficient Support:* When a new incident occurs, support engineers spend a significant amount of time manually searching for similar past tickets, often with little success. This leads to:
+** *Longer Resolution Times:* Engineers frequently have to "reinvent the wheel" to solve problems that have been solved before.
+** *Inconsistent Fixes:* Different engineers may apply different solutions to the same problem, leading to inconsistent outcomes.
+** *High Training Costs:* It takes a long time to train new support staff on the specific "tribal knowledge" of the company's IT environment.
+* *The Cost:* This inefficiency directly impacts productivity and operational costs. The company estimates that it loses thousands of hours per year due to engineers researching previously solved issues.
 
 Our team has been tasked with building a prototype that unlocks this knowledge and makes it instantly accessible to our support engineers.

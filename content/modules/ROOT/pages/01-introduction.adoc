@@ -1,17 +1,18 @@
 = 1.1 Introduction to the Parasol RAG Workshop
 include::_attributes.adoc[]
 
-Welcome to the {company-name} AI Workshop! Over the next 90 minutes, we will explore how to build a powerful, event-driven Retrieval-Augmented Generation (RAG) system on Red Hat OpenShift AI. This lab demonstrates how to leverage modern AI/ML workflows to solve a common enterprise challenge: unlocking valuable knowledge trapped in unstructured data sources like service desk tickets and technical PDF documents.
+Welcome to the {company-name} AI Workshop! Over the next 90 minutes, we will explore how to build a powerful, event-driven https://www.redhat.com/en/topics/ai/what-is-retrieval-augmented-generation[Retrieval-Augmented Generation (RAG)] system on Red Hat OpenShift AI. This lab demonstrates how to leverage modern AI/ML workflows to solve a common enterprise challenge: unlocking valuable knowledge trapped in unstructured data sources like service desk tickets and technical PDF documents.
 
 == Your Role
 
-For this workshop, you are an engineer on an innovative new team at **"{company-name}"**, a large multinational corporation. The company is in the midst of a digital transformation and is looking to modernize its IT support and operations by applying Large Language Models (LLMs).
+For this workshop, you are an engineer on an innovative new team at *"{company-name}"*, a large multinational corporation. The company is in the midst of a digital transformation and is looking to modernize its IT support and operations by applying https://www.redhat.com/en/technologies/artificial-intelligence/ai[artificial intelligence (AI) and machine learning (ML) technologies^] to improve efficiency and decision-making.
 
 Your team's mission is to build a prototype system that proves the value of this new approach.
 
 == The Workshop Goal
 
 We will build a system that can:
+
 * Automatically ingest and understand incident resolutions from a ServiceNow API.
 * Process and extract knowledge from technical PDF documents in real-time.
 * Power an intelligent AI assistant with this domain-specific knowledge.
