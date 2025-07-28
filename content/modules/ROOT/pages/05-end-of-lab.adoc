@@ -9,6 +9,7 @@ You have successfully completed the *Enterprise RAG System Workshop*!
 In this lab, you have taken on the role of an engineer at {company-name} and have built a significant prototype to solve a real-world business problem.
 
 You have successfully:
+
 * Deployed a mock ServiceNow REST API using ArgoCD.
 * Imported and configured a Data Science Pipeline in OpenShift AI.
 * Executed the pipeline to automatically ingest and process data, populating a Milvus vector database.
@@ -16,7 +17,7 @@ You have successfully:
 * Explored how an event-driven architecture using Knative and Kafka can automate data ingestion in real-time.
 
 [.bordershadow]
-image::05/workshop-complete.png[A final congratulations image.]
+image::02/event-driven-pipeline-diagram.png[Event-driven pipeline diagram.]
 
 == Thank You
 
