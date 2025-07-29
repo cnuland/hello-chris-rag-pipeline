@@ -22,6 +22,14 @@ image::03/create-run-button.png[The 'Create run' button on the pipeline details 
 http://mock-servicenow-api-svc.{user}.svc.cluster.local:8080/api/v1/incidents?state=closed
 ----
 
+* `collection_name`: The name of the collection to be created in Milvus.
++
+[.console-input]
+[source,text]
+----
+servicenow_incidents
+----
+
 * `milvus_host`: The internal service name for the Milvus database.
 +
 [.console-input]
@@ -38,13 +46,6 @@ vectordb-milvus.{user}.svc.cluster.local
 19530
 ----
 
-* `collection_name`: The name of the collection to be created in Milvus.
-+
-[.console-input]
-[source,text]
-----
-servicenow_incidents
-----
 
 4.  After filling in all the parameters, the form should look like this:
 
