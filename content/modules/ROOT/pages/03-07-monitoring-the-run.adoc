@@ -7,9 +7,9 @@ After starting the pipeline run in the previous step, you were automatically tak
 
 The graph provides a live visualization of your pipeline's execution. Each box represents a component (a "task") in your pipeline.
 
-* **Blue (Running):** A component with a blue spinning icon is currently executing.
-* **Green (Succeeded):** A component with a green checkmark has completed successfully.
-* **Red (Failed):** If a component encounters an error, it will turn red with an exclamation mark.
+* *Blue (Running):* A component with a blue spinning icon is currently executing.
+* *Green (Succeeded):* A component with a green checkmark has completed successfully.
+* *Red (Failed):* If a component encounters an error, it will turn red with an exclamation mark.
 
 Initially, you will see the `fetch-data-from-api` component in a running state.
 
@@ -20,16 +20,16 @@ image::03/run-graph-in-progress.png[The real-time graph view showing a pipeline 
 
 You can dive into each component to see its logs and details. This is essential for debugging and understanding what the pipeline is doing.
 
-1.  **Click on the `fetch-data-from-api` component** in the graph. A side panel will open.
+1.  *Click on the `fetch-data-from-api` component* in the graph. A side panel will open.
 
-2.  Select the **Logs** tab. Here you can see the standard output from the component's container. You should see log lines indicating that it is connecting to the mock API and fetching the incident data.
-+
+2.  Select the *Logs* tab. Here you can see the standard output from the component's container. You should see log lines indicating that it is connecting to the mock API and fetching the incident data.
+
 [.bordershadow]
 image::03/fetch-api-component-logs.png[Logs from the 'fetch-data-from-api' component showing a successful data fetch.]
 
 3.  After the first component succeeds, the graph will update, and the `ingest-incidents-to-milvus` component will begin running.
 
-4.  Click on the `ingest-incidents-to-milvus` component and view its **Logs** tab. You will see output indicating that it is:
+4.  Click on the `ingest-incidents-to-milvus` component and view its *Logs* tab. You will see output indicating that it is:
     * Connecting to the Milvus database.
     * Loading the sentence-transformer model to generate embeddings.
     * Inserting the incident data and their vector embeddings into the Milvus collection.
@@ -39,7 +39,7 @@ image::03/ingest-milvus-component-logs.png[Logs from the 'ingest-incidents-to-mi
 
 == Verifying Successful Completion
 
-The entire pipeline run should take a few minutes to complete. Once finished, both components in the graph will have green checkmarks, and the overall status of the run will be **Succeeded**.
+The entire pipeline run should take a few minutes to complete. Once finished, both components in the graph will have green checkmarks, and the overall status of the run will be *Succeeded*.
 
 [.bordershadow]
 image::03/run-graph-succeeded.png[The graph view showing that all pipeline components have completed successfully.]

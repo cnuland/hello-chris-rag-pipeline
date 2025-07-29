@@ -252,6 +252,37 @@ curl http://<mock-api-route-for-your-api-project>/api/v1/incidents?limit=2 | jq
 * **Knative Eventing (Broker, Trigger, KafkaSource):** Use `oc get broker,trigger,kafkasource -n rag-pipeline-workshop` to check readiness and conditions.
 * **KFP Integration:** Check `s3-event-handler` logs for errors connecting to the KFP endpoint. Ensure the `KFP_ENDPOINT` (internal service URL) and `KFP_PIPELINE_NAME` are correct, and that the `kfp-trigger-sa` ServiceAccount has the necessary RBAC permissions in the KFP namespace.
 
+---
+
+## Documentation
+
+This project includes comprehensive lab guides built with Antora. To view the documentation locally:
+
+### Viewing Lab Documentation
+Run the Antora viewer container to render and serve the documentation:
+
+```bash
+podman run --rm --name antora -v $PWD:/antora -p 8080:8080 -i -t ghcr.io/juliaaano/antora-viewer
+```
+
+For SELinux environments, append `:z` to the volume mount:
+```bash
+podman run --rm --name antora -v $PWD:/antora:z -p 8080:8080 -i -t ghcr.io/juliaaano/antora-viewer
+```
+
+Once running, open your browser to [http://localhost:8080](http://localhost:8080) to view the rendered lab guides.
+
+To stop the container:
+```bash
+podman stop antora
+```
+
+**Note:** Live-reload is not supported. Restart the container to see content changes.
+
+---
+
+## Manual Pipeline Triggering
+
 you can manually trigger the pipeline as followed
 
 Deploy debug pod first in minio namespace

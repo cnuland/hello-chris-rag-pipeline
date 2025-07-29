@@ -35,8 +35,8 @@ The entire process begins by uploading a file to our S3 bucket, `pdf-inbox`.
 3.  Next, they will navigate to the `pdf-inbox` bucket.
 4.  Finally, they will upload a sample PDF document, such as `scripts/event-test-20250601-212930.pdf` from our Git repository.
 
-[.bordershadow]
-image::02/minio-upload-pdf.png[Uploading a sample PDF file to the 'pdf-inbox' bucket in the MinIO UI.]
+// [.bordershadow]
+// image::02/minio-upload-pdf.png[Uploading a sample PDF file to the 'pdf-inbox' bucket in the MinIO UI.]
 
 As soon as the upload is complete, the MinIO server fires an event.
 
@@ -55,8 +55,8 @@ oc exec -n kafka <your-kafka-broker-pod-name> -- bin/kafka-console-consumer.sh \
 
 The audience will see the raw JSON event from MinIO appear on the screen, confirming it has been successfully brokered by Kafka.
 
-[.bordershadow]
-image::02/kafka-console-consumer-output.png[Output of the Kafka console consumer showing the raw JSON event from the MinIO PDF upload.]
+// [.bordershadow]
+// image::02/kafka-console-consumer-output.png[Output of the Kafka console consumer showing the raw JSON event from the MinIO PDF upload.]
 
 == Step 3: From Kafka to Knative
 
@@ -92,14 +92,15 @@ oc logs -n rag-pipeline-workshop -l serving.knative.dev/service=s3-event-handler
 ```
 
 The audience will see log entries confirming:
+
 * A POST request was received.
 * The application is initializing the KFP client.
 * The `list_experiments` and `list_pipelines` calls are succeeding.
 * The application is logging "Submitting KFP run with name: ..."
 * Finally, "KFP run successfully triggered" with a Run ID and URL.
 
-[.bordershadow]
-image::02/s3-handler-logs.png[Logs from the s3-event-handler pod showing the receipt of the CloudEvent and the successful triggering of a KFP run.]
+// [.bordershadow]
+// image::02/s3-handler-logs.png[Logs from the s3-event-handler pod showing the receipt of the CloudEvent and the successful triggering of a KFP run.]
 
 == Step 5: The Kubeflow Pipeline Run
 
@@ -111,7 +112,7 @@ The event has now successfully traversed the entire serverless infrastructure an
 
 Clicking on the run reveals the graph of the pipeline that was executed. We can see the `download-pdf-from-s3` and `process-pdf-with-docling` components, and by clicking on them, we can inspect their inputs, outputs, and logs.
 
-[.bordershadow]
-image::02/kfp-run-graph-complete.png[The graph of the completed PDF processing pipeline run in the Kubeflow Pipelines UI.]
+// [.bordershadow]
+// image::02/kfp-run-graph-complete.png[The graph of the completed PDF processing pipeline run in the Kubeflow Pipelines UI.]
 
 This completes the demonstration. We have successfully shown an end-to-end, automated, and event-driven workflow for processing unstructured data on OpenShift AI.

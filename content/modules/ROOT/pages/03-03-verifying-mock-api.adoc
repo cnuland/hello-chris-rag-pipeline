@@ -5,10 +5,10 @@ Now that ArgoCD has successfully deployed the mock API application, let's perfor
 
 == Accessing the OpenShift Web Terminal
 
-1.  In the OpenShift web console, make sure you are in the **Developer** perspective and have your project (`{user}`) selected.
+1.  In the OpenShift web console, make sure you are in the *Developer* perspective and have your project (`{user}`) selected.
 
 2.  If you have closed it, open the command line terminal by clicking the terminal icon in the top-right corner of the page.
-+
+
 [.bordershadow]
 image::03/openshift-web-terminal.png[Opening the OpenShift command line terminal from the UI.]
 
@@ -18,23 +18,23 @@ image::03/openshift-web-terminal.png[Opening the OpenShift command line terminal
 
 We will now send requests to two of the API's endpoints: `/api/v1/health` for a simple status check, and `/api/v1/incidents` to retrieve sample data. The API is exposed internally via a Kubernetes Service named `mock-api` on port `8080`.
 
-1.  **Perform a Health Check:** In the OpenShift terminal, run the following command to check the health endpoint.
-+
+1.  *Perform a Health Check:* In the OpenShift terminal, run the following command to check the health endpoint.
+
 [.console-input]
 [source,bash]
 ----
 curl http://mock-servicenow-api-svc.{user}.svc.cluster.local:8080/api/v1/health
 ----
-+
+
 You should see the following JSON output, indicating that the API is up and running:
-+
+
 [source,json]
 ----
 {"status":"UP"}
 ----
 
-2.  **Fetch Incident Data:** Now, let's query the main data endpoint to see the mock ticket data. This is the same endpoint our pipeline will use. We'll ask for two "closed" incidents and pipe the output to the `jq` utility to format it nicely.
-+
+2.  *Fetch Incident Data:* Now, let's query the main data endpoint to see the mock ticket data. This is the same endpoint our pipeline will use. We'll ask for two "closed" incidents and pipe the output to the `jq` utility to format it nicely.
+
 [.console-input]
 [source,bash]
 ----
@@ -42,10 +42,10 @@ curl 'http://mock-servicenow-api-svc.{user}.svc.cluster.local:8080/api/v1/incide
 ----
 
 3.  The output should be a well-formatted JSON object containing a `result` array with two incident records, similar to the example below.
-+
+
 [.bordershadow]
 image::03/api-incidents-check-success.png[Successful output of the curl command showing formatted JSON incident data.]
-+
+
 [source,json]
 ----
 {
