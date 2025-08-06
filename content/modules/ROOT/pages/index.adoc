@@ -3,17 +3,17 @@ include::_attributes.adoc[]
 
 == Workshop Overview
 
-Welcome to the {company-name} RAG Workshop! This {ic-lab} will illustrate how to combine event-driven serverless applications, data science pipelines, and a vector database to solve a real-world enterprise challenge using Large Language Models (LLMs).
+Welcome to the {company-name} RAG Workshop! This {ic-lab} will illustrate how to combine event-driven serverless applications, data science pipelines, and a vector database to solve a real-world enterprise challenge using https://www.redhat.com/en/topics/ai/what-are-large-language-models[Large Language Models (LLMs)^].
 
-The scenario for this lab is that we all work for "{company-name}", a large company looking to leverage AI to improve its IT support operations. Our goal is to build a prototype Retrieval-Augmented Generation (RAG) system that taps into the vast knowledge base of closed ServiceNow tickets, making it instantly searchable for support engineers through a conversational AI assistant.
+The scenario for this lab is that we all work for "{company-name}", a large company looking to leverage AI to improve its IT support operations. Our goal is to build a prototype https://www.redhat.com/en/topics/ai/what-is-retrieval-augmented-generation[Retrieval-Augmented Generation (RAG)^] system that taps into the vast knowledge base of closed ServiceNow tickets, making it instantly searchable for support engineers through a conversational AI assistant.
 
 == Disclaimer
 
 This {ic-lab} is an example of what a customer could build using {rhoai}. {rhoai} itself does not include a ServiceNow integration or a vector database out-of-the-box.
 
-This {ic-lab} makes use of a Large Language Model (LLM), the `docling` document parsing library, and the Milvus vector database. These models and third-party tools are not included in the {rhoai} product. They are provided as a convenience for this {ic-lab}.
+This {ic-lab} makes use of a Large Language Model (LLM), the https://github.com/DS4SD/docling[`docling`^] document parsing library, and the https://milvus.io/[Milvus^] vector database. These models and third-party tools are not included in the {rhoai} product. They are provided as a convenience for this {ic-lab}.
 
-The quality of the models and the architecture are suitable for a prototype. Choosing the right components for a production environment is a complex task that requires significant experimentation and tuning. This {ic-lab} does not cover production-level architecture design.
+NOTE: The quality of the models and the architecture are suitable for a prototype. Choosing the right components for a production environment is a complex task that requires significant experimentation and tuning. This {ic-lab} does not cover production-level architecture design.
 
 == Timetable
 
@@ -24,21 +24,24 @@ This is a tentative timetable for the materials that will be presented.
 | Name |Duration |Type |Description
 
 |The Parasol Company Scenario |15 | Presentation
-a|- We discuss the benefits of using OpenShift AI, Data Science Pipelines, and Milvus for this solution.
+a|- We discuss the benefits of using https://www.redhat.com/en/technologies/cloud-computing/openshift/openshift-ai[OpenShift AI^], https://www.kubeflow.org/docs/components/pipelines/introduction/[Data Science Pipelines^], and https://milvus.io/[Milvus^] for this solution.
 
 |Demo: Event-Driven PDF Pipeline |20 | Demo
 a|- The instructor will demonstrate a real-time data ingestion pipeline.
-- An upload of a PDF to an S3 bucket will automatically trigger a Kubeflow Pipeline via Knative Eventing and Kafka.
+- An upload of a PDF to an S3 bucket will automatically trigger a https://www.kubeflow.org/docs/components/pipelines/introduction/[Kubeflow Pipeline^] via https://knative.dev/docs/eventing/[Knative Eventing^] and https://kafka.apache.org/[Kafka^].
 - This showcases the event-driven capabilities of the platform.
 
 |Lab: Building the API-to-RAG Pipeline |45 | Hands-On
-a|- **Lab Setup:** Attendees log in and explore their pre-created OpenShift AI project.
-- **Deploy & Verify Mock API:** Attendees deploy a mock ServiceNow API using ArgoCD and test its endpoint.
-- **Run KFP Pipeline:** Attendees import and run a Kubeflow Pipeline that fetches data from the API, generates embeddings, and populates the Milvus vector database.
-- **Query the RAG System:** Attendees use a Jupyter Notebook to ask questions against the system and see the contextually relevant answers retrieved from Milvus.
+a|- *Lab Setup:* Attendees log in and explore their pre-created OpenShift AI project.
+- *Deploy & Verify Mock API:* Attendees deploy a mock ServiceNow API using ArgoCD and test its endpoint.
+- *Run KFP Pipeline:* Attendees import and run a Kubeflow Pipeline that fetches data from the API, generates embeddings, and populates the Milvus vector database.
+- *Query the RAG System:* Attendees use a Jupyter Notebook to ask questions against the system and see the contextually relevant answers retrieved from Milvus.
 
 |=========================================================
 
+== Resources
+
+* https://red.ht/intelligent-apps[Presentation Slides: Intelligent Applications^]
 
 == Contributing
 

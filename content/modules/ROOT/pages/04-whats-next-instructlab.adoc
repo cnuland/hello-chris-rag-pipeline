@@ -13,19 +13,30 @@ The next evolution of our system is to move from Retrieval-Augmented Generation 
 
 To understand the benefits, let's compare the two approaches:
 
-* **Retrieval-Augmented Generation (RAG):**
-** *What it is:* Provides external knowledge to a generic model at the time of the query.
-** *How it works:* The system retrieves relevant documents from a database and provides them as context alongside the user's prompt.
-** *Analogy:* Giving a smart person an open book during an exam. They can find the answer, but their fundamental knowledge doesn't change.
-** *Strengths:* Excellent for rapidly changing information and providing answers based on specific, verifiable documents.
-** *Weakness:* Does not improve the model's core reasoning, style, or understanding of a specialized domain.
+[cols="1,2,2",options="header"]
+|===
+|Aspect |Retrieval-Augmented Generation (RAG) |Retrieval-Augmented Fine-Tuning (RAFT)
 
-* **Retrieval-Augmented Fine-Tuning (RAFT):**
-** *What it is:* Uses your curated, high-quality knowledge to *actually teach the model*, fundamentally improving its understanding.
-** *How it works:* Your domain-specific data is used to generate a large set of training examples, which are then used to fine-tune the base LLM.
-** *Analogy:* Having the smart person study the book *before* the exam. They internalize the knowledge and can answer questions more naturally and accurately.
-** *Strengths:* Improves the model's core reasoning, its ability to adopt a specific persona (e.g., a helpful IT agent), and its accuracy within your domain.
-** *Weakness:* The "baked-in" knowledge is only as current as the last fine-tuning run.
+|*What it is*
+|Provides external knowledge to a generic model at the time of the query
+|Uses your curated, high-quality knowledge to *actually teach the model*, fundamentally improving its understanding
+
+|*How it works*
+|The system retrieves relevant documents from a database and provides them as context alongside the user's prompt
+|Your domain-specific data is used to generate a large set of training examples, which are then used to fine-tune the base LLM
+
+|*Analogy*
+|Giving a smart person an open book during an exam. They can find the answer, but their fundamental knowledge doesn't change
+|Having the smart person study the book *before* the exam. They internalize the knowledge and can answer questions more naturally and accurately
+
+|*Strengths*
+|Excellent for rapidly changing information and providing answers based on specific, verifiable documents
+|Improves the model's core reasoning, its ability to adopt a specific persona (e.g., a helpful IT agent), and its accuracy within your domain
+
+|*Weakness*
+|Does not improve the model's core reasoning, style, or understanding of a specialized domain
+|The "baked-in" knowledge is only as current as the last fine-tuning run
+|===
 
 The most powerful systems often use a **hybrid approach**: a model that has been fine-tuned using RAFT is used in a RAG system to access the absolute latest information at query time.
 
@@ -58,6 +69,7 @@ The process for enhancing a model with InstructLab follows three key stages:
 == The Result: A Truly Enterprise-Ready AI Assistant
 
 By fine-tuning a model using InstructLab, we create a new model that is not only knowledgeable about our specific ServiceNow data but is also better at:
+
 * **Following Instructions:** Adhering to specific formatting and output requirements.
 * **Adopting a Persona:** Consistently behaving like a professional, helpful IT support agent from {company-name}.
 * **Improving Accuracy:** Reducing errors and hallucinations by having the domain knowledge more deeply integrated into its own weights.
