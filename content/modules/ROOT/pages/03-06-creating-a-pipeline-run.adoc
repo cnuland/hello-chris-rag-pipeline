@@ -17,7 +17,7 @@ image::03/create-run-button.png[The 'Create run' button on the pipeline details 
 * `api_endpoint`: The internal URL of the mock API you deployed.
 +
 [.console-input]
-[source,text]
+[source,text,subs="attributes"]
 ----
 http://mock-servicenow-api-svc.{user}.svc.cluster.local:8080/api/v1/incidents?state=closed
 ----
@@ -33,7 +33,7 @@ servicenow_incidents
 * `milvus_host`: The internal service name for the Milvus database.
 +
 [.console-input]
-[source,text]
+[source,text,subs="attributes"]
 ----
 vectordb-milvus.{user}.svc.cluster.local
 ----
