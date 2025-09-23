@@ -6,7 +6,7 @@
 //:productname-short: OpenShift Data 
 :productname-long: Red Hat OpenShift AI
 :productname-short: OpenShift AI
-:page-user: {user}
+:user: user-CHANGEME
 :page-openshift_console_url: {openshift_console_url}
 :page-rhoai_dashboard_url: {rhoai_dashboard_url}
 :imagesdir: ../assets/images

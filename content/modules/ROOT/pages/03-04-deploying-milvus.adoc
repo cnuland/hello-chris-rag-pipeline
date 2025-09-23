@@ -58,7 +58,7 @@ To confirm that Milvus is running correctly, stay in the OpenShift Terminal and 
 1.  Run the `oc get pods` command. You may need to run it a few times until you see the desired status. It may take a couple minutes for the pod to be fully available.
 +
 [.console-input]
-[source,bash]
+[source,bash,subs="attributes"]
 ----
 oc get pods -n {user} -w
 ----

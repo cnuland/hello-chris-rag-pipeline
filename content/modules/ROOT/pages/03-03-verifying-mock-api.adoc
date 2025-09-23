@@ -21,7 +21,7 @@ We will now send requests to two of the API's endpoints: `/api/v1/health` for a 
 1.  *Perform a Health Check:* In the OpenShift terminal, run the following command to check the health endpoint.
 
 [.console-input]
-[source,bash]
+[source,bash,subs="attributes"]
 ----
 curl http://mock-servicenow-api-svc.{user}.svc.cluster.local:8080/api/v1/health
 ----
@@ -36,7 +36,7 @@ You should see the following JSON output, indicating that the API is up and runn
 2.  *Fetch Incident Data:* Now, let's query the main data endpoint to see the mock ticket data. This is the same endpoint our pipeline will use. We'll ask for two "closed" incidents and pipe the output to the `jq` utility to format it nicely.
 
 [.console-input]
-[source,bash]
+[source,bash,subs="attributes"]
 ----
 curl 'http://mock-servicenow-api-svc.{user}.svc.cluster.local:8080/api/v1/incidents?state=closed&limit=2' | jq
 ----
