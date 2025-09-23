@@ -17,12 +17,12 @@ asciidoc:
     minio-endpoint: http://minio.ic-shared-minio.svc.cluster.local:9000/
     git-clone-repo-url: https://github.com/cnuland/hello-chris-rag-pipeline.git
     git-clone-repo-branch: dev
-    user: user-CHANGEME
+    user: userX
     password: openshift
     openshift_console_url: https://PLACEHOLDER-URL.com/
     openshift_cluster_ingress_domain: PLACEHOLDER-URL.com
     rhoai_dashboard_url: https://rhods-dashboard-redhat-ods-applications.{openshift_cluster_ingress_domain}/
-    login_command: oc login --insecure-skip-tls-verify=false -u user-CHANGEME -p openshift https://api.MYCLUSTER.com:6443"
+    login_command: oc login --insecure-skip-tls-verify=false -u user-{user} -p openshift https://api.MYCLUSTER.com:6443"
     rhoai: "Red Hat OpenShift AI"
     rhoai-short: "RHOAI"
     ocp: "OpenShift Container Platform"
