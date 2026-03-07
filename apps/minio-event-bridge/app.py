@@ -111,16 +111,32 @@ def webhook():
         }
         
         object_key = None
-        if 'Key' in minio_event: # MinIO specific top-level key
-            object_key = minio_event['Key']
-        elif 'Records' in minio_event and isinstance(minio_event['Records'], list) and len(minio_event['Records']) > 0:
+        bucket_name = None
+
+        if 'Key' in minio_event: # MinIO specific top-level key (format: "bucket/key")
+            key_parts = minio_event['Key'].split('/', 1)
+            if len(key_parts) == 2:
+                bucket_name = key_parts[0]
+                object_key = key_parts[1]
+            else:
+                object_key = minio_event['Key']
+
+        if 'Records' in minio_event and isinstance(minio_event['Records'], list) and len(minio_event['Records']) > 0:
             record = minio_event['Records'][0]
-            if 's3' in record and 'object' in record['s3'] and 'key' in record['s3']['object']:
-                object_key = record['s3']['object']['key']
-        
+            if 's3' in record:
+                if 'bucket' in record['s3'] and 'name' in record['s3']['bucket']:
+                    bucket_name = record['s3']['bucket']['name']
+                if 'object' in record['s3'] and 'key' in record['s3']['object']:
+                    object_key = record['s3']['object']['key']
+
         if object_key:
             attributes["subject"] = object_key
             logger.info(f"RID-{request_id}: Set CloudEvent subject to: {object_key}")
+
+        # Add bucket name as a CloudEvent extension for downstream routing
+        if bucket_name:
+            attributes["bucketname"] = bucket_name
+            logger.info(f"RID-{request_id}: Set CloudEvent extension 'bucketname' to: {bucket_name}")
 
         # Create CloudEvent object with MinIO event as data
         # The 'data' (minio_event) should be a dict if datacontenttype is application/json
