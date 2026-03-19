@@ -22,6 +22,11 @@ LOG_LEVEL = os.environ.get("LOG_LEVEL", "DEBUG").upper()
 KFP_VERIFY_SSL = os.environ.get("KFP_VERIFY_SSL", "true").lower() == "true"
 REQUESTS_CA_BUNDLE = os.environ.get("REQUESTS_CA_BUNDLE", "/var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt")
 
+# S3/MinIO credentials to pass to the pipeline as run parameters
+S3_ENDPOINT_URL = os.environ.get("S3_ENDPOINT_URL", "http://minio.minio.svc.cluster.local:9000")
+S3_ACCESS_KEY = os.environ.get("S3_ACCESS_KEY", "")
+S3_SECRET_KEY = os.environ.get("S3_SECRET_KEY", "")
+
 # Multi-user routing config
 # Suffix appended to username to form bucket name (e.g., "user1" + "-pdf-inbox" = "user1-pdf-inbox")
 USER_BUCKET_SUFFIX = os.environ.get("USER_BUCKET_SUFFIX", "-pdf-inbox")
@@ -76,6 +81,9 @@ app.logger.info(f"REQUESTS_CA_BUNDLE path: {REQUESTS_CA_BUNDLE}")
 app.logger.info(f"USER_BUCKET_SUFFIX: {USER_BUCKET_SUFFIX}")
 app.logger.info(f"DEFAULT_BUCKET_NAME: {DEFAULT_BUCKET_NAME}")
 app.logger.info(f"KFP_DSPA_PATTERN: {KFP_DSPA_PATTERN}")
+app.logger.info(f"S3_ENDPOINT_URL: {S3_ENDPOINT_URL}")
+app.logger.info(f"S3_ACCESS_KEY: {'***SET***' if S3_ACCESS_KEY else 'NOT SET'}")
+app.logger.info(f"S3_SECRET_KEY: {'***SET***' if S3_SECRET_KEY else 'NOT SET'}")
 
 
 def _read_sa_token():
@@ -279,11 +287,15 @@ def handle_s3_event():
                         f"(ID: {experiment.experiment_id})")
 
         # --- Step 7: Build run parameters ---
-        run_params = {}
+        run_params = {
+            "s3_endpoint_url": S3_ENDPOINT_URL,
+            "s3_access_key": S3_ACCESS_KEY,
+            "s3_secret_key": S3_SECRET_KEY,
+        }
         if object_key:
-            run_params["s3_object_key"] = object_key
+            run_params["s3_key"] = object_key
         if bucket_name:
-            run_params["s3_bucket_name"] = bucket_name
+            run_params["s3_bucket"] = bucket_name
 
         job_name = f"s3-trigger-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}-{uuid.uuid4().hex[:6]}"
         app.logger.info(f"RID-{request_id}: Starting pipeline run '{job_name}' with params: {run_params}")

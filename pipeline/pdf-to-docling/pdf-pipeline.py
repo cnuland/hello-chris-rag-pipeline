@@ -1,5 +1,5 @@
 import kfp
-from kfp.dsl import InputPath, OutputPath, component, pipeline
+from kfp.dsl import Input, Output, Artifact, component, pipeline
 import os
 import json
 import logging
@@ -16,7 +16,7 @@ def download_pdf_from_s3(
     s3_endpoint_url: str,
     s3_access_key: str,
     s3_secret_key: str,
-    downloaded_pdf_file_path: OutputPath(str)
+    downloaded_pdf: Output[Artifact]
 ) -> None:
     import boto3
     import logging
@@ -25,7 +25,7 @@ def download_pdf_from_s3(
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
     logging.info(f"Attempting to download s3://{s3_bucket}/{s3_key}")
-    logging.info(f"Artifact path: {downloaded_pdf_file_path}")
+    logging.info(f"Artifact path: {downloaded_pdf.path}")
 
     try:
         s3_client = boto3.client(
@@ -34,13 +34,13 @@ def download_pdf_from_s3(
             aws_access_key_id=s3_access_key,
             aws_secret_access_key=s3_secret_key,
         )
-        os.makedirs(os.path.dirname(downloaded_pdf_file_path), exist_ok=True)
-        s3_client.download_file(s3_bucket, s3_key, downloaded_pdf_file_path)
+        os.makedirs(os.path.dirname(downloaded_pdf.path), exist_ok=True)
+        s3_client.download_file(s3_bucket, s3_key, downloaded_pdf.path)
 
-        if not os.path.exists(downloaded_pdf_file_path):
-            raise FileNotFoundError(f"Expected artifact file not found at {downloaded_pdf_file_path}")
+        if not os.path.exists(downloaded_pdf.path):
+            raise FileNotFoundError(f"Expected artifact file not found at {downloaded_pdf.path}")
 
-        logging.info(f"Successfully downloaded PDF to artifact path: {downloaded_pdf_file_path}")
+        logging.info(f"Successfully downloaded PDF to artifact path: {downloaded_pdf.path}")
     except Exception as e:
         logging.error(f"Error downloading from S3: {e}", exc_info=True)
         raise
@@ -50,8 +50,8 @@ def download_pdf_from_s3(
     packages_to_install=["docling"]
 )
 def process_pdf_with_docling(
-    pdf_artifact_path: InputPath(str),
-    docling_output_json_path: OutputPath(str)
+    pdf_artifact: Input[Artifact],
+    docling_output_json: Output[Artifact]
 ) -> None:
     import pathlib
     import logging
@@ -62,19 +62,24 @@ def process_pdf_with_docling(
 
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-    pdf_input_path = pathlib.Path(pdf_artifact_path)
-    output_json_path = pathlib.Path(docling_output_json_path)
+    # EasyOCR tries to write to /.EasyOCR which is read-only on OpenShift.
+    # Redirect HOME and EASYOCR_MODULE_PATH to a writable temp directory.
+    os.environ['HOME'] = '/tmp'
+    os.environ['EASYOCR_MODULE_PATH'] = '/tmp/.EasyOCR'
+
+    pdf_input_path = pathlib.Path(pdf_artifact.path)
+    output_json_path = pathlib.Path(docling_output_json.path)
 
     logging.info(f"Processing PDF: {pdf_input_path.name} with docling...")
     logging.info(f"Docling output will be saved to: {output_json_path}")
 
     doc_converter = DocumentConverter()
-    conv_results = doc_converter.convert_all([pdf_input_path], raises_on_error=True)
+    conv_results = list(doc_converter.convert_all([pdf_input_path], raises_on_error=True))
 
     if conv_results and conv_results[0].document:
         conv_res = conv_results[0]
         logging.info(f"Docling successfully parsed document. Status: {conv_res.status}")
-        doc_dict = conv_res.document.save_as_dict()
+        doc_dict = conv_res.document.model_dump()
 
         logging.info(f"Top-level keys: {list(doc_dict.keys())}")
         logging.info(f"Data types of keys: {[type(v).__name__ for v in doc_dict.values()]}")
@@ -131,7 +136,7 @@ def pdf_to_docling_pipeline(
     download_task.set_caching_options(False)
 
     docling_task = process_pdf_with_docling(
-        pdf_artifact_path=download_task.outputs["downloaded_pdf_file_path"]
+        pdf_artifact=download_task.outputs["downloaded_pdf"]
     )
     docling_task.set_display_name("Process PDF with Docling")
     docling_task.set_caching_options(False)
