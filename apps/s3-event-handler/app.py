@@ -312,16 +312,9 @@ def handle_s3_event():
         if run:
             app.logger.info(f"RID-{request_id}: Pipeline run started successfully. "
                             f"Run ID: {run.run_id}, Endpoint: {kfp_endpoint}")
-            return jsonify({
-                "status": "success",
-                "message": "Pipeline run started",
-                "run_id": run.run_id,
-                "pipeline": PIPELINE_NAME,
-                "endpoint": kfp_endpoint,
-                "bucket": bucket_name,
-                "object_key": object_key,
-                "request_id": request_id,
-            }), 200
+            # Return empty body — Knative Kafka Broker dispatcher cannot parse
+            # non-CloudEvent JSON responses and treats them as poison pills.
+            return '', 200
         else:
             app.logger.warning(f"RID-{request_id}: run_pipeline returned None.")
             return jsonify({"status": "error", "message": "run_pipeline returned None",
