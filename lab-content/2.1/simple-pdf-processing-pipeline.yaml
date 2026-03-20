@@ -1,0 +1,207 @@
+# PIPELINE DEFINITION
+# Name: pdf-to-docling-debug-pipeline
+# Description: Downloads a PDF from S3 and parses it with Docling.
+# Inputs:
+#    s3_access_key: str
+#    s3_bucket: str
+#    s3_endpoint_url: str
+#    s3_key: str
+#    s3_secret_key: str
+components:
+  comp-download-pdf-from-s3:
+    executorLabel: exec-download-pdf-from-s3
+    inputDefinitions:
+      parameters:
+        s3_access_key:
+          parameterType: STRING
+        s3_bucket:
+          parameterType: STRING
+        s3_endpoint_url:
+          parameterType: STRING
+        s3_key:
+          parameterType: STRING
+        s3_secret_key:
+          parameterType: STRING
+    outputDefinitions:
+      artifacts:
+        downloaded_pdf:
+          artifactType:
+            schemaTitle: system.Artifact
+            schemaVersion: 0.0.1
+  comp-process-pdf-with-docling:
+    executorLabel: exec-process-pdf-with-docling
+    inputDefinitions:
+      artifacts:
+        pdf_artifact:
+          artifactType:
+            schemaTitle: system.Artifact
+            schemaVersion: 0.0.1
+    outputDefinitions:
+      artifacts:
+        docling_output_json:
+          artifactType:
+            schemaTitle: system.Artifact
+            schemaVersion: 0.0.1
+deploymentSpec:
+  executors:
+    exec-download-pdf-from-s3:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - download_pdf_from_s3
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.13.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
+          \  python3 -m pip install --quiet --no-warn-script-location 'boto3==1.28.57'\
+          \ && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef download_pdf_from_s3(\n    s3_bucket: str,\n    s3_key: str,\n\
+          \    s3_endpoint_url: str,\n    s3_access_key: str,\n    s3_secret_key:\
+          \ str,\n    downloaded_pdf: Output[Artifact]\n) -> None:\n    import boto3\n\
+          \    import logging\n    import os\n\n    logging.basicConfig(level=logging.INFO,\
+          \ format='%(asctime)s - %(levelname)s - %(message)s')\n\n    logging.info(f\"\
+          Attempting to download s3://{s3_bucket}/{s3_key}\")\n    logging.info(f\"\
+          Artifact path: {downloaded_pdf.path}\")\n\n    try:\n        s3_client =\
+          \ boto3.client(\n            's3',\n            endpoint_url=s3_endpoint_url,\n\
+          \            aws_access_key_id=s3_access_key,\n            aws_secret_access_key=s3_secret_key,\n\
+          \        )\n        os.makedirs(os.path.dirname(downloaded_pdf.path), exist_ok=True)\n\
+          \        s3_client.download_file(s3_bucket, s3_key, downloaded_pdf.path)\n\
+          \n        if not os.path.exists(downloaded_pdf.path):\n            raise\
+          \ FileNotFoundError(f\"Expected artifact file not found at {downloaded_pdf.path}\"\
+          )\n\n        logging.info(f\"Successfully downloaded PDF to artifact path:\
+          \ {downloaded_pdf.path}\")\n    except Exception as e:\n        logging.error(f\"\
+          Error downloading from S3: {e}\", exc_info=True)\n        raise\n\n"
+        image: quay.io/cnuland/docling-pipeline:latest
+    exec-process-pdf-with-docling:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - process_pdf_with_docling
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'kfp==2.13.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"'  &&\
+          \  python3 -m pip install --quiet --no-warn-script-location 'docling' &&\
+          \ \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef process_pdf_with_docling(\n    pdf_artifact: Input[Artifact],\n\
+          \    docling_output_json: Output[Artifact]\n) -> None:\n    import pathlib\n\
+          \    import logging\n    import json\n    import os\n    import binascii\n\
+          \    from docling.document_converter import DocumentConverter\n\n    logging.basicConfig(level=logging.INFO,\
+          \ format='%(asctime)s - %(levelname)s - %(message)s')\n\n    # EasyOCR tries\
+          \ to write to /.EasyOCR which is read-only on OpenShift.\n    # Redirect\
+          \ HOME and EASYOCR_MODULE_PATH to a writable temp directory.\n    os.environ['HOME']\
+          \ = '/tmp'\n    os.environ['EASYOCR_MODULE_PATH'] = '/tmp/.EasyOCR'\n\n\
+          \    pdf_input_path = pathlib.Path(pdf_artifact.path)\n    output_json_path\
+          \ = pathlib.Path(docling_output_json.path)\n\n    logging.info(f\"Processing\
+          \ PDF: {pdf_input_path.name} with docling...\")\n    logging.info(f\"Docling\
+          \ output will be saved to: {output_json_path}\")\n\n    doc_converter =\
+          \ DocumentConverter()\n    conv_results = list(doc_converter.convert_all([pdf_input_path],\
+          \ raises_on_error=True))\n\n    if conv_results and conv_results[0].document:\n\
+          \        conv_res = conv_results[0]\n        logging.info(f\"Docling successfully\
+          \ parsed document. Status: {conv_res.status}\")\n        doc_dict = conv_res.document.model_dump()\n\
+          \n        logging.info(f\"Top-level keys: {list(doc_dict.keys())}\")\n \
+          \       logging.info(f\"Data types of keys: {[type(v).__name__ for v in\
+          \ doc_dict.values()]}\")\n\n        try:\n            cleaned_dict = json.loads(json.dumps(doc_dict,\
+          \ ensure_ascii=False))\n        except Exception as json_sanitize_err:\n\
+          \            logging.error(f\"Error sanitizing JSON: {json_sanitize_err}\"\
+          , exc_info=True)\n            raise\n\n        os.makedirs(os.path.dirname(output_json_path),\
+          \ exist_ok=True)\n        with open(output_json_path, 'w', encoding='utf-8')\
+          \ as f:\n            json.dump(cleaned_dict, f, ensure_ascii=False, indent=2)\n\
+          \n        try:\n            with open(output_json_path, 'rb') as f:\n  \
+          \              raw_bytes = f.read()\n                raw_bytes.decode('utf-8')\n\
+          \                logging.info(f\"Output file size: {len(raw_bytes)} bytes\"\
+          )\n                logging.info(f\"Output file preview (hex): {binascii.hexlify(raw_bytes[:256]).decode()}...\"\
+          )\n        except Exception as encoding_err:\n            logging.error(f\"\
+          Output file failed UTF-8 validation: {encoding_err}\", exc_info=True)\n\
+          \            raise\n\n        try:\n            json_preview = json.dumps(cleaned_dict,\
+          \ ensure_ascii=False)[:1000]\n            logging.info(f\"Docling JSON preview\
+          \ (first 1K chars): {json_preview}\")\n        except Exception as preview_err:\n\
+          \            logging.warning(f\"Failed to preview JSON: {preview_err}\"\
+          , exc_info=True)\n\n        logging.info(\"Successfully saved docling output\
+          \ as JSON artifact.\")\n    else:\n        raise RuntimeError(f\"Docling\
+          \ conversion failed for {pdf_input_path.name}\")\n\n"
+        image: quay.io/cnuland/docling-pipeline:latest
+pipelineInfo:
+  description: Downloads a PDF from S3 and parses it with Docling.
+  name: pdf-to-docling-debug-pipeline
+root:
+  dag:
+    tasks:
+      download-pdf-from-s3:
+        cachingOptions: {}
+        componentRef:
+          name: comp-download-pdf-from-s3
+        inputs:
+          parameters:
+            s3_access_key:
+              componentInputParameter: s3_access_key
+            s3_bucket:
+              componentInputParameter: s3_bucket
+            s3_endpoint_url:
+              componentInputParameter: s3_endpoint_url
+            s3_key:
+              componentInputParameter: s3_key
+            s3_secret_key:
+              componentInputParameter: s3_secret_key
+        taskInfo:
+          name: Download PDF from S3
+      process-pdf-with-docling:
+        cachingOptions: {}
+        componentRef:
+          name: comp-process-pdf-with-docling
+        dependentTasks:
+        - download-pdf-from-s3
+        inputs:
+          artifacts:
+            pdf_artifact:
+              taskOutputArtifact:
+                outputArtifactKey: downloaded_pdf
+                producerTask: download-pdf-from-s3
+        taskInfo:
+          name: Process PDF with Docling
+  inputDefinitions:
+    parameters:
+      s3_access_key:
+        parameterType: STRING
+      s3_bucket:
+        parameterType: STRING
+      s3_endpoint_url:
+        parameterType: STRING
+      s3_key:
+        parameterType: STRING
+      s3_secret_key:
+        parameterType: STRING
+schemaVersion: 2.1.0
+sdkVersion: kfp-2.13.0
